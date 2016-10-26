@@ -1,5 +1,4 @@
 ###Git - "Camel Control"??
 ***
-To run 
-  - either use ./cml from this directory
-  - or run "Make" from this directory and use cml from any terminal context
+To run: "make/make install" to compile CmlControl and added cml to your path.
+***Before Add/Commit - ***please run "make clean" so you do not commit any compiled OCaml files!
