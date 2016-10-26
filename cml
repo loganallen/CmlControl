@@ -1,4 +1,18 @@
 #!/bin/bash
 
 
-echo "welcome to the yung 🐪"
+# If no arguments are supplied, print the instructions.
+# We can and should modify these. I was just trying to test it out.
+if [[ $# == 0 ]]; then
+  printf "\n🐪  Welcome to Camel Control (cml) 🐪\n\n"
+  printf "The Camel is your friend... here are it's most useful commands:\n\n"
+  printf "Start a working area\n"
+  printf "\t init \t initialize a new camel repo \n"
+  printf "\t clone \t initialize an existing remote camel repo locally \n\n"
+  printf "Work on existing hump \n"
+  printf "\t add \t Add file contents to the index \n"
+  printf "\t commit\t Record changes to the repository \n\n"
+
+
+  exit 64
+fi
