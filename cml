@@ -3,7 +3,8 @@
 
 # If no arguments are supplied, print the instructions.
 # We can and should modify these. I was just trying to test it out.
-./cml.byte
+/usr/local/bin/cml.byte
+echo "The current working directory: $PWD"
 if [[ $# == 0 ]]; then
   printf "\n🐪  Welcome to Camel Control (cml) 🐪\n\n"
   printf "The Camel is your friend... here are it's most useful commands:\n\n"
@@ -17,4 +18,3 @@ if [[ $# == 0 ]]; then
 
   exit 64
 fi
-
