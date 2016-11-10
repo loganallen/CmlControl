@@ -3,7 +3,6 @@
 
 # If no arguments are supplied, print the instructions.
 # We can and should modify these. I was just trying to test it out.
-/usr/local/bin/cml.byte
 echo "The current working directory: $PWD"
 if [[ $# == 0 ]]; then
   printf "\n🐪  Welcome to Camel Control (cml) 🐪\n\n"
@@ -15,6 +14,9 @@ if [[ $# == 0 ]]; then
   printf "\t add \t Add file contents to the index \n"
   printf "\t commit\t Record changes to the repository \n\n"
 
+# If arguments are supplied, pass them to cml bytecode program.  Up to 5 args allowed.
+else
+  /usr/local/bin/cml.byte $1 $2 $3 $4 $5
 
   exit 64
 fi
