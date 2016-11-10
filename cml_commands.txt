@@ -1,0 +1,8 @@
+cml status -> run SHA1 on every file pointed to in manifest, return files that do not match HASH
+why does hacker not just change HEAD
+TAGS?
+
+Merging
+if different files, take merged files
+if same file different code, merge file by taking different lines
+if same file same line different code, merge conflict
