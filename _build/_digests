@@ -1,4 +1,0 @@
-"Rule: ocaml: cmo* -> byte (%=cml )": "\212j\002\217\028\254O\024\19663\176\253x\246w"
-"Rule: ocaml dependencies ml (%=cml )": "|C)'\166$\131\134d\255\161t\216\014\031\196"
-"Rule: ocaml: ml -> cmo & cmi (%=cml )": "\192/\152\003\1969X\233\028\144\164f\128\011&\250"
-"Resource: /Users/Michael/Desktop/CS3110FinalProject/cml.ml": "\236\206\223\240\183\221%(/\177w\187\178-\020?"

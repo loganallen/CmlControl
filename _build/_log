@@ -1,8 +1,0 @@
-### Starting build.
-# Target: cml.ml.depends, tags: { extension:ml, file:cml.ml, ocaml, ocamldep, quiet }
-/Users/Michael/.opam/4.03.0/bin/ocamldep.opt -modules cml.ml > cml.ml.depends # cached
-# Target: cml.cmo, tags: { byte, compile, extension:cmo, extension:ml, file:cml.cmo, file:cml.ml, implem, ocaml, quiet }
-/Users/Michael/.opam/4.03.0/bin/ocamlc.opt -c -o cml.cmo cml.ml # cached
-# Target: cml.byte, tags: { byte, dont_link_with, extension:byte, file:cml.byte, link, ocaml, program, quiet }
-/Users/Michael/.opam/4.03.0/bin/ocamlc.opt cml.cmo -o cml.byte # cached
-# Compilation successful.
