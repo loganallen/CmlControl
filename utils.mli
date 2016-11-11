@@ -25,11 +25,7 @@ type mapping = string * string
 type index = mapping list
 
 (* a variant for an cml object, which can be a Blob, Tree, or Commit  *)
-type object =
-| Blob of blob
-| Tree of tree
-| Commit of commit
-
+type obj = Blob of blob | Tree of tree | Commit of commit
 
 
 (* hash returns a SHA-1 hash of a given input *)
@@ -43,9 +39,9 @@ val compress: string -> string -> unit
  *)
 val decompress: string -> string -> unit
 (* creates and object in the object directory and returns its name (hashed) *)
-val create_object: object -> string
+val create_obj: obj -> string
 (* takes hash and returns an object type *)
-val parse_object: string -> object
+val parse_obj: string -> obj
 (* returns the current HEAD of the cml repository *)
 val get_head: unit -> string
 (* sets the HEAD of the cml repository *)
