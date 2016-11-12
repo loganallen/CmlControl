@@ -58,7 +58,7 @@ let set_branch_ptr (branch_name : string) (commit_hash : string) : unit =
 let update_index (idx : index) (map : mapping) : index =
   failwith "Unimplemented"
 
-(* returns teh index *)
+(* returns the index *)
 let get_index () : index =
   failwith "Unimplemented"
 

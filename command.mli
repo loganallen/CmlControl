@@ -35,7 +35,7 @@ val diff     : string -> string list -> unit
 (* Display help information about CmlControl. *)
 val help     : string -> string list -> unit
 (* init Create an empty CmlControl repository. *)
-val init     : string -> string list -> unit
+val init     : string list -> unit
 (* merge Join two or more development histories together. *)
 val merge    : string -> string list -> unit
 (* Remove files from working tree and from the index. *)

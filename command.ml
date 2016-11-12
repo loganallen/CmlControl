@@ -19,43 +19,44 @@ let add (input : input) : unit =
   failwith "Unimplemented"
 
 (* creates a new branch *)
-let branch (branch_name : string) (options : string list) : unit =
+let branch (branch_name : string) (flags : string list) : unit =
   failwith "Unimplemented"
 
 (* checkout Switch branches or restore working tree files. *)
-let checkout (branch_name : string) (options : string list) : unit =
+let checkout (branch_name : string) (flags : string list) : unit =
   failwith "Unimplemented"
 
 (* commit Record changes to the repository.
  * Stores the current contents of the index in a new commit
  * along with a log message from the user describing the changes. *)
-let commit (msg : string) (options : string list) : unit =
+let commit (msg : string) (flags : string list) : unit =
   failwith "Unimplemented"
 
 (* diff Show changes between commits, commit and working tree, etc *)
-let diff (commit : string) (options : string list) : unit =
+let diff (commit : string) (flags : string list) : unit =
   failwith "Unimplemented"
 
 (* Display help information about CmlControl. *)
-let help (options : string) (options : string list) : unit =
+let help (options : string) (flags : string list) : unit =
   failwith "Unimplemented"
 
 (* init Create an empty CmlControl repository. *)
-let init (options : string) (options_other : string list) : unit =
+let init (flags : string list) : unit =
+
   failwith "Unimplemented"
 
 (* merge Join two or more development histories together. *)
-let merge (merge_branch : string) (options : string list) : unit =
+let merge (merge_branch : string) (flags : string list) : unit =
   failwith "Unimplemented"
 
 (* Remove files from working tree and from the index. *)
-let rm (file_name : string) (options : string list) : unit =
+let rm (file_name : string) (flags : string list) : unit =
   failwith "Unimplemented"
 
 (* stash Stash the changes in a dirty working directory away. *)
-let stash (options : string) (options_other : string list) : unit =
+let stash (options : string) (flags : string list) : unit =
   failwith "Unimplemented"
 
 (* displays any changes to the working directory *)
-let status (options : string) (options_other : string list) : unit =
+let status (options : string) (flags : string list) : unit =
   failwith "Unimplemented"
