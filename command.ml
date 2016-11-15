@@ -48,7 +48,13 @@ let init (flags : string list) : unit =
 		let _ = closedir handle in
 		raise (Fatal "Cannot init repo, already initialized")
 	with
-		Unix_error (Unix.ENOENT,_,_) -> mkdir ".cml" 0o777
+		Unix_error (Unix.ENOENT,_,_) ->
+			begin
+				mkdir ".cml" 0o777; chdir ".cml";
+				mkdir "heads" 0o777; mkdir "objects" 0o777;
+				let f = openfile "HEAD" [O_CREAT] 0o777 in
+				close f
+			end
 
 (* merge Join two or more development histories together. *)
 let merge (merge_branch : string) (flags : string list) : unit =
