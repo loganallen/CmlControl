@@ -1,3 +1,6 @@
+open Unix
+open Cryptokit
+
 type commit = {
   author: string;
   message: string;
@@ -16,8 +19,12 @@ type obj = Blob of blob | Tree of tree | Commit of commit
 
 (* hash returns a SHA-1 hash of a given input *)
 let hash (file_name : string) : string =
-  failwith "Unimplemented"
-
+	try
+		let fd = openfile file_name [O_RDONLY] 0o777 in
+		let channel = in_channel_of_descr fd in
+		hash_channel (Hash.md5 ()) channel |> transform_string (Hexa.encode ())
+	with
+		Unix_error (Unix.ENOENT,_,_) -> failwith ("Could not find file: " ^ file_name)
 (* compress compresses a file/directory
  * takes initial path and final path as arguments.
  *)
