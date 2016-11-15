@@ -22,4 +22,4 @@ let print_newline () :  unit =
 
 (* prints the camel emoji *)
 let print_camel () : unit =
-  failwith "Unimplemented"
+	print_endline "🐪 "

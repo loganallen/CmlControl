@@ -1,18 +1,17 @@
 open Utils
 open Print
+open Unix
 
 type command =  | Add | Branch | Checkout | Commit | Diff | Help | Init | Merge
                 | Rm | Stash | Status
 
 type input = { command: command; arg: string; flags: string list}
 
+exception Fatal of string
+
 (* parses a string and returns an input type *)
 let parse_input (args : string) : input =
-  failwith "Unimplemented"
-
-(* executes a command *)
-let execute (input : input) : unit =
-  failwith "Unimplemented"
+	{ command = Init; arg = ""; flags = [] }
 
 (* add file contents to the index. *)
 let add (input : input) : unit =
@@ -42,8 +41,12 @@ let help (options : string) (flags : string list) : unit =
 
 (* init Create an empty CmlControl repository. *)
 let init (flags : string list) : unit =
-
-  failwith "Unimplemented"
+	try
+		let handle = opendir ".cml" in
+		let _ = closedir handle in
+		raise (Fatal "Cannot init repo, already initialized")
+	with
+		Unix_error (Unix.ENOENT,_,_) -> mkdir ".cml" 0o777
 
 (* merge Join two or more development histories together. *)
 let merge (merge_branch : string) (flags : string list) : unit =
@@ -60,3 +63,9 @@ let stash (options : string) (flags : string list) : unit =
 (* displays any changes to the working directory *)
 let status (options : string) (flags : string list) : unit =
   failwith "Unimplemented"
+
+(* executes a command *)
+let execute (arg : input) : unit =
+	match arg.command with
+		| Init  -> init []
+		| _ -> print_error "command not found" ""
