@@ -63,9 +63,8 @@ let init (flags : string list) : unit =
 	with
 		Unix_error (Unix.ENOENT,_,_) ->
 			begin
-				mkdir ".cml" perm; chdir ".cml";
-				mkdir "heads" perm; mkdir "objects" perm;
-				let f = openfile "HEAD" [O_CREAT] perm in
+				mkdir ".cml" perm; mkdir ".cml/heads" perm; mkdir ".cml/objects" perm;
+				let f = openfile ".cml/HEAD" [O_CREAT] perm in
 				close f
 			end
 
