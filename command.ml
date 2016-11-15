@@ -13,9 +13,20 @@ let perm = 0o777
 
 (* parses a string and returns an input type *)
 let parse_input (args : string array) : input =
-	match args.(1) with
-		| "init" -> { command = Init; arg = ""; flags = [] }
-		| _ -> raise (Fatal (args.(1) ^ ": command unimplemented"))
+  if Array.length args = 0 then raise (Fatal "no command given, try 'cml help'") else
+	match args.(0) with
+		| "add"       -> { command = Add; arg = ""; flags = [] }
+		| "branch"    -> { command = Branch; arg = ""; flags = [] }
+		| "checkout"  -> { command = Checkout; arg = ""; flags = [] }
+		| "commit"    -> { command = Commit; arg = ""; flags = [] }
+		| "diff"      -> { command = Diff; arg = ""; flags = [] }
+		| "help"      -> { command = Help; arg = ""; flags = [] }
+		| "init"      -> { command = Init; arg = ""; flags = [] }
+		| "merge"     -> { command = Merge; arg = ""; flags = [] }
+		| "rm"        -> { command = Rm; arg = ""; flags = [] }
+		| "stash"     -> { command = Stash; arg = ""; flags = [] }
+		| "status"    -> { command = Status; arg = ""; flags = [] }
+		| _           -> raise (Fatal (args.(0) ^ ": invalid command"))
 
 (* add file contents to the index. *)
 let add (input : input) : unit =
@@ -78,4 +89,4 @@ let status (options : string) (flags : string list) : unit =
 let execute (arg : input) : unit =
 	match arg.command with
 		| Init  -> init []
-		| _ -> print_error "command not found" ""
+		| _ -> print_error "command unimplemented" ""

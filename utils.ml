@@ -26,6 +26,7 @@ let hash (file_name : string) : string =
 		close_in channel; transform_string (Hexa.encode ()) hash
 	with
 		Unix_error (Unix.ENOENT,_,_) -> failwith ("Could not find file: " ^ file_name)
+
 (* compress compresses a file/directory
  * takes initial path and final path as arguments.
  *)
