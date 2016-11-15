@@ -10,8 +10,10 @@ type input = { command: command; arg: string; flags: string list}
 exception Fatal of string
 
 (* parses a string and returns an input type *)
-let parse_input (args : string) : input =
-	{ command = Init; arg = ""; flags = [] }
+let parse_input (args : string array) : input =
+	match args.(1) with
+		| "init" -> { command = Init; arg = ""; flags = [] }
+		| _ -> raise (Fatal (args.(1) ^ ": command unimplemented"))
 
 (* add file contents to the index. *)
 let add (input : input) : unit =

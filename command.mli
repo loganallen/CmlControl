@@ -16,7 +16,7 @@ type input = {
 }
 
 (* parses a string and returns an input type *)
-val parse_input : string -> input
+val parse_input : string array -> input
 (* executes a command *)
 val execute     : input -> unit
 
