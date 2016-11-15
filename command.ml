@@ -9,6 +9,8 @@ type input = { command: command; arg: string; flags: string list}
 
 exception Fatal of string
 
+let perm = 0o777
+
 (* parses a string and returns an input type *)
 let parse_input (args : string array) : input =
 	match args.(1) with
@@ -50,9 +52,9 @@ let init (flags : string list) : unit =
 	with
 		Unix_error (Unix.ENOENT,_,_) ->
 			begin
-				mkdir ".cml" 0o777; chdir ".cml";
-				mkdir "heads" 0o777; mkdir "objects" 0o777;
-				let f = openfile "HEAD" [O_CREAT] 0o777 in
+				mkdir ".cml" perm; chdir ".cml";
+				mkdir "heads" perm; mkdir "objects" perm;
+				let f = openfile "HEAD" [O_CREAT] perm in
 				close f
 			end
 

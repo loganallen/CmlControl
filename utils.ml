@@ -22,7 +22,8 @@ let hash (file_name : string) : string =
 	try
 		let fd = openfile file_name [O_RDONLY] 0o777 in
 		let channel = in_channel_of_descr fd in
-		hash_channel (Hash.sha1 ()) channel |> transform_string (Hexa.encode ())
+		let hash = hash_channel (Hash.sha1 ()) channel in
+		close_in channel; transform_string (Hexa.encode ()) hash
 	with
 		Unix_error (Unix.ENOENT,_,_) -> failwith ("Could not find file: " ^ file_name)
 (* compress compresses a file/directory
