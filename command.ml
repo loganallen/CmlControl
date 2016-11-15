@@ -56,17 +56,12 @@ let help (options : string) (flags : string list) : unit =
 
 (* init Create an empty CmlControl repository. *)
 let init (flags : string list) : unit =
-	try
-		let handle = opendir ".cml" in
-		let _ = closedir handle in
-		raise (Fatal "Cannot init repo, already initialized")
-	with
-		Unix_error (Unix.ENOENT,_,_) ->
-			begin
-				mkdir ".cml" perm; mkdir ".cml/heads" perm; mkdir ".cml/objects" perm;
-				let f = openfile ".cml/HEAD" [O_CREAT] perm in
-				close f
-			end
+  if Sys.file_exists ".cml" then
+    raise (Fatal "Cannot init repo, already initialized")
+  else
+		mkdir ".cml" perm; mkdir ".cml/heads" perm; mkdir ".cml/objects" perm;
+		let f = openfile ".cml/HEAD" [O_CREAT] perm in close f;
+    print_color "cml: repo initialized successfully" "green"; print_camel ()
 
 (* merge Join two or more development histories together. *)
 let merge (merge_branch : string) (flags : string list) : unit =
