@@ -60,7 +60,8 @@ let init (flags : string list) : unit =
     raise (Fatal "Cannot init repo, already initialized")
   else
 		mkdir ".cml" perm; mkdir ".cml/heads" perm; mkdir ".cml/objects" perm;
-		let f = openfile ".cml/HEAD" [O_CREAT] perm in close f;
+		let out = open_out ".cml/HEAD" in
+		output_string out "heads/master"; close_out out;
     print_color "cml: repo initialized successfully" "green"; print_camel ()
 
 (* merge Join two or more development histories together. *)
