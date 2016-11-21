@@ -67,7 +67,7 @@ let set_head (commit_hash : string) : unit =
 		let st_ch = open_in ".cml/HEAD" in
 		let path = ".cml/" ^ input_line st_ch in
 		close_in st_ch;
-		let out_ch = open_out path in 
+		let out_ch = open_out path in
 		output_string out_ch commit_hash; close_out out_ch
 	with
 		| Sys_error _ -> failwith "could not set HEAD"
@@ -93,12 +93,29 @@ let set_branch_ptr (branch_name : string) (commit_hash : string) : unit =
 
 (* updates the index by adding a mapping type *)
 let update_index (idx : index) (map : mapping) : index =
-  failwith "Unimplemented"
+  let (file_path, _) = map in
+  map::(List.remove_assoc file_path idx)
 
 (* returns the index *)
 let get_index () : index =
-  failwith "Unimplemented"
+  try
+    let in_ch = open_in ".cml/index" in
+    let rec parse_index ch acc =
+      try
+        let raw = input_line ch in let split = String.index raw ' ' in
+        let file_path = String.sub raw 0 split in
+        let hash = String.sub raw split (String.length raw - split) in
+        (file_path,hash)::acc
+      with
+        End_of_file ->   close_in ch; acc
+    in parse_index in_ch []
+  with
+    | Sys_error _ -> failwith ("index not found")
 
 (* initializes an index in the cml directory *)
 let set_index (idx : index) : unit =
-  failwith "Unimplemented"
+  let out_ch = open_out ".cml/index" in
+  let rec write_index to_ch = function
+    | [] -> close_out to_ch
+    | (fp, h)::t -> output_string to_ch (fp ^ " " ^ h); write_index to_ch t
+  in write_index out_ch idx
