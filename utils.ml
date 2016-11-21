@@ -96,7 +96,8 @@ let update_index (idx : index) (map : mapping) : index =
   let (file_path, _) = map in
   map::(List.remove_assoc file_path idx)
 
-(* returns the index *)
+(* returns the index which is a list that maps tracked filenames
+ * to their most recent hash string value *)
 let get_index () : index =
   try
     let in_ch = open_in ".cml/index" in
@@ -110,7 +111,7 @@ let get_index () : index =
         End_of_file ->   close_in ch; acc
     in parse_index in_ch []
   with
-    | Sys_error _ -> failwith ("index not found")
+    | Sys_error _ -> []
 
 (* initializes an index in the cml directory *)
 let set_index (idx : index) : unit =
