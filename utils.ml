@@ -119,3 +119,40 @@ let set_index (idx : index) : unit =
     | [] -> close_out to_ch
     | (fp, h)::t -> output_string to_ch (fp ^ " " ^ h); write_index to_ch t
   in write_index out_ch idx
+
+(* returns true if dir is known link, or if is .cml *)
+let is_bad_dir name =
+  let temp =
+    try
+      let st = String.rindex name '/' in
+      String.sub name (st + 1) (String.length name - st - 1)
+    with
+      Not_found -> name
+  in match temp with
+    | "." | ".." | ".cml" -> true
+    | _ -> false
+
+(* returns a list of all files in working repo by absolute path *)
+let rec get_all_files (dirs : string list) (acc : string list) : string list =
+  let rec loop dir_h path files directories =
+    try
+      let temp = readdir dir_h in
+      let f_name = if path = "" || path = "./" then temp else (path ^ "/" ^ temp) in
+      if Sys.is_directory f_name then loop dir_h path files (f_name::directories)
+      else loop dir_h path (f_name::files) directories
+    with
+      End_of_file -> closedir dir_h; (files, directories)
+  in
+  match dirs with
+    | [] -> acc
+    | dir_name::t ->
+      begin
+        if is_bad_dir dir_name then
+          let _ = print_endline "skipped" in
+          get_all_files t acc
+        else
+          let _ = print_endline dir_name in
+          let dir_h = opendir dir_name in
+          let (files, directories) = loop dir_h dir_name acc [] in
+          get_all_files (t@directories) files
+      end
