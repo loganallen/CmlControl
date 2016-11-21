@@ -16,6 +16,10 @@ let print_error (msg : string) (options : string) : unit =
 let rec print_indent (msg : string) (num_indents : int) : unit =
   print_string " "; print_indent msg (num_indents - 1)
 
+(* prints a normal string *)
+let print (msg : string) : unit =
+  print_endline msg
+
 (* prints a newline *)
 let print_newline () :  unit =
   print_string "\n"

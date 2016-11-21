@@ -57,12 +57,12 @@ let help (options : string) (flags : string list) : unit =
 (* init Create an empty CmlControl repository. *)
 let init (flags : string list) : unit =
   if Sys.file_exists ".cml" then
-    raise (Fatal "Cannot init repo, already initialized")
+    raise (Fatal "Cml repository already initialized")
   else
 		mkdir ".cml" perm; mkdir ".cml/heads" perm; mkdir ".cml/objects" perm;
 		let out = open_out ".cml/HEAD" in
 		output_string out "heads/master"; close_out out;
-    print_color "cml: repo initialized successfully" "green"; print_camel ()
+    print_color "initialized empty Cml repository" "green"; print_camel ()
 
 (* merge Join two or more development histories together. *)
 let merge (merge_branch : string) (flags : string list) : unit =
@@ -82,6 +82,9 @@ let status (options : string) (flags : string list) : unit =
 
 (* executes a command *)
 let execute (arg : input) : unit =
-	match arg.command with
+  try
+	  match arg.command with
 		| Init  -> init []
-		| _ -> print_error "command unimplemented" ""
+	  | _ -> print_error "command unimplemented" ""
+  with
+  | Fatal msg -> print ("fatal: "^msg)
