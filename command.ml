@@ -2,57 +2,42 @@ open Utils
 open Print
 open Unix
 
-type command =  | Add | Branch | Checkout | Commit | Diff | Help | Init | Merge
-                | Rm | Stash | Status
+type command =
+| Add | Branch | Checkout | Commit | Diff | Help | Init | Log
+| Merge | Reset | Rm | Stash | Status
 
 type input = { command: command; arg: string; flags: string list}
 
 exception Fatal of string
+exception Unrecognized of string
 
 let perm = 0o777
 
-(* parses a string and returns an input type *)
-let parse_input (args : string array) : input =
-  if Array.length args = 0 then raise (Fatal "no command given, try 'cml help'") else
-	match args.(0) with
-		| "add"       -> { command = Add; arg = ""; flags = [] }
-		| "branch"    -> { command = Branch; arg = ""; flags = [] }
-		| "checkout"  -> { command = Checkout; arg = ""; flags = [] }
-		| "commit"    -> { command = Commit; arg = ""; flags = [] }
-		| "diff"      -> { command = Diff; arg = ""; flags = [] }
-		| "help"      -> { command = Help; arg = ""; flags = [] }
-		| "init"      -> { command = Init; arg = ""; flags = [] }
-		| "merge"     -> { command = Merge; arg = ""; flags = [] }
-		| "rm"        -> { command = Rm; arg = ""; flags = [] }
-		| "stash"     -> { command = Stash; arg = ""; flags = [] }
-		| "status"    -> { command = Status; arg = ""; flags = [] }
-		| _           -> raise (Fatal (args.(0) ^ ": invalid command"))
-
-(* add file contents to the index. *)
+(* add file contents to the index *)
 let add (input : input) : unit =
   failwith "Unimplemented"
 
-(* creates a new branch *)
+(* list, create, or delete branches *)
 let branch (branch_name : string) (flags : string list) : unit =
   failwith "Unimplemented"
 
-(* checkout Switch branches or restore working tree files. *)
+(* switch branches or restore working tree files *)
 let checkout (branch_name : string) (flags : string list) : unit =
   failwith "Unimplemented"
 
-(* commit Record changes to the repository.
- * Stores the current contents of the index in a new commit
- * along with a log message from the user describing the changes. *)
+(* record changes to the repository:
+ * stores the current contents of the index in a new commit
+ * along with commit metadata. *)
 let commit (msg : string) (flags : string list) : unit =
   failwith "Unimplemented"
 
-(* diff Show changes between commits, commit and working tree, etc *)
+(* show changes between working tree and previous commits *)
 let diff (commit : string) (flags : string list) : unit =
   failwith "Unimplemented"
 
-(* Display help information about CmlControl. *)
-let help (options : string) (flags : string list) : unit =
-  failwith "Unimplemented"
+(* display help information about CmlControl. *)
+let help () : unit =
+  print_help ()
 
 (* init Create an empty CmlControl repository. *)
 let init (flags : string list) : unit =
@@ -64,19 +49,23 @@ let init (flags : string list) : unit =
 		output_string out "heads/master"; close_out out;
     print_color "initialized empty Cml repository" "green"; print_camel ()
 
-(* merge Join two or more development histories together. *)
+(* display the current branches commit history *)
+let log () : unit =
+  failwith "Unimplemented"
+
+(* join two or more development histories together *)
 let merge (merge_branch : string) (flags : string list) : unit =
   failwith "Unimplemented"
 
-(* Remove files from working tree and from the index. *)
+(* remove files from working tree and index *)
 let rm (file_name : string) (flags : string list) : unit =
   failwith "Unimplemented"
 
-(* stash Stash the changes in a dirty working directory away. *)
+(* stashes changes made to the current working tree *)
 let stash (options : string) (flags : string list) : unit =
   failwith "Unimplemented"
 
-(* displays any changes to the working directory *)
+(* show the working tree status *)
 let status (options : string) (flags : string list) : unit =
   if not (cml_initialized "./") then
     raise (Fatal "Not a cml repository (or any of the parent directories)")
@@ -92,12 +81,34 @@ let status (options : string) (flags : string list) : unit =
       | _ -> let _ = print_staged st in
              let _ = print_changed ch in print_untracked ut
 
-(* executes a command *)
+(* parses bash string input and returns a Cml input type *)
+let parse_input (args : string array) : input =
+  if Array.length args = 0 then raise (Fatal "no command given, try 'cml help'") else
+  match args.(0) with
+    | "add"       -> { command = Add; arg = ""; flags = [] }
+    | "branch"    -> { command = Branch; arg = ""; flags = [] }
+    | "checkout"  -> { command = Checkout; arg = ""; flags = [] }
+    | "commit"    -> { command = Commit; arg = ""; flags = [] }
+    | "diff"      -> { command = Diff; arg = ""; flags = [] }
+    | "help"      -> { command = Help; arg = ""; flags = [] }
+    | "init"      -> { command = Init; arg = ""; flags = [] }
+    | "log"       -> { command = Log; arg = ""; flags = [] }
+    | "merge"     -> { command = Merge; arg = ""; flags = [] }
+    | "reset"     -> { command = Reset; arg = ""; flags = [] }
+    | "rm"        -> { command = Rm; arg = ""; flags = [] }
+    | "stash"     -> { command = Stash; arg = ""; flags = [] }
+    | "status"    -> { command = Status; arg = ""; flags = [] }
+    | _           -> raise (Fatal (args.(0) ^ ": invalid command"))
+
+(* executes a Cml command *)
 let execute (arg : input) : unit =
   try
 	  match arg.command with
 		| Init   -> init []
     | Status -> status "" []
+    | Help   -> help ()
+    | Log    -> log ()
 	  | _ -> print_error "command unimplemented" ""
   with
   | Fatal msg -> print ("fatal: "^msg)
+  | Unrecognized cmd -> print ("cml: '"^cmd^"' is not a cml command. See git help.")
