@@ -31,13 +31,34 @@ let hash (file_name : string) : string =
  * takes initial path and final path as arguments.
  *)
 let compress (file_name : string) (dest_path : string) : unit =
-  failwith "Unimplemented"
+  let oc = Gzip.open_out dest_path in
+  let ic = open_in file_name in
+  let rec loop ic oc =
+    try
+      let write = (input_line ic) ^ "\n" in
+      Gzip.output oc write 0 (String.length write); loop ic oc
+    with
+      | Sys_error _ -> failwith (file_name ^ " not found")
+      | End_of_file -> close_in ic; Gzip.close_out oc
+  in loop ic oc
+
+
+(* ($) is an infix operator for appending a char to a string *)
+let ($) str c =  str ^ Char.escaped c
 
 (* decompress decompresses a file/directory
  * takes initial and final path as arguments.
  *)
 let decompress (file_name : string) (dest_path : string) : unit =
-  failwith "Unimplemented"
+  let rec loop ic acc =
+    try loop ic (acc $ (Gzip.input_char ic)) with End_of_file -> Gzip.close_in ic; acc
+  in try
+    let ic = Gzip.open_in file_name in
+    let oc = open_out dest_path in
+    Printf.fprintf oc "%s" (loop ic ""); close_out oc
+  with
+    | Sys_error _ -> failwith (file_name ^ " not found")
+    | _ -> failwith "Gzip error: file empty or not Gzip"
 
 (* creates and object in the object directory and returns its name (hashed) *)
 let create_obj (obj : obj) : string =
