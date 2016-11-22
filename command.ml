@@ -56,7 +56,7 @@ let help (options : string) (flags : string list) : unit =
 
 (* init Create an empty CmlControl repository. *)
 let init (flags : string list) : unit =
-  if Sys.file_exists ".cml" then
+  if cml_initialized "./" then
     raise (Fatal "Cml repository already initialized")
   else
 		mkdir ".cml" perm; mkdir ".cml/heads" perm; mkdir ".cml/objects" perm;
@@ -78,13 +78,26 @@ let stash (options : string) (flags : string list) : unit =
 
 (* displays any changes to the working directory *)
 let status (options : string) (flags : string list) : unit =
-  failwith "Unimplemented"
+  if not (cml_initialized "./") then
+    raise (Fatal "Not a cml repository (or any of the parent directories)")
+  else
+    print "On branch __";
+    let cwd = get_all_files ["./"] [] in
+    let idx = get_index () in
+    let st = get_staged idx in
+    let ch = get_changed cwd idx in
+    let ut = get_untracked cwd idx in
+      match (st,ch,ut) with
+      | [],[],[] -> print "no changes to be committed, working tree clean"
+      | _ -> let _ = print_staged st in
+             let _ = print_changed ch in print_untracked ut
 
 (* executes a command *)
 let execute (arg : input) : unit =
   try
 	  match arg.command with
-		| Init  -> init []
+		| Init   -> init []
+    | Status -> status "" []
 	  | _ -> print_error "command unimplemented" ""
   with
   | Fatal msg -> print ("fatal: "^msg)

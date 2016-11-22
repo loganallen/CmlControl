@@ -56,8 +56,8 @@ val get_branch_ptr: string -> string
 (* initializes a given commit to a given branch name *)
 val set_branch_ptr: string -> string -> unit
 
-(* updates the index by adding a mapping type *)
-val update_index: index -> mapping -> index
+(* updates the index by adding a new mapping *)
+val update_index: index -> string * string -> index
 
 (* returns the index which is a list that maps tracked filenames
  * to their most recent hash string value *)
@@ -65,3 +65,22 @@ val get_index: unit -> index
 
 (* initializes an index in the cml directory *)
 val set_index: index -> unit
+
+(* returns true if dir is known link, or if is .cml *)
+val is_bad_dir: string -> bool
+
+(* returns a list of all files in working repo by absolute path *)
+val get_all_files: string list -> string list -> string list
+
+(* returns a list of all files staged (added) for commit *)
+val get_staged: index -> string list
+
+(* returns a list of changed files *)
+val get_changed: string list -> index -> string list
+
+(* returns a list of untracked files *)
+val get_untracked: string list -> index -> string list
+
+(* returns true if the current directory (or parent) is an initialized Cml repo,
+ * otherwise raises an exception *)
+val cml_initialized: string -> bool

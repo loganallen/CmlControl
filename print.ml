@@ -13,8 +13,9 @@ let print_error (msg : string) (options : string) : unit =
   ANSITerminal.(print_string [red] (msg ^ "\n"))
 
 (* prints a specified amount of indentations *)
-let rec print_indent (msg : string) (num_indents : int) : unit =
-  print_string " "; print_indent msg (num_indents - 1)
+let rec print_indent (msg : string) (c : string) (n : int) : unit =
+  if n = 0 then print_color msg c else
+  let _ = print_string "  " in print_indent msg c (n - 1)
 
 (* prints a normal string *)
 let print (msg : string) : unit =
@@ -27,3 +28,32 @@ let print_newline () :  unit =
 (* prints the camel emoji *)
 let print_camel () : unit =
 	print_endline "🐪 "
+
+(* prints the files staged for a commit *)
+let print_staged (files : string list) : unit =
+  match files with
+  | [] -> ()
+  | _  -> begin
+    print "Changes to be committed:";
+    List.iter (fun s -> print_indent s "green" 3) files;
+  end
+
+(* prints the files not staged for commit *)
+let print_changed (files : string list) : unit =
+  match files with
+  | [] -> ()
+  | _  -> begin
+    print ("Changes not staged for commit:");
+    print "  (use \"cml add <file>\" to stage for commit";
+    List.iter (fun s -> print_indent s "red" 3) files;
+  end
+
+(* prints untracked files *)
+let print_untracked (files : string list) : unit =
+  match files with
+  | [] -> ()
+  | _  -> begin
+    print ("Untracked files:");
+    print "  (use \"cml add <file>\" to include in commit";
+    List.iter (fun s -> print_indent s "red" 3) files;
+  end

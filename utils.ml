@@ -12,8 +12,7 @@ type commit = {
 
 type blob = string
 type tree = string list
-type mapping = string * string
-type index = mapping list
+type index = (string * string) list
 
 type obj = Blob of blob | Tree of tree | Commit of commit
 
@@ -91,8 +90,8 @@ let set_branch_ptr (branch_name : string) (commit_hash : string) : unit =
 	with
 		| Sys_error _ -> failwith ("write error")
 
-(* updates the index by adding a mapping type *)
-let update_index (idx : index) (map : mapping) : index =
+(* updates the index by adding a new mapping *)
+let update_index (idx : index) (map : string * string) : index =
   let (file_path, _) = map in
   map::(List.remove_assoc file_path idx)
 
@@ -149,11 +148,44 @@ let rec get_all_files (dirs : string list) (acc : string list) : string list =
     | dir_name::t ->
       begin
         if is_bad_dir dir_name then
-          let _ = print_endline "skipped" in
+          (*let _ = print_endline "skipped" in*)
           get_all_files t acc
         else
-          let _ = print_endline dir_name in
+          (*let _ = print_endline dir_name in*)
           let dir_h = opendir dir_name in
           let (files, directories) = loop dir_h dir_name acc [] in
           get_all_files (t@directories) files
       end
+
+(* returns a list of all files staged (added) for commit *)
+let rec get_staged (idx : index) : string list = []
+  (* TODO: compare [idx] to the index of the HEAD to see which file
+   * hashes are added/staged for a commit *)
+
+(* returns a list of changed files *)
+let get_changed (cwd : string list) (idx : index) : string list =
+  let find_changed acc fn =
+    try
+      let old_hash = List.assoc fn idx in
+      let new_hash = hash fn in
+      if old_hash = new_hash then acc else fn::acc
+    with
+    | Not_found -> acc
+  in
+  List.fold_left find_changed [] cwd
+
+(* returns a list of untracked files *)
+let get_untracked (cwd : string list) (idx : index) : string list =
+  let find_untracked acc fn =
+    try
+      let _ = List.assoc fn idx in acc
+    with
+    | Not_found -> if fn.[0] = '.'then acc else fn::acc
+  in
+  List.fold_left find_untracked [] cwd
+
+(* returns true if the current directory (or parent) is an initialized Cml repo,
+ * otherwise raises an exception *)
+let cml_initialized (path : string) : bool =
+  Sys.file_exists ".cml"
+
