@@ -28,11 +28,15 @@ type obj = Blob of blob | Tree of tree | Commit of commit
 
 (* hash returns a SHA-1 hash of a given input *)
 val hash : string -> string
+
+(* copy creates copy of a file in a new destination *)
+val copy: string -> string -> unit
+
 (* compress compresses a file/directory
  * takes initial path and final path as arguments.
  *)
-
 val compress: string -> string -> unit
+
 (* decompress decompresses a file/directory
  * takes initial and final path as arguments.
  *)

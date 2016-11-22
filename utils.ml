@@ -27,6 +27,21 @@ let hash (file_name : string) : string =
 	with
 		Unix_error (Unix.ENOENT,_,_) -> failwith ("Could not find file: " ^ file_name)
 
+(* [copy filename destination] creates exact copy of filename at destination *)
+let copy (file_name : string) (dest_path : string) : unit =
+  let rec loop ic oc =
+    try Printf.fprintf oc ("%s\n") (input_line ic); loop ic oc with End_of_file -> close_in ic; close_out oc
+  in try
+    let ic = open_in file_name in
+    let oc = open_out dest_path in
+    loop ic oc
+  with
+    Sys_error _ -> failwith ("utils.copy, file not found")
+
+
+(* ($) is an infix operator for appending a char to a string *)
+let ($) str c =  str ^ Char.escaped c
+
 (* compress compresses a file/directory
  * takes initial path and final path as arguments.
  *)
@@ -35,16 +50,11 @@ let compress (file_name : string) (dest_path : string) : unit =
   let ic = open_in file_name in
   let rec loop ic oc =
     try
-      let write = (input_line ic) ^ "\n" in
-      Gzip.output oc write 0 (String.length write); loop ic oc
+      Gzip.output_char oc (input_char ic); loop ic oc
     with
       | Sys_error _ -> failwith (file_name ^ " not found")
       | End_of_file -> close_in ic; Gzip.close_out oc
   in loop ic oc
-
-
-(* ($) is an infix operator for appending a char to a string *)
-let ($) str c =  str ^ Char.escaped c
 
 (* decompress decompresses a file/directory
  * takes initial and final path as arguments.
