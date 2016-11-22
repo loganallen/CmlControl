@@ -9,12 +9,12 @@ type command =
 type input = { command: command; arg: string; flags: string list}
 
 exception Fatal of string
-exception Unrecognized of string
+exception Parsing of string
 
 let perm = 0o777
 
 (* add file contents to the index *)
-let add (input : input) : unit =
+let add (file_name : string) (flags: string list) : unit =
   failwith "Unimplemented"
 
 (* list, create, or delete branches *)
@@ -57,6 +57,10 @@ let log () : unit =
 let merge (merge_branch : string) (flags : string list) : unit =
   failwith "Unimplemented"
 
+(* reset the current HEAD to a specified state *)
+let reset (file_name : string) (flags: string list) : unit =
+  failwith "Unimplemented"
+
 (* remove files from working tree and index *)
 let rm (file_name : string) (flags : string list) : unit =
   failwith "Unimplemented"
@@ -85,30 +89,37 @@ let status (options : string) (flags : string list) : unit =
 let parse_input (args : string array) : input =
   if Array.length args = 0 then raise (Fatal "no command given, try 'cml help'") else
   match args.(0) with
-    | "add"       -> { command = Add; arg = ""; flags = [] }
-    | "branch"    -> { command = Branch; arg = ""; flags = [] }
-    | "checkout"  -> { command = Checkout; arg = ""; flags = [] }
-    | "commit"    -> { command = Commit; arg = ""; flags = [] }
-    | "diff"      -> { command = Diff; arg = ""; flags = [] }
-    | "help"      -> { command = Help; arg = ""; flags = [] }
-    | "init"      -> { command = Init; arg = ""; flags = [] }
-    | "log"       -> { command = Log; arg = ""; flags = [] }
-    | "merge"     -> { command = Merge; arg = ""; flags = [] }
-    | "reset"     -> { command = Reset; arg = ""; flags = [] }
-    | "rm"        -> { command = Rm; arg = ""; flags = [] }
-    | "stash"     -> { command = Stash; arg = ""; flags = [] }
-    | "status"    -> { command = Status; arg = ""; flags = [] }
-    | _           -> raise (Fatal (args.(0) ^ ": invalid command"))
+    | "add"      -> { command = Add; arg = ""; flags = [] }
+    | "branch"   -> { command = Branch; arg = ""; flags = [] }
+    | "checkout" -> { command = Checkout; arg = ""; flags = [] }
+    | "commit"   -> { command = Commit; arg = ""; flags = [] }
+    | "diff"     -> { command = Diff; arg = ""; flags = [] }
+    | "help"     -> { command = Help; arg = ""; flags = [] }
+    | "init"     -> { command = Init; arg = ""; flags = [] }
+    | "log"      -> { command = Log; arg = ""; flags = [] }
+    | "merge"    -> { command = Merge; arg = ""; flags = [] }
+    | "reset"    -> { command = Reset; arg = ""; flags = [] }
+    | "rm"       -> { command = Rm; arg = ""; flags = [] }
+    | "stash"    -> { command = Stash; arg = ""; flags = [] }
+    | "status"   -> { command = Status; arg = ""; flags = [] }
+    | cmd        -> raise (Parsing cmd)
 
 (* executes a Cml command *)
 let execute (arg : input) : unit =
   try
 	  match arg.command with
-		| Init   -> init []
-    | Status -> status "" []
-    | Help   -> help ()
-    | Log    -> log ()
-	  | _ -> print_error "command unimplemented" ""
+    | Add      -> add "" []
+    | Branch   -> branch "" []
+    | Checkout -> checkout "" []
+    | Commit   -> commit "" []
+    | Diff     -> diff "" []
+    | Help     -> help ()
+		| Init     -> init []
+    | Log      -> log ()
+    | Merge    -> merge "" []
+    | Reset    -> reset "" []
+    | Rm       -> rm "" []
+    | Stash    -> stash "" []
+    | Status   -> status "" []
   with
   | Fatal msg -> print ("fatal: "^msg)
-  | Unrecognized cmd -> print ("cml: '"^cmd^"' is not a cml command. See git help.")

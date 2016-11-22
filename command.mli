@@ -11,8 +11,14 @@ type command =
  *)
 type input = { command: command; arg: string; flags: string list }
 
+(* Fatal exception for internal cml execution errors *)
+exception Fatal of string
+
+(* Parsing exception for unrecognized cml commands *)
+exception Parsing of string
+
 (* add file contents to the index *)
-val add: input -> unit
+val add: string -> string list -> unit
 
 (* list, create, or delete branches *)
 val branch: string -> string list -> unit
@@ -39,6 +45,9 @@ val log: unit -> unit
 
 (* join two or more development histories together *)
 val merge: string -> string list -> unit
+
+(* reset the current HEAD to a specified state *)
+val reset: string -> string list -> unit
 
 (* remove files from working tree and index *)
 val rm: string -> string list -> unit
