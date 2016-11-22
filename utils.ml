@@ -47,6 +47,18 @@ let create_obj (obj : obj) : string =
 let parse_obj (file_name : string) : obj =
   failwith "Unimplemented"
 
+(* returns string of name of the current branch *)
+let get_current_branch () : string =
+  try
+    let ch = open_in ".cml/HEAD" in
+    let raw = input_line ch in
+    let _ = close_in ch in
+    let split = (String.rindex raw '/') + 1 in
+    String.sub raw split (String.length raw - split)
+  with
+    | Sys_error _ -> failwith "HEAD not found"
+    | End_of_file -> failwith "HEAD not initialized"
+
 (* returns the current HEAD of the cml repository *)
 let get_head () : string =
 	try
@@ -188,4 +200,3 @@ let get_untracked (cwd : string list) (idx : index) : string list =
  * otherwise raises an exception *)
 let cml_initialized (path : string) : bool =
   Sys.file_exists ".cml"
-

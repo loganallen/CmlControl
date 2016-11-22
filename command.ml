@@ -81,7 +81,7 @@ let status (options : string) (flags : string list) : unit =
   if not (cml_initialized "./") then
     raise (Fatal "Not a cml repository (or any of the parent directories)")
   else
-    print "On branch __";
+    print ("On branch " ^ (get_current_branch ()));
     let cwd = get_all_files ["./"] [] in
     let idx = get_index () in
     let st = get_staged idx in

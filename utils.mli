@@ -50,6 +50,9 @@ val get_head: unit -> string
 (* sets the HEAD of the cml repository *)
 val set_head: string -> unit
 
+(* returns string representation of repo's current branch *)
+val get_current_branch: unit -> string
+
 (* returns the HASH of a head of the given branch *)
 val get_branch_ptr: string -> string
 
