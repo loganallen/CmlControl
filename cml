@@ -1,20 +1,10 @@
 #!/bin/bash
 
-
-# If no arguments are supplied, print the instructions.
-# We can and should modify these. I was just trying to test it out.
-
+# If no arguments are supplied, display Cml help
 if [[ $# == 0 ]]; then
-  printf "\n🐪  Welcome to Camel Control (cml) 🐪\n\n"
-  printf "The Camel is your friend... here are it's most useful commands:\n\n"
-  printf "Start a working area\n"
-  printf "\t init \t initialize a new camel repo \n"
-  printf "\t clone \t initialize an existing remote camel repo locally \n\n"
-  printf "Work on existing hump \n"
-  printf "\t add \t Add file contents to the index \n"
-  printf "\t commit\t Record changes to the repository \n\n"
+  /usr/local/bin/cml.byte "help"
 
-# If arguments are supplied, pass them to cml bytecode program.  Up to 5 args allowed.
+# If arguments are supplied, pass them to cml bytecode program. Up to 5 args allowed.
 else
   /usr/local/bin/cml.byte $1 $2 $3 $4 $5
 
