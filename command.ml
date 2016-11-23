@@ -47,7 +47,7 @@ let init (flags : string list) : unit =
 		mkdir ".cml" perm; mkdir ".cml/heads" perm; mkdir ".cml/objects" perm;
 		let out = open_out ".cml/HEAD" in
 		output_string out "heads/master"; close_out out;
-    print_color "initialized empty Cml repository" "green"; print_camel ()
+    print_color "initialized empty Cml repository" "b"
 
 (* display the current branches commit history *)
 let log () : unit =
