@@ -3,16 +3,13 @@
 (* A variant type for the commands supported by cml control. *)
 type command =
 | Add | Branch | Checkout | Commit | Diff | Help | Init | Log
-| Merge | Reset | Rm | Stash | Status
+| Merge | Reset | Rm | Stash | Status | User
 
 (* a record type for the input a user gives to the terminal.
  * command is the desired command, arg is what the user wants to run the command
  * on, and flags are any flags to modify the command.
  *)
 type input = { command: command; arg: string; flags: string list }
-
-(* Fatal exception for internal cml execution errors *)
-exception Fatal of string
 
 (* Parsing exception for unrecognized cml commands *)
 exception Parsing of string
@@ -57,6 +54,9 @@ val stash: string -> string list -> unit
 
 (* show the working tree status *)
 val status: string -> string list -> unit
+
+(* set the user info to [username] *)
+val user: string -> unit
 
 (* parses bash string input and returns a Cml input type *)
 val parse_input: string array -> input

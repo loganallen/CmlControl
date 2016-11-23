@@ -2,7 +2,7 @@
 
 # If no arguments are supplied, display Cml help
 if [[ $# == 0 ]]; then
-  /usr/local/bin/cml.byte "help"
+  /usr/local/bin/cml.byte "--help"
 
 # If arguments are supplied, pass them to cml bytecode program. Up to 5 args allowed.
 else

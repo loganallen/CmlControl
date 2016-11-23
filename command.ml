@@ -4,11 +4,10 @@ open Unix
 
 type command =
 | Add | Branch | Checkout | Commit | Diff | Help | Init | Log
-| Merge | Reset | Rm | Stash | Status
+| Merge | Reset | Rm | Stash | Status | User
 
 type input = { command: command; arg: string; flags: string list}
 
-exception Fatal of string
 exception Parsing of string
 
 let perm = 0o777
@@ -71,9 +70,6 @@ let stash (options : string) (flags : string list) : unit =
 
 (* show the working tree status *)
 let status (options : string) (flags : string list) : unit =
-  if not (cml_initialized "./") then
-    raise (Fatal "Not a cml repository (or any of the parent directories)")
-  else
     print ("On branch " ^ (get_current_branch ()));
     let cwd = get_all_files ["./"] [] in
     let idx = get_index () in
@@ -85,16 +81,21 @@ let status (options : string) (flags : string list) : unit =
       | _ -> let _ = print_staged st in
              let _ = print_changed ch in print_untracked ut
 
+(* set the user info to [username] *)
+let user (username : string) : unit =
+  if username = "" then
+    let name = get_user_info () in print ("Current user: "^name)
+  else set_user_info username
+
 (* parses bash string input and returns a Cml input type *)
 let parse_input (args : string array) : input =
-  if Array.length args = 0 then raise (Fatal "no command given, try 'cml help'") else
+  if Array.length args = 0 then raise (Fatal "no command given, see [--help]") else
   match args.(0) with
     | "add"      -> { command = Add; arg = ""; flags = [] }
     | "branch"   -> { command = Branch; arg = ""; flags = [] }
     | "checkout" -> { command = Checkout; arg = ""; flags = [] }
     | "commit"   -> { command = Commit; arg = ""; flags = [] }
     | "diff"     -> { command = Diff; arg = ""; flags = [] }
-    | "help"     -> { command = Help; arg = ""; flags = [] }
     | "init"     -> { command = Init; arg = ""; flags = [] }
     | "log"      -> { command = Log; arg = ""; flags = [] }
     | "merge"    -> { command = Merge; arg = ""; flags = [] }
@@ -102,24 +103,35 @@ let parse_input (args : string array) : input =
     | "rm"       -> { command = Rm; arg = ""; flags = [] }
     | "stash"    -> { command = Stash; arg = ""; flags = [] }
     | "status"   -> { command = Status; arg = ""; flags = [] }
+    | "--help"   -> { command = Help; arg = ""; flags = [] }
+    | "--user"   -> begin
+        try
+          let name = args.(1) in { command = User; arg = name; flags = [] }
+        with
+        | Invalid_argument _ -> { command = User; arg = ""; flags = [] }
+      end
     | cmd        -> raise (Parsing cmd)
 
 (* executes a Cml command *)
-let execute (arg : input) : unit =
+let execute (i : input) : unit =
   try
-	  match arg.command with
-    | Add      -> add "" []
-    | Branch   -> branch "" []
-    | Checkout -> checkout "" []
-    | Commit   -> commit "" []
-    | Diff     -> diff "" []
-    | Help     -> help ()
-		| Init     -> init []
-    | Log      -> log ()
-    | Merge    -> merge "" []
-    | Reset    -> reset "" []
-    | Rm       -> rm "" []
-    | Stash    -> stash "" []
-    | Status   -> status "" []
+    if not (i.command = Init || i.command = Help) && not (cml_initialized "./") then
+      raise (Fatal "Not a Cml repository (or any of the parent directories)")
+    else
+      match i.command with
+      | Add      -> add "" []
+      | Branch   -> branch "" []
+      | Checkout -> checkout "" []
+      | Commit   -> commit "" []
+      | Diff     -> diff "" []
+      | Help     -> help ()
+  		| Init     -> init []
+      | Log      -> log ()
+      | Merge    -> merge "" []
+      | Reset    -> reset "" []
+      | Rm       -> rm "" []
+      | Stash    -> stash "" []
+      | Status   -> status "" []
+      | User     -> user i.arg
   with
   | Fatal msg -> print ("fatal: "^msg)
