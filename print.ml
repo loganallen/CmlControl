@@ -44,7 +44,7 @@ let print_changed (files : string list) : unit =
   | [] -> ()
   | _  -> begin
     print ("Changes not staged for commit:");
-    print_indent "(use \"cml add <file>\" to stage for commit" "" 1;
+    print_indent "(use \"cml add <file>\" to stage for commit)" "" 1;
     List.iter (fun s -> print_indent s "red" 3) files;
   end
 
@@ -54,7 +54,7 @@ let print_untracked (files : string list) : unit =
   | [] -> ()
   | _  -> begin
     print ("Untracked files:");
-    print_indent "(use \"cml add <file>\" to include in commit" "" 1;
+    print_indent "(use \"cml add <file>\" to include in commit)" "" 1;
     List.iter (fun s -> print_indent s "red" 3) files;
   end
 
