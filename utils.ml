@@ -133,13 +133,17 @@ let create_branch (branch : string) : unit =
   else
     let _ = validate_branch branch in
     if String.contains branch '/' then
-      branch_help ".cml/heads/" branch (* make branch sub-directories *)
+      branch_help ".cml/heads/" branch
     else
       open_out (".cml/heads/"^branch) |> close_out
 
 (* delete a branch if it exists *)
 let delete_branch (branch : string) : unit =
-  ()
+  if (get_branches () |> List.mem branch) then (* or just use Sys.file_exists?? *)
+    let _ = Sys.remove (".cml/heads/"^branch) in
+    print_color ("Deleted branch "^branch^".") "b"
+  else
+    raise (Fatal ("branch "^branch^" not found."))
 
 (* returns the current HEAD of the cml repository *)
 let get_head () : string =

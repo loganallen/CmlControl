@@ -24,7 +24,7 @@ let branch (args: string list) : unit =
     let branch_print b =
       if b = cur then (print_string "* "; print_color cur "g")
       else print ("  "^b)
-    in (* List all of the branches *)
+    in
     get_branches () |> List.iter branch_print
   end
   | b::[] -> begin
