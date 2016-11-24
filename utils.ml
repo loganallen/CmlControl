@@ -233,7 +233,7 @@ let get_untracked (cwd : string list) (idx : index) : string list =
 (* fetch the user info (username) *)
 let get_user_info () : string =
   try
-    let ch = open_in ".cml/info" in
+    let ch = open_in ".cml/config" in
     let raw = input_line ch in
     let split = (String.index raw ' ') + 1 in let len = (String.length raw) - split in
     close_in ch; String.sub raw split len
@@ -242,7 +242,7 @@ let get_user_info () : string =
 
 (* set the user info (username) *)
 let set_user_info (name : string) : unit =
-  let ch = open_out ".cml/info" in
+  let ch = open_out ".cml/config" in
   output_string ch ("user: "^name^"\n"); close_out ch
 
 (* returns true if the current directory (or parent) is an initialized Cml repo,
