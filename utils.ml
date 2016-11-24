@@ -89,7 +89,6 @@ let validate_branch (branch : string) : unit =
 
 (* returns a list of all branches in alphabetical order*)
 let get_branches () : string list =
-  let brs = Sys.readdir ".cml/heads" |> Array.to_list in
   let rec branch_loop acc q =
     match q with
     | []   -> acc
@@ -97,11 +96,13 @@ let get_branches () : string list =
       let temp = ".cml/heads/"^h in
       if Sys.is_directory temp then
         let subs = Sys.readdir temp |> Array.to_list
-        |> List.map (fun f -> h^"/"^f) in branch_loop acc subs@t
+        |> List.map (fun f -> h^"/"^f) in branch_loop acc t@subs
       else
         branch_loop (h::acc) t
     end
-  in branch_loop [] brs |> List.sort (Pervasives.compare)
+  in
+  Sys.readdir ".cml/heads" |> Array.to_list |> branch_loop [] |>
+  List.sort (Pervasives.compare)
 
 (* returns string of name of the current branch *)
 let get_current_branch () : string =
@@ -120,7 +121,8 @@ let rec branch_help (path : string) (branch : string) : unit =
   try
     let slash = String.index branch '/' in
     let dir = String.sub branch 0 slash in
-    let prefix = path^dir in mkdir prefix perm;
+    let prefix = path^dir in
+    if not (Sys.file_exists prefix) then mkdir prefix perm;
     String.sub branch (slash+1) ((String.length branch) - (slash+1)) |>
       branch_help (prefix^"/")
   with
@@ -139,11 +141,17 @@ let create_branch (branch : string) : unit =
 
 (* delete a branch if it exists *)
 let delete_branch (branch : string) : unit =
-  if (get_branches () |> List.mem branch) then (* or just use Sys.file_exists?? *)
-    let _ = Sys.remove (".cml/heads/"^branch) in
-    print_color ("Deleted branch "^branch^".") "b"
+  if branch = get_current_branch () then
+    raise (Fatal ("cannot delete branch '"^branch^"'."))
   else
-    raise (Fatal ("branch "^branch^" not found."))
+    try
+      if (get_branches () |> List.mem branch) then
+        let _ = Sys.remove (".cml/heads/"^branch) in
+        print ("Deleted branch "^branch^".")
+      else
+        raise (Fatal ("branch '"^branch^"' not found."))
+    with
+    | Sys_error _ -> raise (Fatal "cannot perform such an operation.")
 
 (* returns the current HEAD of the cml repository *)
 let get_head () : string =
