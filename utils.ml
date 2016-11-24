@@ -14,8 +14,6 @@ type blob = string
 type tree = string list
 type index = (string * string) list
 
-type obj = Blob of blob | Tree of tree | Commit of commit
-
 exception Fatal of string
 
 let perm = 0o777
@@ -73,12 +71,19 @@ let decompress (file_name : string) (dest_path : string) : unit =
     | Sys_error _ -> failwith (file_name ^ " not found")
     | _ -> raise (Fatal "Gzip error - file empty or not Gzip")
 
-(* creates and object in the object directory and returns its name (hashed) *)
-let create_obj (obj : obj) : string =
+(* creates a blob object for the given file. Returns the hash. *)
+let create_blob (file_name: string) : string =
+  let hsh = hash file_name in
+  let d1 = String.sub hsh 0 2 in
+  let f1 = String.sub hsh 2 (String.length hsh -2) in
+  d1^f1
+
+(* creates a tree object for the given directory. Returns the hash.*)
+let create_tree (dir_name: string) : string =
   failwith "Unimplemented"
 
-(* takes hash and returns an object type *)
-let parse_obj (file_name : string) : obj =
+(* creates a commit object for the given commit. Returns the hash. *)
+let create_commit (msg: string) : string =
   failwith "Unimplemented"
 
 (* returns string of name of the current branch *)

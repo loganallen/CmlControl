@@ -14,13 +14,19 @@ exception Parsing of string
 let perm = 0o777
 
 (* add file contents to the index *)
-let add (file_name : string) (flags: string list) : unit =
+let add (args: string list) : unit =
   try
+  (* if List.hd args = "." or "-A" then
+  run on all files that are changed. use diff? else *)
+  List.iter (fun file_name ->
   if not (Sys.file_exists file_name) then
   raise (Fatal "That file does not exist.")
-  else print "nice"
+  else let hsh = Utils.create_blob file_name in
+  print hsh) args
   with
+  | Failure f -> print ("Fatal: add must accept files")
   | Fatal msg -> print ("Fatal: " ^msg)
+
 
 
 (* list, create, or delete branches *)
