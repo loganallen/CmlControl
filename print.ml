@@ -61,6 +61,7 @@ let print_untracked (files : string list) : unit =
 (* prints a help log for all Cml commands *)
 let print_help () : unit =
   print_camel (); print_newline ();
+  print_color "usage: [--help] [--user [<name>]]" "b"; print_newline ();
   print "The following are cml commands and usages:";
   print_newline ();
   print_color "starting a cml version control repository" "";

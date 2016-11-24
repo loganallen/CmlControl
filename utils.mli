@@ -19,6 +19,9 @@ type blob = string
  *)
 type tree = string list
 
+(* Fatal exception for internal cml execution errors *)
+exception Fatal of string
+
 (* type index is a list of mappings from filename to its hash,
  * referred to as the index in git *)
 type index = (string * string) list
@@ -87,6 +90,12 @@ val get_changed: string list -> index -> string list
 
 (* returns a list of untracked files *)
 val get_untracked: string list -> index -> string list
+
+(* fetch the user info (username) *)
+val get_user_info: unit -> string
+
+(* set the user info (username) *)
+val set_user_info: string -> unit
 
 (* returns true if the current directory (or parent) is an initialized Cml repo,
  * otherwise raises an exception *)

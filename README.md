@@ -1,7 +1,23 @@
-###Git - "Camel Control"??
-***
-To run: "make/make install" to compile CmlControl and add cml to your path.<br>
-####Before Add/Commit - please run "make clean" so that you do not add any compiled OCaml files to our repo!
+## Camel Control (cml)
 
-Make sure that you have cryptokit & ANSITerminal installed to run.
-	-to install either run "opam install ..."
+*An OCaml-based management tool for local version control.*
+
+#### Installation
+
+Cml has the following dependencies: <br>
+
+	~ cryptokit
+	~ ANSITerminal
+	~ camlzip
+
+All of these can be installed using: `opam install`
+
+#### Compilation
+
+Run: `make` or `make install` to compile Cml and add `cml` to your path.
+
+#### Development
+
+Run: `make clean` to remove compiled OCaml files before committing to the development repository.
+
+Run: `make uninstall` to remove `cml` from your path entirely.

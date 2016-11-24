@@ -16,6 +16,9 @@ type index = (string * string) list
 
 type obj = Blob of blob | Tree of tree | Commit of commit
 
+exception Fatal of string
+
+let perm = 0o777
 
 (* hash returns a SHA-1 hash of a given input *)
 let hash (file_name : string) : string =
@@ -25,7 +28,7 @@ let hash (file_name : string) : string =
 		let hash = hash_channel (Hash.sha1 ()) channel in
 		close_in channel; transform_string (Hexa.encode ()) hash
 	with
-		Unix_error (Unix.ENOENT,_,_) -> failwith ("Could not find file: " ^ file_name)
+		Unix_error (Unix.ENOENT,_,_) -> raise (Fatal ("Could not find file: "^file_name))
 
 (* [copy filename destination] creates exact copy of filename at destination *)
 let copy (file_name : string) (dest_path : string) : unit =
@@ -36,7 +39,7 @@ let copy (file_name : string) (dest_path : string) : unit =
     let oc = open_out dest_path in
     loop ic oc
   with
-    Sys_error _ -> failwith ("utils.copy, file not found")
+    Sys_error _ -> raise (Fatal "utils.copy, file not found")
 
 
 (* ($) is an infix operator for appending a char to a string *)
@@ -52,7 +55,7 @@ let compress (file_name : string) (dest_path : string) : unit =
     try
       Gzip.output_char oc (input_char ic); loop ic oc
     with
-      | Sys_error _ -> failwith (file_name ^ " not found")
+      | Sys_error _ -> raise (Fatal (file_name^" not found"))
       | End_of_file -> close_in ic; Gzip.close_out oc
   in loop ic oc
 
@@ -68,7 +71,7 @@ let decompress (file_name : string) (dest_path : string) : unit =
     Printf.fprintf oc "%s" (loop ic ""); close_out oc
   with
     | Sys_error _ -> failwith (file_name ^ " not found")
-    | _ -> failwith "Gzip error: file empty or not Gzip"
+    | _ -> raise (Fatal "Gzip error - file empty or not Gzip")
 
 (* creates and object in the object directory and returns its name (hashed) *)
 let create_obj (obj : obj) : string =
@@ -87,8 +90,8 @@ let get_current_branch () : string =
     let split = (String.rindex raw '/') + 1 in
     String.sub raw split (String.length raw - split)
   with
-    | Sys_error _ -> failwith "HEAD not found"
-    | End_of_file -> failwith "HEAD not initialized"
+    | Sys_error _ -> raise (Fatal "HEAD not found")
+    | End_of_file -> raise (Fatal "HEAD not initialized")
 
 (* returns the current HEAD of the cml repository *)
 let get_head () : string =
@@ -100,8 +103,8 @@ let get_head () : string =
 		let head = input_line ed_ch in
 		close_in ed_ch; head
 	with
-		| Sys_error _ -> failwith "HEAD not found"
-		| End_of_file -> failwith "HEAD not initialized"
+		| Sys_error _ -> raise (Fatal "HEAD not found")
+    | End_of_file -> raise (Fatal "HEAD not initialized")
 
 (* sets the HEAD of the cml repository *)
 let set_head (commit_hash : string) : unit =
@@ -112,8 +115,8 @@ let set_head (commit_hash : string) : unit =
 		let out_ch = open_out path in
 		output_string out_ch commit_hash; close_out out_ch
 	with
-		| Sys_error _ -> failwith "could not set HEAD"
-		| End_of_file -> failwith "HEAD not initialized"
+		| Sys_error _ -> raise (Fatal "could not set HEAD")
+		| End_of_file -> raise (Fatal "HEAD not initialized")
 
 (* returns the HASH of a head of the given branch *)
 let get_branch_ptr (branch_name : string) : string =
@@ -122,8 +125,8 @@ let get_branch_ptr (branch_name : string) : string =
 		let ptr = input_line in_ch in
 		close_in in_ch; ptr
 	with
-		| Sys_error _ -> failwith ("branch " ^ branch_name ^ " not found")
-		| End_of_file -> failwith (branch_name ^ " ptr not set")
+		| Sys_error _ -> raise (Fatal ("branch "^branch_name^" not found"))
+		| End_of_file -> raise (Fatal (branch_name^" ptr not set"))
 
 (* initializes a given commit to a given branch name *)
 let set_branch_ptr (branch_name : string) (commit_hash : string) : unit =
@@ -131,7 +134,7 @@ let set_branch_ptr (branch_name : string) (commit_hash : string) : unit =
 		let out_ch = open_out (".cml/heads/" ^ branch_name) in
 		output_string out_ch commit_hash; close_out out_ch
 	with
-		| Sys_error _ -> failwith ("write error")
+		| Sys_error _ -> raise (Fatal "write error")
 
 (* updates the index by adding a new mapping *)
 let update_index (idx : index) (map : string * string) : index =
@@ -226,6 +229,21 @@ let get_untracked (cwd : string list) (idx : index) : string list =
     | Not_found -> if fn.[0] = '.'then acc else fn::acc
   in
   List.fold_left find_untracked [] cwd
+
+(* fetch the user info (username) *)
+let get_user_info () : string =
+  try
+    let ch = open_in ".cml/config" in
+    let raw = input_line ch in
+    let split = (String.index raw ' ') + 1 in let len = (String.length raw) - split in
+    close_in ch; String.sub raw split len
+  with
+  | Sys_error _ -> raise (Fatal "username not set, set with [--user <name>]")
+
+(* set the user info (username) *)
+let set_user_info (name : string) : unit =
+  let ch = open_out ".cml/config" in
+  output_string ch ("user: "^name^"\n"); close_out ch
 
 (* returns true if the current directory (or parent) is an initialized Cml repo,
  * otherwise raises an exception *)
