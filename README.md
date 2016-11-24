@@ -21,3 +21,5 @@ Run: `make` or `make install` to compile Cml and add `cml` to your path.
 Run: `make clean` to remove compiled OCaml files before committing to the development repository.
 
 Run: `make uninstall` to remove `cml` from your path entirely.
+
+**Run:** `rm -rf .cml/` **before committing if you were testing** `cml` **in the local repo.**
