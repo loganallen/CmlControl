@@ -60,6 +60,9 @@ val set_head: string -> unit
 (* returns string representation of repo's current branch *)
 val get_current_branch: unit -> string
 
+(* returns a list of all branches *)
+val get_branches: unit -> string list
+
 (* returns the HASH of a head of the given branch *)
 val get_branch_ptr: string -> string
 

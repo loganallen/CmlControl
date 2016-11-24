@@ -25,8 +25,14 @@ let add (file_name : string) (flags: string list) : unit =
 
 (* list, create, or delete branches *)
 let branch (args: string list) : unit =
-  let br = get_current_branch () in
+  match args with
+  | [] -> begin
+    (* List all of the branched *)
+    let brs = get_branches () in
+    let br = get_current_branch () in
     print_string "* "; print_color br "g"
+  end
+  | _ -> ()
 
 (* switch branches or restore working tree files *)
 let checkout (args: string list) : unit =

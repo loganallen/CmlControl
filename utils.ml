@@ -81,6 +81,10 @@ let create_obj (obj : obj) : string =
 let parse_obj (file_name : string) : obj =
   failwith "Unimplemented"
 
+(* returns a list of all branches *)
+let get_branches () : string list =
+    Sys.readdir ".cml/heads" |> Array.to_list
+
 (* returns string of name of the current branch *)
 let get_current_branch () : string =
   try
