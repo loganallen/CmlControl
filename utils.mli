@@ -19,15 +19,28 @@ type blob = string
  *)
 type tree = string list
 
-(* Fatal exception for internal cml execution errors *)
-exception Fatal of string
-
 (* type index is a list of mappings from filename to its hash,
  * referred to as the index in git *)
 type index = (string * string) list
 
 (* a variant for an cml object, which can be a Blob, Tree, or Commit  *)
 type obj = Blob of blob | Tree of tree | Commit of commit
+
+(* Fatal exception for internal cml execution errors *)
+exception Fatal of string
+
+(***************************** Generic Helpers ********************************)
+(******************************************************************************)
+
+(* returns true if the current directory (or parent) is an initialized Cml repo,
+ * otherwise raises an exception *)
+val cml_initialized: string -> bool
+
+(* ($) is an infix operator for appending a char to a string *)
+val ($): string -> char -> string
+
+(************************* File Compression & Hashing *************************)
+(******************************************************************************)
 
 (* hash returns a SHA-1 hash of a given input *)
 val hash : string -> string
@@ -51,35 +64,30 @@ val create_obj: obj -> string
 (* takes hash and returns an object type *)
 val parse_obj: string -> obj
 
+(**************************** HEAD Ptr Manipulation ***************************)
+(******************************************************************************)
+
 (* returns the current HEAD of the cml repository *)
 val get_head: unit -> string
 
 (* sets the HEAD of the cml repository *)
 val set_head: string -> unit
 
-(* validate the branch name *)
-val validate_branch: string -> unit
-
-(* recursively creates branch sub-directories as needed *)
-val branch_help: string -> string -> unit
-
-(* create a new branch if it doesn't exist *)
-val create_branch: string -> unit
-
-(* delete a branch if it exists *)
-val delete_branch: string -> unit
-
-(* returns a list of all branches *)
-val get_branches: unit -> string list
-
-(* returns string representation of repo's current branch *)
-val get_current_branch: unit -> string
-
 (* returns the HASH of a head of the given branch *)
 val get_branch_ptr: string -> string
 
 (* initializes a given commit to a given branch name *)
 val set_branch_ptr: string -> string -> unit
+
+(* returns a list of all versions of HEAD *)
+val get_versions: unit -> string list
+
+(* go to an old version of HEAD *)
+(* precondition: [version] of HEAD exists *)
+val switch_version: string -> unit
+
+(***************************** Index Manipulation *****************************)
+(******************************************************************************)
 
 (* updates the index by adding a new mapping *)
 val update_index: index -> string * string -> index
@@ -90,6 +98,9 @@ val get_index: unit -> index
 
 (* initializes an index in the cml directory *)
 val set_index: index -> unit
+
+(****************************** File Fetching *********************************)
+(******************************************************************************)
 
 (* returns true if dir is known link, or if is .cml *)
 val is_bad_dir: string -> bool
@@ -106,12 +117,36 @@ val get_changed: string list -> index -> string list
 (* returns a list of untracked files *)
 val get_untracked: string list -> index -> string list
 
+(******************************** Branching ***********************************)
+(******************************************************************************)
+
+(* validate the branch name *)
+val validate_branch: string -> unit
+
+(* returns a list of all branches *)
+val get_branches: unit -> string list
+
+(* returns string representation of repo's current branch *)
+val get_current_branch: unit -> string
+
+(* recursively creates branch sub-directories as needed *)
+val branch_help: string -> string -> unit
+
+(* create a new branch if it doesn't exist *)
+val create_branch: string -> unit
+
+(* delete a branch if it exists *)
+val delete_branch: string -> unit
+
+(* switch current working branch *)
+(* precondition: [branch] exists *)
+val switch_branch: string -> unit
+
+(******************************** User Info ***********************************)
+(******************************************************************************)
+
 (* fetch the user info (username) *)
 val get_user_info: unit -> string
 
 (* set the user info (username) *)
 val set_user_info: string -> unit
-
-(* returns true if the current directory (or parent) is an initialized Cml repo,
- * otherwise raises an exception *)
-val cml_initialized: string -> bool

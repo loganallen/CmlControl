@@ -33,12 +33,32 @@ let branch (args: string list) : unit =
   end
   | flag::b::_ -> begin
     if flag = "-d" || flag = "-D" then delete_branch b
-    else raise (Fatal "Invalid flags, see [--help]")
+    else raise (Fatal "invalid flags, see [--help]")
   end
 
 (* switch branches or restore working tree files *)
 let checkout (args: string list) : unit =
-  failwith "Unimplemented"
+  match args with
+  | []    -> raise (Fatal "branch name or HEAD version required")
+  | h::[] -> begin
+    if h = "-b" || h = "-B" then
+      raise (Fatal "branch name required")
+    else
+      begin
+        if (get_branches () |> List.mem h) then
+          switch_branch h
+        else if (get_versions () |> List.mem h) then
+          switch_version h
+        else
+          raise (Fatal ("pathspec '"^h^"' does not match an file(s) know to cml"))
+      end
+  end
+  | flag::b::_ -> begin
+    if flag = "-b" || flag = "-B" then
+      let _ = create_branch b in switch_branch b
+    else
+      raise (Fatal ("invalid flags, see [--help]"))
+  end
 
 (* record changes to the repository:
  * stores the current contents of the index in a new commit
