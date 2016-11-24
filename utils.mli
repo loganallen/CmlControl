@@ -23,11 +23,6 @@ type tree = string list
  * referred to as the index in git *)
 type index = (string * string) list
 
-<<<<<<< HEAD
-=======
-(* a variant for an cml object, which can be a Blob, Tree, or Commit  *)
-type obj = Blob of blob | Tree of tree | Commit of commit
-
 (* Fatal exception for internal cml execution errors *)
 exception Fatal of string
 
@@ -44,7 +39,6 @@ val ($): string -> char -> string
 (************************* File Compression & Hashing *************************)
 (******************************************************************************)
 
->>>>>>> master
 (* hash returns a SHA-1 hash of a given input *)
 val hash : string -> string
 

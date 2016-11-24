@@ -147,7 +147,19 @@ let set_branch_ptr (branch_name : string) (commit_hash : string) : unit =
 	with
 		| Sys_error _ -> raise (Fatal "write error")
 
-<<<<<<< HEAD
+
+(* returns a list of all versions of HEAD *)
+let get_versions () : string list =
+  []
+
+(* go to an old version of HEAD *)
+(* precondition: [version] of HEAD exists *)
+let switch_version (version : string) : unit =
+  ()
+
+(***************************** Index Manipulation *****************************)
+(******************************************************************************)
+
 (* returns the index which is a list that maps tracked filenames
 * to their most recent hash string value *)
 let get_index () : index =
@@ -164,19 +176,6 @@ try
   in parse_index in_ch []
 with
   | Sys_error _ -> []
-=======
-(* returns a list of all versions of HEAD *)
-let get_versions () : string list =
-  []
-
-(* go to an old version of HEAD *)
-(* precondition: [version] of HEAD exists *)
-let switch_version (version : string) : unit =
-  ()
-
-(***************************** Index Manipulation *****************************)
-(******************************************************************************)
->>>>>>> master
 
 (* updates the index by adding a new mapping *)
 let update_index (idx : index) (map : string * string) : index =
