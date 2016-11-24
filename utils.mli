@@ -57,11 +57,20 @@ val get_head: unit -> string
 (* sets the HEAD of the cml repository *)
 val set_head: string -> unit
 
-(* returns string representation of repo's current branch *)
-val get_current_branch: unit -> string
+(* validate the branch name *)
+val validate_branch: string -> unit
+
+(* create a new branch if it doesn't exist *)
+val create_branch: string -> unit
+
+(* delete a branch if it exists *)
+val delete_branch: string -> unit
 
 (* returns a list of all branches *)
 val get_branches: unit -> string list
+
+(* returns string representation of repo's current branch *)
+val get_current_branch: unit -> string
 
 (* returns the HASH of a head of the given branch *)
 val get_branch_ptr: string -> string

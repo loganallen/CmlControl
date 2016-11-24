@@ -81,9 +81,26 @@ let create_obj (obj : obj) : string =
 let parse_obj (file_name : string) : obj =
   failwith "Unimplemented"
 
-(* returns a list of all branches *)
+let validate_branch (branch : string) : unit =
+  if (String.sub branch 0 1) = "." || (String.sub branch 0 1) = "-" then
+    raise (Fatal "Invalid branch name.")
+  else ()
+
+(* returns a list of all branches in alphabetical order*)
 let get_branches () : string list =
-    Sys.readdir ".cml/heads" |> Array.to_list
+  let brs = Sys.readdir ".cml/heads" |> Array.to_list in
+  let rec branch_loop acc q =
+    match q with
+    | []   -> acc
+    | h::t -> begin
+      let temp = ".cml/heads/"^h in
+      if Sys.is_directory temp then
+        let subs = Sys.readdir temp |> Array.to_list
+        |> List.map (fun f -> h^"/"^f) in branch_loop acc subs@t
+      else
+        branch_loop (h::acc) t
+    end
+  in branch_loop [] brs |> List.sort (Pervasives.compare)
 
 (* returns string of name of the current branch *)
 let get_current_branch () : string =
@@ -96,6 +113,18 @@ let get_current_branch () : string =
   with
     | Sys_error _ -> raise (Fatal "HEAD not found")
     | End_of_file -> raise (Fatal "HEAD not initialized")
+
+(* create a new branch if it doesn't exist *)
+let create_branch (branch : string) : unit =
+  if (get_branches () |> List.mem branch) then
+    raise (Fatal ("A branch named "^branch^" already exists."))
+  else
+    let _ = validate_branch branch in
+    open_out (".cml/heads/"^branch) |> close_out
+
+(* delete a branch if it exists *)
+let delete_branch (branch : string) : unit =
+  ()
 
 (* returns the current HEAD of the cml repository *)
 let get_head () : string =

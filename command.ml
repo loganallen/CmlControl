@@ -20,12 +20,21 @@ let add (args: string list) : unit =
 let branch (args: string list) : unit =
   match args with
   | [] -> begin
-    (* List all of the branched *)
-    let brs = get_branches () in
-    let br = get_current_branch () in
-    print_string "* "; print_color br "g"
+    let cur = get_current_branch () in
+    let branch_print b =
+      if b = cur then (print_string "* "; print_color cur "g")
+      else print ("  "^b)
+    in (* List all of the branches *)
+    get_branches () |> List.iter branch_print
   end
-  | _ -> ()
+  | b::[] -> begin
+    if b = "-d" || b = "-D" then raise (Fatal "branch name required")
+    else create_branch b
+  end
+  | flag::b::_ -> begin
+    if flag = "-d" || flag = "-D" then delete_branch b
+    else raise (Fatal "Invalid flags, see [--help]")
+  end
 
 (* switch branches or restore working tree files *)
 let checkout (args: string list) : unit =
@@ -50,7 +59,8 @@ let init () : unit =
   if cml_initialized "./" then
     raise (Fatal "Cml repository already initialized")
   else
-		mkdir ".cml" perm; mkdir ".cml/heads" perm; mkdir ".cml/objects" perm;
+    mkdir ".cml" perm; mkdir ".cml/heads" perm; mkdir ".cml/objects" perm;
+    let _ = create_branch "master" in
 		let out = open_out ".cml/HEAD" in
 		output_string out "heads/master"; close_out out;
     print_color "initialized empty Cml repository" "b"
