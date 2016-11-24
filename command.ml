@@ -14,7 +14,19 @@ let perm = 0o777
 
 (* add file contents to the index *)
 let add (args: string list) : unit =
-  failwith "Unimplemented"
+  try
+  (* if List.hd args = "." or "-A" then
+  run on all files that are changed. use diff? else *)
+  List.iter (fun file_name ->
+  if not (Sys.file_exists file_name) then
+  raise (Fatal "That file does not exist.")
+  else let hash = (create_blob file_name) in
+  let idx = get_index () in
+  update_index idx (file_name,hash) |> set_index ) args;
+  with
+  | Failure f -> print ("Fatal: add must accept files")
+  | Fatal msg -> print ("Fatal: " ^msg)
+
 
 (* list, create, or delete branches *)
 let branch (args: string list) : unit =
