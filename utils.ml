@@ -75,8 +75,13 @@ let decompress (file_name : string) (dest_path : string) : unit =
 let create_blob (file_name: string) : string =
   let hsh = hash file_name in
   let d1 = String.sub hsh 0 2 in
+  if not (Sys.file_exists (".cml/objects/"^d1)) then
+  mkdir (".cml/objects/"^d1) perm;
   let f1 = String.sub hsh 2 (String.length hsh -2) in
-  mkdir (".cml/objects/"^d1) perm; d1^f1
+  let path = ".cml/objects/"^d1^"/"^f1 in
+  open_out path |> close_out;
+  copy file_name path;
+  d1^f1
 
 (* creates a tree object for the given directory. Returns the hash.*)
 let create_tree (dir_name: string) : string =
