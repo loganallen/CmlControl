@@ -1,7 +1,6 @@
 open Utils
 open Print
 open Unix
-open Sys
 
 type command =
 | Add | Branch | Checkout | Commit | Diff | Help | Init | Log
@@ -21,12 +20,12 @@ let add (args: string list) : unit =
   List.iter (fun file_name ->
   if not (Sys.file_exists file_name) then
   raise (Fatal "That file does not exist.")
-  else let hsh = Utils.create_blob file_name in
-  print hsh) args
+  else let hash = (create_blob file_name) in
+  let idx = get_index () in
+  update_index idx (file_name,hash) |> set_index ) args;
   with
   | Failure f -> print ("Fatal: add must accept files")
   | Fatal msg -> print ("Fatal: " ^msg)
-
 
 
 (* list, create, or delete branches *)

@@ -150,27 +150,27 @@ let set_branch_ptr (branch_name : string) (commit_hash : string) : unit =
 	with
 		| Sys_error _ -> raise (Fatal "write error")
 
+(* returns the index which is a list that maps tracked filenames
+* to their most recent hash string value *)
+let get_index () : index =
+try
+  let in_ch = open_in ".cml/index" in
+  let rec parse_index ch acc =
+    try
+      let raw = input_line ch in let split = String.index raw ' ' in
+      let file_path = String.sub raw 0 split in
+      let hash = String.sub raw split (String.length raw - split) in
+      (file_path,hash)::acc
+    with
+      End_of_file ->   close_in ch; acc
+  in parse_index in_ch []
+with
+  | Sys_error _ -> []
+
 (* updates the index by adding a new mapping *)
 let update_index (idx : index) (map : string * string) : index =
   let (file_path, _) = map in
   map::(List.remove_assoc file_path idx)
-
-(* returns the index which is a list that maps tracked filenames
- * to their most recent hash string value *)
-let get_index () : index =
-  try
-    let in_ch = open_in ".cml/index" in
-    let rec parse_index ch acc =
-      try
-        let raw = input_line ch in let split = String.index raw ' ' in
-        let file_path = String.sub raw 0 split in
-        let hash = String.sub raw split (String.length raw - split) in
-        (file_path,hash)::acc
-      with
-        End_of_file ->   close_in ch; acc
-    in parse_index in_ch []
-  with
-    | Sys_error _ -> []
 
 (* initializes an index in the cml directory *)
 let set_index (idx : index) : unit =
