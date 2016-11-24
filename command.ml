@@ -27,16 +27,45 @@ let add (file_name : string) (flags: string list) : unit =
 let branch (args: string list) : unit =
   match args with
   | [] -> begin
-    (* List all of the branched *)
-    let brs = get_branches () in
-    let br = get_current_branch () in
-    print_string "* "; print_color br "g"
+    let cur = get_current_branch () in
+    let branch_print b =
+      if b = cur then (print_string "* "; print_color cur "g")
+      else print ("  "^b)
+    in
+    get_branches () |> List.iter branch_print
   end
-  | _ -> ()
+  | b::[] -> begin
+    if b = "-d" || b = "-D" then raise (Fatal "branch name required")
+    else create_branch b
+  end
+  | flag::b::_ -> begin
+    if flag = "-d" || flag = "-D" then delete_branch b
+    else raise (Fatal "invalid flags, see [--help]")
+  end
 
 (* switch branches or restore working tree files *)
 let checkout (args: string list) : unit =
-  failwith "Unimplemented"
+  match args with
+  | []    -> raise (Fatal "branch name or HEAD version required")
+  | h::[] -> begin
+    if h = "-b" || h = "-B" then
+      raise (Fatal "branch name required")
+    else
+      begin
+        if (get_branches () |> List.mem h) then
+          switch_branch h
+        else if (get_versions () |> List.mem h) then
+          switch_version h
+        else
+          raise (Fatal ("pathspec '"^h^"' does not match an file(s) know to cml"))
+      end
+  end
+  | flag::b::_ -> begin
+    if flag = "-b" || flag = "-B" then
+      let _ = create_branch b in switch_branch b
+    else
+      raise (Fatal ("invalid flags, see [--help]"))
+  end
 
 (* record changes to the repository:
  * stores the current contents of the index in a new commit
@@ -57,7 +86,8 @@ let init () : unit =
   if cml_initialized "./" then
     raise (Fatal "Cml repository already initialized")
   else
-		mkdir ".cml" perm; mkdir ".cml/heads" perm; mkdir ".cml/objects" perm;
+    mkdir ".cml" perm; mkdir ".cml/heads" perm; mkdir ".cml/objects" perm;
+    let _ = create_branch "master" in
 		let out = open_out ".cml/HEAD" in
 		output_string out "heads/master"; close_out out;
     print_color "initialized empty Cml repository" "b"

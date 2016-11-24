@@ -20,6 +20,20 @@ exception Fatal of string
 
 let perm = 0o777
 
+(***************************** Generic Helpers ********************************)
+(******************************************************************************)
+
+(* returns true if the current directory (or parent) is an initialized Cml repo,
+ * otherwise raises an exception *)
+let cml_initialized (path : string) : bool =
+  Sys.file_exists ".cml"
+
+(* ($) is an infix operator for appending a char to a string *)
+let ($) (str : string) (c : char) : string =  str ^ Char.escaped c
+
+(************************* File Compression & Hashing *************************)
+(******************************************************************************)
+
 (* hash returns a SHA-1 hash of a given input *)
 let hash (file_name : string) : string =
 	try
@@ -40,10 +54,6 @@ let copy (file_name : string) (dest_path : string) : unit =
     loop ic oc
   with
     Sys_error _ -> raise (Fatal "utils.copy, file not found")
-
-
-(* ($) is an infix operator for appending a char to a string *)
-let ($) str c =  str ^ Char.escaped c
 
 (* compress compresses a file/directory
  * takes initial path and final path as arguments.
@@ -81,21 +91,8 @@ let create_obj (obj : obj) : string =
 let parse_obj (file_name : string) : obj =
   failwith "Unimplemented"
 
-(* returns a list of all branches *)
-let get_branches () : string list =
-    Sys.readdir ".cml/heads" |> Array.to_list
-
-(* returns string of name of the current branch *)
-let get_current_branch () : string =
-  try
-    let ch = open_in ".cml/HEAD" in
-    let raw = input_line ch in
-    let _ = close_in ch in
-    let split = (String.rindex raw '/') + 1 in
-    String.sub raw split (String.length raw - split)
-  with
-    | Sys_error _ -> raise (Fatal "HEAD not found")
-    | End_of_file -> raise (Fatal "HEAD not initialized")
+(**************************** HEAD Ptr Manipulation ***************************)
+(******************************************************************************)
 
 (* returns the current HEAD of the cml repository *)
 let get_head () : string =
@@ -140,6 +137,18 @@ let set_branch_ptr (branch_name : string) (commit_hash : string) : unit =
 	with
 		| Sys_error _ -> raise (Fatal "write error")
 
+(* returns a list of all versions of HEAD *)
+let get_versions () : string list =
+  []
+
+(* go to an old version of HEAD *)
+(* precondition: [version] of HEAD exists *)
+let switch_version (version : string) : unit =
+  ()
+
+(***************************** Index Manipulation *****************************)
+(******************************************************************************)
+
 (* updates the index by adding a new mapping *)
 let update_index (idx : index) (map : string * string) : index =
   let (file_path, _) = map in
@@ -170,6 +179,9 @@ let set_index (idx : index) : unit =
     | (fp, h)::t -> output_string to_ch (fp ^ " " ^ h); write_index to_ch t
   in write_index out_ch idx
 
+(****************************** File Fetching *********************************)
+(******************************************************************************)
+
 (* returns true if dir is known link, or if is .cml *)
 let is_bad_dir name =
   let temp =
@@ -195,17 +207,14 @@ let rec get_all_files (dirs : string list) (acc : string list) : string list =
   in
   match dirs with
     | [] -> acc
-    | dir_name::t ->
-      begin
-        if is_bad_dir dir_name then
-          (*let _ = print_endline "skipped" in*)
-          get_all_files t acc
-        else
-          (*let _ = print_endline dir_name in*)
-          let dir_h = opendir dir_name in
-          let (files, directories) = loop dir_h dir_name acc [] in
-          get_all_files (t@directories) files
-      end
+    | dir_name::t -> begin
+      if is_bad_dir dir_name then
+        get_all_files t acc
+      else
+        let dir_h = opendir dir_name in
+        let (files, directories) = loop dir_h dir_name acc [] in
+        get_all_files (t@directories) files
+    end
 
 (* returns a list of all files staged (added) for commit *)
 let rec get_staged (idx : index) : string list = []
@@ -234,12 +243,102 @@ let get_untracked (cwd : string list) (idx : index) : string list =
   in
   List.fold_left find_untracked [] cwd
 
+(******************************** Branching ***********************************)
+(******************************************************************************)
+
+(* validate the branch name *)
+let validate_branch (branch : string) : unit =
+  if (String.sub branch 0 1) = "." || (String.sub branch 0 1) = "-" then
+    raise (Fatal "invalid branch name")
+  else ()
+
+(* returns a list of all branches in alphabetical order*)
+let get_branches () : string list =
+  let rec branch_loop acc q =
+    match q with
+    | []   -> acc
+    | h::t -> begin
+      let temp = ".cml/heads/"^h in
+      if Sys.is_directory temp then
+        let subs = Sys.readdir temp |> Array.to_list
+        |> List.map (fun f -> h^"/"^f) in branch_loop acc t@subs
+      else
+        branch_loop (h::acc) t
+    end
+  in
+  Sys.readdir ".cml/heads" |> Array.to_list |> branch_loop [] |>
+  List.sort (Pervasives.compare)
+
+(* returns string of name of the current branch *)
+let get_current_branch () : string =
+  try
+    let ch = open_in ".cml/HEAD" in
+    let raw = input_line ch in
+    let _ = close_in ch in
+    let split = (String.index raw '/') + 1 in
+    String.sub raw split (String.length raw - split)
+  with
+    | Sys_error _ -> raise (Fatal "HEAD not found")
+    | End_of_file -> raise (Fatal "HEAD not initialized")
+
+(* recursively creates branch sub-directories as needed *)
+let rec branch_help (path : string) (branch : string) : unit =
+  try
+    let slash = String.index branch '/' in
+    let dir = String.sub branch 0 slash in
+    let prefix = path^dir in
+    if not (Sys.file_exists prefix) then mkdir prefix perm;
+    String.sub branch (slash+1) ((String.length branch) - (slash+1)) |>
+      branch_help (prefix^"/")
+  with
+  | Not_found -> open_out (path^"/"^branch) |> close_out
+
+(* create a new branch if it doesn't exist *)
+let create_branch (branch : string) : unit =
+  if (get_branches () |> List.mem branch) then
+    raise (Fatal ("a branch named "^branch^" already exists"))
+  else
+    let _ = validate_branch branch in
+    if String.contains branch '/' then
+      branch_help ".cml/heads/" branch
+    else
+      open_out (".cml/heads/"^branch) |> close_out
+
+(* delete a branch if it exists *)
+let delete_branch (branch : string) : unit =
+  if branch = get_current_branch () then
+    raise (Fatal ("cannot delete branch '"^branch^"'"))
+  else
+    try
+      if (get_branches () |> List.mem branch) then
+        let _ = Sys.remove (".cml/heads/"^branch) in
+        print ("Deleted branch "^branch^"")
+      else
+        raise (Fatal ("branch '"^branch^"' not found"))
+    with
+    | Sys_error _ -> raise (Fatal "cannot perform such an operation")
+
+(* switch current working branch *)
+(* precondition: [branch] exists *)
+let switch_branch (branch : string) : unit =
+  if (get_current_branch () = branch) then
+    print ("Already on branch '"^branch^"'")
+  else
+    let ch = open_out ".cml/HEAD" in
+    output_string ch ("heads/"^branch); close_out ch;
+    let _ = print ("Switched to branch '"^branch^"'") in
+    get_branch_ptr branch |> switch_version
+
+(******************************** User Info ***********************************)
+(******************************************************************************)
+
 (* fetch the user info (username) *)
 let get_user_info () : string =
   try
     let ch = open_in ".cml/config" in
     let raw = input_line ch in
-    let split = (String.index raw ' ') + 1 in let len = (String.length raw) - split in
+    let split = (String.index raw ' ') + 1 in
+    let len = (String.length raw) - split in
     close_in ch; String.sub raw split len
   with
   | Sys_error _ -> raise (Fatal "username not set, set with [--user <name>]")
@@ -248,8 +347,3 @@ let get_user_info () : string =
 let set_user_info (name : string) : unit =
   let ch = open_out ".cml/config" in
   output_string ch ("user: "^name^"\n"); close_out ch
-
-(* returns true if the current directory (or parent) is an initialized Cml repo,
- * otherwise raises an exception *)
-let cml_initialized (path : string) : bool =
-  Sys.file_exists ".cml"
