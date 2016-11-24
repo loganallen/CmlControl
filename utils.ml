@@ -251,17 +251,14 @@ let rec get_all_files (dirs : string list) (acc : string list) : string list =
   in
   match dirs with
     | [] -> acc
-    | dir_name::t ->
-      begin
-        if is_bad_dir dir_name then
-          (*let _ = print_endline "skipped" in*)
-          get_all_files t acc
-        else
-          (*let _ = print_endline dir_name in*)
-          let dir_h = opendir dir_name in
-          let (files, directories) = loop dir_h dir_name acc [] in
-          get_all_files (t@directories) files
-      end
+    | dir_name::t -> begin
+      if is_bad_dir dir_name then
+        get_all_files t acc
+      else
+        let dir_h = opendir dir_name in
+        let (files, directories) = loop dir_h dir_name acc [] in
+        get_all_files (t@directories) files
+    end
 
 (* returns a list of all files staged (added) for commit *)
 let rec get_staged (idx : index) : string list = []
@@ -295,7 +292,8 @@ let get_user_info () : string =
   try
     let ch = open_in ".cml/config" in
     let raw = input_line ch in
-    let split = (String.index raw ' ') + 1 in let len = (String.length raw) - split in
+    let split = (String.index raw ' ') + 1 in
+    let len = (String.length raw) - split in
     close_in ch; String.sub raw split len
   with
   | Sys_error _ -> raise (Fatal "username not set, set with [--user <name>]")
