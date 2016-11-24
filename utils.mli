@@ -60,6 +60,9 @@ val set_head: string -> unit
 (* validate the branch name *)
 val validate_branch: string -> unit
 
+(* recursively creates branch sub-directories as needed *)
+val branch_help: string -> string -> unit
+
 (* create a new branch if it doesn't exist *)
 val create_branch: string -> unit
 

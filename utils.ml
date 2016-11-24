@@ -81,6 +81,7 @@ let create_obj (obj : obj) : string =
 let parse_obj (file_name : string) : obj =
   failwith "Unimplemented"
 
+(* validate the branch name *)
 let validate_branch (branch : string) : unit =
   if (String.sub branch 0 1) = "." || (String.sub branch 0 1) = "-" then
     raise (Fatal "Invalid branch name.")
@@ -114,13 +115,27 @@ let get_current_branch () : string =
     | Sys_error _ -> raise (Fatal "HEAD not found")
     | End_of_file -> raise (Fatal "HEAD not initialized")
 
+(* recursively creates branch sub-directories as needed *)
+let rec branch_help (path : string) (branch : string) : unit =
+  try
+    let slash = String.index branch '/' in
+    let dir = String.sub branch 0 slash in
+    let prefix = path^dir in mkdir prefix perm;
+    String.sub branch (slash+1) ((String.length branch) - (slash+1)) |>
+      branch_help (prefix^"/")
+  with
+  | Not_found -> open_out (path^"/"^branch) |> close_out
+
 (* create a new branch if it doesn't exist *)
 let create_branch (branch : string) : unit =
   if (get_branches () |> List.mem branch) then
     raise (Fatal ("A branch named "^branch^" already exists."))
   else
     let _ = validate_branch branch in
-    open_out (".cml/heads/"^branch) |> close_out
+    if String.contains branch '/' then
+      branch_help ".cml/heads/" branch (* make branch sub-directories *)
+    else
+      open_out (".cml/heads/"^branch) |> close_out
 
 (* delete a branch if it exists *)
 let delete_branch (branch : string) : unit =
