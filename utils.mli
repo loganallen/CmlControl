@@ -23,9 +23,6 @@ type tree = string list
  * referred to as the index in git *)
 type index = (string * string) list
 
-(* a variant for an cml object, which can be a Blob, Tree, or Commit  *)
-type obj = Blob of blob | Tree of tree | Commit of commit
-
 (* Fatal exception for internal cml execution errors *)
 exception Fatal of string
 
@@ -58,11 +55,14 @@ val compress: string -> string -> unit
  *)
 val decompress: string -> string -> unit
 
-(* creates and object in the object directory and returns its name (hashed) *)
-val create_obj: obj -> string
+(* creates a blob object for the given file. Returns the hash. *)
+val create_blob: string -> string
 
-(* takes hash and returns an object type *)
-val parse_obj: string -> obj
+(* creates a tree object for the given directory. Returns the hash.*)
+val create_tree: string -> string
+
+(* creates a commit object for the given commit. Returns the hash. *)
+val create_commit: string -> string
 
 (**************************** HEAD Ptr Manipulation ***************************)
 (******************************************************************************)

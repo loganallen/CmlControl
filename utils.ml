@@ -14,8 +14,6 @@ type blob = string
 type tree = string list
 type index = (string * string) list
 
-type obj = Blob of blob | Tree of tree | Commit of commit
-
 exception Fatal of string
 
 let perm = 0o777
@@ -83,12 +81,24 @@ let decompress (file_name : string) (dest_path : string) : unit =
     | Sys_error _ -> failwith (file_name ^ " not found")
     | _ -> raise (Fatal "Gzip error - file empty or not Gzip")
 
-(* creates and object in the object directory and returns its name (hashed) *)
-let create_obj (obj : obj) : string =
+(* creates a blob object for the given file. Returns the hash. *)
+let create_blob (file_name: string) : string =
+  let hsh = hash file_name in
+  let d1 = String.sub hsh 0 2 in
+  if not (Sys.file_exists (".cml/objects/"^d1)) then
+  mkdir (".cml/objects/"^d1) perm;
+  let f1 = String.sub hsh 2 (String.length hsh -2) in
+  let path = ".cml/objects/"^d1^"/"^f1 in
+  open_out path |> close_out;
+  copy file_name path;
+  d1^f1
+
+(* creates a tree object for the given directory. Returns the hash.*)
+let create_tree (dir_name: string) : string =
   failwith "Unimplemented"
 
-(* takes hash and returns an object type *)
-let parse_obj (file_name : string) : obj =
+(* creates a commit object for the given commit. Returns the hash. *)
+let create_commit (msg: string) : string =
   failwith "Unimplemented"
 
 (**************************** HEAD Ptr Manipulation ***************************)
@@ -137,6 +147,7 @@ let set_branch_ptr (branch_name : string) (commit_hash : string) : unit =
 	with
 		| Sys_error _ -> raise (Fatal "write error")
 
+
 (* returns a list of all versions of HEAD *)
 let get_versions () : string list =
   []
@@ -149,27 +160,27 @@ let switch_version (version : string) : unit =
 (***************************** Index Manipulation *****************************)
 (******************************************************************************)
 
+(* returns the index which is a list that maps tracked filenames
+* to their most recent hash string value *)
+let get_index () : index =
+try
+  let in_ch = open_in ".cml/index" in
+  let rec parse_index ch acc =
+    try
+      let raw = input_line ch in let split = String.index raw ' ' in
+      let file_path = String.sub raw 0 split in
+      let hash = String.sub raw split (String.length raw - split) in
+      (file_path,hash)::acc
+    with
+      End_of_file ->   close_in ch; acc
+  in parse_index in_ch []
+with
+  | Sys_error _ -> []
+
 (* updates the index by adding a new mapping *)
 let update_index (idx : index) (map : string * string) : index =
   let (file_path, _) = map in
   map::(List.remove_assoc file_path idx)
-
-(* returns the index which is a list that maps tracked filenames
- * to their most recent hash string value *)
-let get_index () : index =
-  try
-    let in_ch = open_in ".cml/index" in
-    let rec parse_index ch acc =
-      try
-        let raw = input_line ch in let split = String.index raw ' ' in
-        let file_path = String.sub raw 0 split in
-        let hash = String.sub raw split (String.length raw - split) in
-        (file_path,hash)::acc
-      with
-        End_of_file ->   close_in ch; acc
-    in parse_index in_ch []
-  with
-    | Sys_error _ -> []
 
 (* initializes an index in the cml directory *)
 let set_index (idx : index) : unit =
