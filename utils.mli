@@ -17,7 +17,7 @@ type blob = string
 (* type tree represents a directory with pointers to blobs/other trees
  * note: pointers in this case are string file names
  *)
-type tree = string list
+type tree = Blob of string * string | Tree of string * tree list
 
 (* type index is a list of mappings from filename to its hash,
  * referred to as the index in git *)

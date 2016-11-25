@@ -11,7 +11,7 @@ type commit = {
 }
 
 type blob = string
-type tree = string list
+type tree = Blob of string * string | Tree of string * tree list
 type index = (string * string) list
 
 exception Fatal of string
@@ -28,6 +28,13 @@ let cml_initialized (path : string) : bool =
 
 (* ($) is an infix operator for appending a char to a string *)
 let ($) (str : string) (c : char) : string =  str ^ Char.escaped c
+
+(* returns (dir_name, file_name) for any string with the format "dir_name/file_name" *)
+let split_path fn =
+  let split = String.index fn '/' in
+  let dir_name = String.sub fn 0 split in
+  let file_name = String.sub fn (split + 1) (String.length fn - split - 1) in
+  (dir_name, file_name)
 
 (************************* File Compression & Hashing *************************)
 (******************************************************************************)
@@ -92,6 +99,36 @@ let create_blob (file_name: string) : string =
   open_out path |> close_out;
   copy file_name path;
   d1^f1
+
+(************************** Tree Creation and Writing *************************)
+(******************************************************************************)
+let rec tree_insert tree (fn, hn) =
+  let rec loop acc (fn, hn) = function
+    | [] ->
+      begin
+        try
+          let (dir_name, file_name) = split_path fn in
+          (Tree (dir_name, [Blob(file_name, hn)]))::acc
+        with Not_found -> Blob (fn, hn)::acc
+      end
+    | (Tree (n, lst))::t ->
+      begin
+        try
+          let (dir_name, file_name) = split_path fn in
+          if dir_name = n then
+            let _ = print_endline "here" in
+            (tree_insert (Tree (n, lst)) (file_name, hn))::(acc @ t)
+          else raise Not_found
+        with Not_found -> loop ((Tree (n, lst))::acc) (fn, hn) t
+      end
+    | (Blob (fx, hx))::t -> loop ((Blob (fx, hx))::acc) (fn, hn) t
+  in match tree with
+    | Tree (n, lst) -> Tree (n, loop [] (fn, hn) lst)
+    | _ -> failwith "error"
+
+let make_tree (idx : index) =
+  let tree = Tree (".", []) in
+  List.fold_left tree_insert tree idx
 
 (* creates a tree object for the given directory. Returns the hash.*)
 let create_tree (dir_name: string) : string =
