@@ -86,12 +86,10 @@ let create_blob (file_name: string) : string =
   let hsh = hash file_name in
   let d1 = String.sub hsh 0 2 in
   if not (Sys.file_exists (".cml/objects/"^d1)) then
-  mkdir (".cml/objects/"^d1) perm;
+    mkdir (".cml/objects/"^d1) perm;
   let f1 = String.sub hsh 2 (String.length hsh -2) in
   let path = ".cml/objects/"^d1^"/"^f1 in
-  open_out path |> close_out;
-  copy file_name path;
-  d1^f1
+    open_out path |> close_out; copy file_name path; d1^f1
 
 (* creates a tree object for the given directory. Returns the hash.*)
 let create_tree (dir_name: string) : string =
@@ -163,32 +161,32 @@ let switch_version (version : string) : unit =
 (* returns the index which is a list that maps tracked filenames
 * to their most recent hash string value *)
 let get_index () : index =
-try
-  let in_ch = open_in ".cml/index" in
-  let rec parse_index ch acc =
-    try
-      let raw = input_line ch in let split = String.index raw ' ' in
-      let file_path = String.sub raw 0 split in
-      let hash = String.sub raw split (String.length raw - split) in
-      (file_path,hash)::acc
-    with
-      End_of_file ->   close_in ch; acc
-  in parse_index in_ch []
-with
-  | Sys_error _ -> []
+  try
+    let rec parse_index acc ch =
+      try
+        let raw = input_line ch in let split = String.index raw ' ' in
+        let file_path = String.sub raw 0 split in
+        let hash = String.sub raw (split+1) (String.length raw - (split+1)) in
+          parse_index ((file_path,hash)::acc) ch
+      with
+        End_of_file -> close_in ch; acc
+    in parse_index [] (open_in ".cml/index")
+  with
+    | Sys_error _ -> []
 
 (* updates the index by adding a new mapping *)
-let update_index (idx : index) (map : string * string) : index =
-  let (file_path, _) = map in
-  map::(List.remove_assoc file_path idx)
+let update_index (file_name : string) (hash : string) : index =
+  let idx = get_index () in
+  (file_name,hash) :: (List.remove_assoc file_name idx)
+
 
 (* initializes an index in the cml directory *)
 let set_index (idx : index) : unit =
-  let out_ch = open_out ".cml/index" in
-  let rec write_index to_ch = function
-    | [] -> close_out to_ch
-    | (fp, h)::t -> output_string to_ch (fp ^ " " ^ h); write_index to_ch t
-  in write_index out_ch idx
+  let rec write_index ch = function
+    | [] -> close_out ch
+    | (f,h)::t -> output_string ch (f^" "^h^"\n"); write_index ch t
+  in
+  write_index (open_out ".cml/index") idx
 
 (****************************** File Fetching *********************************)
 (******************************************************************************)
@@ -210,14 +208,15 @@ let rec get_all_files (dirs : string list) (acc : string list) : string list =
   let rec loop dir_h path files directories =
     try
       let temp = readdir dir_h in
-      let f_name = if path = "" || path = "./" then temp else (path ^ "/" ^ temp) in
-      if Sys.is_directory f_name then loop dir_h path files (f_name::directories)
-      else loop dir_h path (f_name::files) directories
+      let f_name = (if path = "" || path = "./" then temp else (path^"/"^temp)) in
+      if Sys.is_directory f_name then
+        loop dir_h path files (f_name::directories)
+      else
+        loop dir_h path (f_name::files) directories
     with
       End_of_file -> closedir dir_h; (files, directories)
-  in
-  match dirs with
-    | [] -> acc
+  in match dirs with
+    | [] -> List.sort (Pervasives.compare) acc
     | dir_name::t -> begin
       if is_bad_dir dir_name then
         get_all_files t acc
@@ -228,11 +227,16 @@ let rec get_all_files (dirs : string list) (acc : string list) : string list =
     end
 
 (* returns a list of all files staged (added) for commit *)
-let rec get_staged (idx : index) : string list = []
-  (* TODO: compare [idx] to the index of the HEAD to see which file
-   * hashes are added/staged for a commit *)
+(* precondition: all files have objects in [.cml/objects/] *)
+let rec get_staged (idx : index) : string list =
+  let find_staged acc (f,h) =
+    let d1 = String.sub h 0 2 in
+    let f1 = String.sub h 2 (String.length h - 2) in
+      if (Sys.file_exists (".cml/objects/"^d1^"/"^f1)) then f::acc else acc
+  in
+  List.fold_left find_staged [] idx |> List.sort (Pervasives.compare)
 
-(* returns a list of changed files *)
+(* returns a list of changed files (different from the working index) *)
 let get_changed (cwd : string list) (idx : index) : string list =
   let find_changed acc fn =
     try
@@ -242,7 +246,7 @@ let get_changed (cwd : string list) (idx : index) : string list =
     with
     | Not_found -> acc
   in
-  List.fold_left find_changed [] cwd
+  List.fold_left find_changed [] cwd |> List.sort (Pervasives.compare)
 
 (* returns a list of untracked files *)
 let get_untracked (cwd : string list) (idx : index) : string list =
@@ -250,9 +254,9 @@ let get_untracked (cwd : string list) (idx : index) : string list =
     try
       let _ = List.assoc fn idx in acc
     with
-    | Not_found -> if fn.[0] = '.'then acc else fn::acc
+    | Not_found -> if fn.[0] = '.' then acc else fn::acc
   in
-  List.fold_left find_untracked [] cwd
+  List.fold_left find_untracked [] cwd |> List.sort (Pervasives.compare)
 
 (******************************** Branching ***********************************)
 (******************************************************************************)

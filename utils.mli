@@ -89,12 +89,12 @@ val switch_version: string -> unit
 (***************************** Index Manipulation *****************************)
 (******************************************************************************)
 
-(* updates the index by adding a new mapping *)
-val update_index: index -> string * string -> index
-
 (* returns the index which is a list that maps tracked filenames
  * to their most recent hash string value *)
 val get_index: unit -> index
+
+(* updates the index by adding a new mapping *)
+val update_index: string -> string -> index
 
 (* initializes an index in the cml directory *)
 val set_index: index -> unit

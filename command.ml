@@ -14,19 +14,25 @@ let perm = 0o777
 
 (* add file contents to the index *)
 let add (args: string list) : unit =
-  try
-  (* if List.hd args = "." or "-A" then
-  run on all files that are changed. use diff? else *)
-  List.iter (fun file_name ->
-  if not (Sys.file_exists file_name) then
-  raise (Fatal "That file does not exist.")
-  else let hash = (create_blob file_name) in
-  let idx = get_index () in
-  update_index idx (file_name,hash) |> set_index ) args;
-  with
-  | Failure f -> print ("Fatal: add must accept files")
-  | Fatal msg -> print ("Fatal: " ^msg)
-
+  let add_help file =
+    if Sys.file_exists file then
+      create_blob file |> update_index file |> set_index
+    else
+      raise (Fatal ("pathspec '"^file^"' does not match an file(s)"))
+  in
+  match args with
+  | [] -> raise (Fatal "nothing files specified")
+  | f::[] -> begin
+    if f = "." || f = "-A" then (* add all files *)
+      let cwd = get_all_files ["./"] [] in
+      let idx = get_index () in
+      let ch = get_changed cwd idx in
+      let ut = get_untracked cwd idx in
+      List.iter add_help (ut@ch)
+    else
+      add_help f
+  end
+  | _ -> List.iter add_help args
 
 (* list, create, or delete branches *)
 let branch (args: string list) : unit =
@@ -57,12 +63,9 @@ let checkout (args: string list) : unit =
       raise (Fatal "branch name required")
     else
       begin
-        if (get_branches () |> List.mem h) then
-          switch_branch h
-        else if (get_versions () |> List.mem h) then
-          switch_version h
-        else
-          raise (Fatal ("pathspec '"^h^"' does not match an file(s) know to cml"))
+        if (get_branches () |> List.mem h) then switch_branch h
+        else if (get_versions () |> List.mem h) then switch_version h
+        else raise (Fatal ("pathspec '"^h^"' does not match an file(s)"))
       end
   end
   | flag::b::_ -> begin
@@ -119,7 +122,7 @@ let stash (args: string list) : unit =
 
 (* show the working tree status *)
 let status () : unit =
-    print ("On branch " ^ (get_current_branch ()));
+    print ("On branch "^(get_current_branch ())^"\n");
     let cwd = get_all_files ["./"] [] in
     let idx = get_index () in
     let st = get_staged idx in
