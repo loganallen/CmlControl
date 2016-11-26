@@ -62,7 +62,7 @@ val create_blob: string -> string
 val create_tree: index -> string
 
 (* creates a commit object for the given commit. Returns the hash. *)
-val create_commit: string -> index -> string -> string
+val create_commit: index -> string -> string -> string -> string
 
 (**************************** HEAD Ptr Manipulation ***************************)
 (******************************************************************************)

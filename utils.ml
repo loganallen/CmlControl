@@ -158,15 +158,16 @@ let create_tree (idx : index) : string =
   write_tree tree
 
 (* creates a commit object for the given commit. Returns the hash. *)
-let create_commit (msg: string) (idx : index) (last_commit : string) : string =
+let create_commit (idx : index) (msg: string) (username : string) (parent : string) : string =
   let rec write_commit oc = function
     | [] -> close_out oc
     | h::t -> Printf.fprintf oc "%s\n" h; write_commit oc t
   in
-  let commit_tree = create_tree idx in
-  let temp_name = ".cml/temp_commit"^commit_tree in
+  let commit_hsh = create_tree idx in
+  let temp_name = ".cml/temp_commit"^commit_hsh in
   let oc = open_out temp_name in
-  let _ = write_commit oc [("tree " ^ commit_tree);("mesg " ^ msg);("lstc " ^ last_commit)] in
+  let lines = [("commit " ^ commit_hsh);("message " ^ msg);("user " ^ username);("parent " ^ parent)] in
+  let _ = write_commit oc lines in
   let hsh = hash temp_name in
   let d1 = String.sub hsh 0 2 in
   if not (Sys.file_exists (".cml/objects/"^d1)) then

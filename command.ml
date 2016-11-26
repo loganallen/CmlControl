@@ -82,7 +82,8 @@ let checkout (args: string list) : unit =
 let commit (args: string list) : unit =
   let idx = get_index () in
   let last_commit = try get_head () with Fatal n -> "None" in
-  let nh = create_commit "test" idx last_commit in
+  let username = get_user_info () in
+  let nh = create_commit idx "test" username last_commit in
   set_head nh
 
 (* show changes between working tree and previous commits *)
