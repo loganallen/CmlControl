@@ -141,7 +141,7 @@ let rec write_tree tree =
   in match tree with
     | Tree (n, lst) ->
       begin
-        let temp_name = "temp_"^n in
+        let temp_name = ".cml/temp_"^n in
         let oc = open_out temp_name in
         let _ = write_lines oc (tree_data [] lst) in
         let hsh = hash temp_name in
