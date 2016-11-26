@@ -14,26 +14,26 @@ let perm = 0o777
 
 (* add file contents to the index *)
 let add (args: string list) : unit =
-  let add_help file =
+  let add_help idx_acc file =
     if Sys.file_exists file then
-    let hash = create_blob file in
-      get_index () |> update_index (file,hash) |> set_index
+      let hash = create_blob file in
+      update_index (file,hash) idx_acc
     else
       raise (Fatal ("pathspec '"^file^"' does not match an file(s)"))
   in
   match args with
   | [] -> raise (Fatal "nothing files specified")
   | f::[] -> begin
-    if f = "." || f = "-A" then (* add all files *)
-      let cwd = get_all_files ["./"] [] in
-      let idx = get_index () in
-      let ch = get_changed cwd idx in
-      let ut = get_untracked cwd idx in
-      List.iter add_help (ut@ch)
-    else
-      add_help f
+    let idx = get_index () in
+      if f = "." || f = "-A" then (* add all files *)
+        let cwd = get_all_files ["./"] [] in
+        let ch = get_changed cwd idx in
+        let ut = get_untracked cwd idx in
+          List.fold_left add_help idx (ut@ch) |> set_index
+      else
+        add_help idx f |> set_index
   end
-  | _ -> List.iter add_help args
+  | _ -> List.fold_left add_help (get_index ()) args |> set_index
 
 (* list, create, or delete branches *)
 let branch (args: string list) : unit =
