@@ -131,8 +131,8 @@ let make_tree (idx : index) =
 let rec write_tree tree =
   let rec tree_data acc = function
     | [] -> acc
-    | (Blob (fn,hn))::t -> tree_data ((fn ^ " " ^ hn)::acc) t
-    | (Tree (n, lst))::t -> tree_data ((write_tree (Tree (n, lst)))::acc) t
+    | (Blob (fn,hn))::t -> tree_data (("blob " ^ hn ^ " " ^ fn)::acc) t
+    | (Tree (n, lst))::t -> tree_data (("tree " ^ (write_tree (Tree (n, lst))) ^ " " ^ n)::acc) t
   in let rec write_lines oc = function
     | [] -> close_out oc;
     | h::t -> Printf.fprintf oc "%s\n" h; write_lines oc t
