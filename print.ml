@@ -35,7 +35,8 @@ let print_staged (files : string list) : unit =
   | [] -> ()
   | _  -> begin
     print "Changes to be committed:";
-    List.iter (fun s -> print_indent s "green" 3) files;
+    print_indent "(use \"cml rm --cached? <file>...\" to unstage)\n" "" 1;
+    List.iter (fun s -> print_indent s "green" 3) files; print_newline ()
   end
 
 (* prints the files not staged for commit *)
@@ -44,8 +45,8 @@ let print_changed (files : string list) : unit =
   | [] -> ()
   | _  -> begin
     print ("Changes not staged for commit:");
-    print_indent "(use \"cml add <file>\" to stage for commit)" "" 1;
-    List.iter (fun s -> print_indent s "red" 3) files;
+    print_indent "(use \"cml add <file>\" to stage for commit)\n" "" 1;
+    List.iter (fun s -> print_indent s "red" 3) files; print_newline ()
   end
 
 (* prints untracked files *)
@@ -54,8 +55,8 @@ let print_untracked (files : string list) : unit =
   | [] -> ()
   | _  -> begin
     print ("Untracked files:");
-    print_indent "(use \"cml add <file>\" to include in commit)" "" 1;
-    List.iter (fun s -> print_indent s "red" 3) files;
+    print_indent "(use \"cml add <file>\" to include in commit)\n" "" 1;
+    List.iter (fun s -> print_indent s "red" 3) files; print_newline ()
   end
 
 (* prints a help log for all Cml commands *)
