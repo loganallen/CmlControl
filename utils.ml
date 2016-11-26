@@ -100,7 +100,7 @@ let create_blob (file_name: string) : string =
   copy file_name path;
   d1^f1
 
-(************************** Tree Creation and Writing *************************)
+(************************** Tree Creation & Helpers ***************************)
 (******************************************************************************)
 let rec tree_insert tree (fn, hn) =
   let rec loop acc (fn, hn) = function
@@ -130,9 +130,34 @@ let make_tree (idx : index) =
   let tree = Tree (".", []) in
   List.fold_left tree_insert tree idx
 
+let rec write_tree tree =
+  let rec tree_data acc = function
+    | [] -> acc
+    | (Blob (fn,hn))::t -> tree_data ((fn ^ " " ^ hn)::acc) t
+    | (Tree (n, lst))::t -> tree_data ((write_tree (Tree (n, lst)))::acc) t
+  in let rec write_lines oc = function
+    | [] -> close_out oc;
+    | h::t -> Printf.fprintf oc "%s\n" h; write_lines oc t
+  in match tree with
+    | Tree (n, lst) ->
+      begin
+        let temp_name = "temp_"^n in
+        let oc = open_out temp_name in
+        let _ = write_lines oc (tree_data [] lst) in
+        let hsh = hash temp_name in
+        let d1 = String.sub hsh 0 2 in
+        if not (Sys.file_exists (".cml/objects/"^d1)) then
+        mkdir (".cml/objects/"^d1) perm;
+        let f1 = String.sub hsh 2 (String.length hsh -2) in
+        let path = ".cml/objects/"^d1^"/"^f1 in
+        Sys.rename temp_name path; path
+      end
+    | _ -> failwith "write-tree error"
+
 (* creates a tree object for the given directory. Returns the hash.*)
-let create_tree (dir_name: string) : string =
-  failwith "Unimplemented"
+let create_tree (idx : index) : string =
+  let tree = make_tree idx in
+  write_tree tree
 
 (* creates a commit object for the given commit. Returns the hash. *)
 let create_commit (msg: string) : string =

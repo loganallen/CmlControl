@@ -59,7 +59,7 @@ val decompress: string -> string -> unit
 val create_blob: string -> string
 
 (* creates a tree object for the given directory. Returns the hash.*)
-val create_tree: string -> string
+val create_tree: index -> string
 
 (* creates a commit object for the given commit. Returns the hash. *)
 val create_commit: string -> string
