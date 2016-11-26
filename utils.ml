@@ -148,7 +148,7 @@ let rec write_tree tree =
         mkdir (".cml/objects/"^d1) perm;
         let f1 = String.sub hsh 2 (String.length hsh -2) in
         let path = ".cml/objects/"^d1^"/"^f1 in
-        Sys.rename temp_name path; path
+        Sys.rename temp_name path; (d1 ^ f1)
       end
     | _ -> failwith "write-tree error"
 
@@ -173,8 +173,7 @@ let create_commit (msg: string) (idx : index) (last_commit : string) : string =
   mkdir (".cml/objects/"^d1) perm;
   let f1 = String.sub hsh 2 (String.length hsh -2) in
   let path = ".cml/objects/"^d1^"/"^f1 in
-  Sys.rename temp_name path; path
-
+  Sys.rename temp_name path; (d1 ^ f1)
 
 (**************************** HEAD Ptr Manipulation ***************************)
 (******************************************************************************)

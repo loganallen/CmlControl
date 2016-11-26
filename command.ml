@@ -81,7 +81,7 @@ let checkout (args: string list) : unit =
  * along with commit metadata. *)
 let commit (args: string list) : unit =
   let idx = get_index () in
-  let last_commit = get_head () in
+  let last_commit = try get_head () with Fatal n -> "None" in
   let nh = create_commit "test" idx last_commit in
   set_head nh
 
