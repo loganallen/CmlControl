@@ -80,7 +80,10 @@ let checkout (args: string list) : unit =
  * stores the current contents of the index in a new commit
  * along with commit metadata. *)
 let commit (args: string list) : unit =
-  failwith "Unimplemented"
+  let idx = get_index () in
+  let last_commit = get_head () in
+  let nh = create_commit "test" idx last_commit in
+  set_head nh
 
 (* show changes between working tree and previous commits *)
 let diff (args: string list) : unit =
