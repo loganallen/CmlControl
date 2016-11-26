@@ -16,7 +16,8 @@ let perm = 0o777
 let add (args: string list) : unit =
   let add_help file =
     if Sys.file_exists file then
-      create_blob file |> update_index file |> set_index
+    let hash = create_blob file in
+      get_index () |> update_index (file,hash) |> set_index
     else
       raise (Fatal ("pathspec '"^file^"' does not match an file(s)"))
   in

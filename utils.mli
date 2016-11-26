@@ -94,7 +94,7 @@ val switch_version: string -> unit
 val get_index: unit -> index
 
 (* updates the index by adding a new mapping *)
-val update_index: string -> string -> index
+val update_index: string * string -> index -> index
 
 (* initializes an index in the cml directory *)
 val set_index: index -> unit

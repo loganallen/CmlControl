@@ -175,9 +175,8 @@ let get_index () : index =
     | Sys_error _ -> []
 
 (* updates the index by adding a new mapping *)
-let update_index (file_name : string) (hash : string) : index =
-  let idx = get_index () in
-  (file_name,hash) :: (List.remove_assoc file_name idx)
+let update_index (map : string * string) (idx : index) : index =
+  map :: (List.remove_assoc (fst map) idx)
 
 
 (* initializes an index in the cml directory *)
