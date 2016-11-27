@@ -1,5 +1,5 @@
 install:
-	ocamlbuild -pkgs unix,ANSITerminal,cryptokit,camlzip cml.byte
+	ocamlbuild -pkgs unix,ANSITerminal,cryptokit,camlzip,str cml.byte
 	cp cml /usr/local/bin
 	cp cml.byte /usr/local/bin
 
