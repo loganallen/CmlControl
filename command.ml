@@ -166,7 +166,7 @@ let parse_input (args : string array) : input =
 (* executes a Cml command *)
 let execute (i : input) : unit =
   try
-    if not (i.cmd = Init || i.cmd = Help) && not (cml_initialized "./") then
+    if not (i.cmd = Init || i.cmd = Help) && not (cml_initialized_r "./") then
       raise (Fatal "Not a Cml repository (or any of the parent directories)")
     else
       match i.cmd with
