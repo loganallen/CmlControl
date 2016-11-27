@@ -98,6 +98,7 @@ module Tree = struct
     (obj_type, obj_hash, obj_name)
 
   let rec read_tree (tree_name : string) (ptr : string) : t =
+    let fold_helper acc (dn, ptr) = (read_tree dn ptr)::acc in
     let rec loop ic dirs acc =
       try
         let raw = input_line ic in
@@ -107,7 +108,7 @@ module Tree = struct
           | "tree" -> loop ic ((obj_name, obj_hash)::dirs) acc
           | _ -> failwith "read_tree: error"
       with
-        End_of_file -> close_in ic; acc@(List.fold_left (fun acc (dn, ptr) -> (read_tree dn ptr)::acc) [] dirs)
+        End_of_file -> close_in ic; acc@(List.fold_left fold_helper [] dirs)
     in
     let ic = open_in (Utils.get_object_path ptr) in
     Tree(tree_name, loop ic [] [])
