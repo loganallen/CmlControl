@@ -73,6 +73,10 @@ let path_contains_name path name =
 let string_contains str sub =
   Str.string_match (Str.regexp (".*"^sub^".*")) str 0
 
+(* returns [str] without [sub] *)
+let remove_from_string str sub =
+  Str.replace_first (Str.regexp sub) "" str
+
 
 (************************* File Compression & Hashing *************************)
 (******************************************************************************)

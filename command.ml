@@ -115,16 +115,26 @@ let reset (args: string list) : unit =
 
 (* remove files from working tree and index *)
 let rm (args: string list) : unit =
+  let cml = match cml_path "./" with
+  | Some s -> s
+  | None -> raise (Fatal "Not a Cml repository (or any of the parent directories)")
+  in
   if args = [] then
     raise (Fatal "no files specified")
   else
     let remove_from_idx file =
-      let rm_helper acc (path,hash) =
-        if path_contains_name path file then acc else (path,hash)::acc
-      in
-      let idx = get_index () in
-      let idx' = List.fold_left rm_helper [] idx in
-      set_index idx'
+      if Sys.file_exists file then
+        let file' = if cml = "./" then file else remove_from_string file cml in
+        let rm_file acc (path,hash) =
+          if file' = path then acc else (path,hash)::acc
+        in
+        (* let rm_dir acc (path,hash) =
+          if path_contains_name path file then acc else (path,hash)::acc *)
+        let idx = get_index () in
+        let idx' = List.fold_left rm_file [] idx in
+        set_index idx'
+      else
+        raise (Fatal ("pathspec '"^file^"' does not match an file(s)"))
     in
     List.iter remove_from_idx args
 

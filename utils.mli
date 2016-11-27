@@ -49,11 +49,14 @@ val ($): string -> char -> string
  * (or any of the parent directories) *)
 val chdir_to_cml : unit -> unit
 
+(* returns true if [name] is a file or directory name in [path] *)
+val path_contains_name : string -> string -> bool
+
 (* returns true if [sub] is a substring of [str] *)
 val string_contains : string -> string -> bool
 
-(* returns true if [name] is a file or directory name in [path] *)
-val path_contains_name : string -> string -> bool
+(* returns [str] without [sub] *)
+val remove_from_string : string -> string -> string
 
 (************************* File Compression & Hashing *************************)
 (******************************************************************************)
