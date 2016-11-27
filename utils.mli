@@ -74,6 +74,9 @@ val create_blob: string -> string
 (* creates a commit object for the given commit. Returns the hash. *)
 val create_commit: string -> string -> string -> string -> string
 
+(* returns a commit record for the given commit ptr *)
+val parse_commit: string -> commit
+
 (**************************** HEAD Ptr Manipulation ***************************)
 (******************************************************************************)
 
