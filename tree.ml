@@ -66,7 +66,7 @@ module Tree = struct
       | Tree (n, lst) -> helper n [] lst
       | Blob _ -> []
 
-  let read_tree (ptr : string) : t =
+  (*let read_tree (ptr : string) : t =
     let rec read_tree_help (acc:t) (ch:in_channel) =
       try
         let raw = input_line ch in
@@ -89,7 +89,24 @@ module Tree = struct
       | End_of_file -> let _ = close_in ch in acc
     in
     let (_,path) = split_hash ptr in
-    open_in path |> read_tree_help empty
+    open_in path |> read_tree_help empty*)
+
+
+  let rec read_tree (tree_name : string) (ptr : string) : t =
+    let rec loop ic dirs acc =
+      try
+        let raw = input_line ic in
+        let hsh = String.sub raw 5 40 in
+        let name = String.sub raw 46 (String.length raw - 46) in
+        match String.sub raw 0 4 with
+          | "blob" -> loop ic dirs ((Blob (name, hsh))::acc)
+          | "tree" -> loop ic ((name, hsh)::dirs) acc
+          | _ -> failwith "read_tree: error"
+      with
+        End_of_file -> close_in ic; acc@(List.fold_left (fun acc (dn, ptr) -> (read_tree dn ptr)::acc) [] dirs)
+    in
+    let ic = open_in (Utils.get_object_path ptr) in
+    Tree(tree_name, loop ic [] [])
 
   let rec write_tree (tree : t) : string =
     let rec tree_data acc = function
