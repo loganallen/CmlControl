@@ -20,13 +20,47 @@ let perm = 0o777
 (***************************** Generic Helpers ********************************)
 (******************************************************************************)
 
-(* returns true if the current directory (or parent) is an initialized Cml repo,
- * otherwise raises an exception *)
+(* returns the option path to the nearest .cml directory from the cwd
+ * (current working directory). *)
+let cml_path path =
+  let rec cml_path_helper i acc =
+    if i = 0 then
+      raise (Fatal "Not a Cml repository (or any of the parent directories)")
+    else
+      if Sys.file_exists (acc^".cml") then
+        Some acc
+      else
+        cml_path_helper (i-1) (acc^"../")
+  in
+  let cwd = Sys.getcwd () in
+  let i = ref 0 in
+  String.iter (fun c -> if c = '/' then incr i else ()) cwd;
+  cml_path_helper !i path
+
+(* returns true if the path contains an initialized Cml repo,
+ * otherwise returns false *)
 let cml_initialized (path : string) : bool =
-  Sys.file_exists ".cml"
+  Sys.file_exists (path^".cml")
+
+(* returns true if the current directory (or parent) is an initialized Cml repo,
+ * otherwise returns false *)
+let cml_initialized_r path =
+  match cml_path path with
+  | Some _ -> true
+  | None -> false
+
+(* sets the cwd (current working directory) to the nearest .cml directory.
+ * Raises Fatal exception if directory is not a Cml repository
+ * (or any of the parent directories) *)
+let chdir_to_cml () =
+  match cml_path ((Sys.getcwd ())^"/") with
+  | Some path -> Sys.chdir path
+  | None -> raise (Fatal "Not a Cml repository (or any of the parent directories)")
+
 
 (* ($) is an infix operator for appending a char to a string *)
 let ($) (str : string) (c : char) : string =  str ^ Char.escaped c
+
 
 (************************* File Compression & Hashing *************************)
 (******************************************************************************)
