@@ -62,7 +62,15 @@ module Tree = struct
   let index_to_tree (idx : index) =
     List.fold_left insert empty idx
 
-  let tree_to_index (tree : t) = []
+  let tree_to_index (tree : t) =
+    let rec helper path acc = function
+      | [] -> acc
+      | (Tree (n, lst))::t ->
+          helper path (helper (if path = "" then n else path ^ "/" ^ n) [] lst) t
+      | (Blob (fn, hn))::t -> helper path (((path ^ fn), hn)::acc) t
+    in match tree with
+      | Tree (n, lst) -> helper n [] lst
+      | Blob _ -> []
 
   let read_tree (ptr : string) = empty
 
