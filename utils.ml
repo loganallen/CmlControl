@@ -5,9 +5,8 @@ open Print
 type commit = {
   author: string;
   message: string;
-  date: string;
-  tree_ptr: string;
-  prev_commit_ptr: string;
+  tree: string;
+  parent: string;
 }
 
 type blob = string
@@ -99,7 +98,7 @@ let create_commit (commit : string) (msg: string) (username : string) (parent : 
   in
   let temp_name = ".cml/temp_commit"^commit in
   let oc = open_out temp_name in
-  let lines = [("commit " ^ commit);("message " ^ msg);("user " ^ username);("parent " ^ parent)] in
+  let lines = [commit;msg;username;parent] in
   let _ = write_commit oc lines in
   let hsh = hash temp_name in
   let d1 = String.sub hsh 0 2 in
@@ -108,6 +107,23 @@ let create_commit (commit : string) (msg: string) (username : string) (parent : 
   let f1 = String.sub hsh 2 (String.length hsh -2) in
   let path = ".cml/objects/"^d1^"/"^f1 in
   Sys.rename temp_name path; (d1 ^ f1)
+
+let parse_commit (commit : string) : commit =
+  try
+    let dir = String.sub commit 0 2 in
+    let name = String.sub commit 3 (String.length commit - 2) in
+    let path = ".cml/objects/" ^ dir ^ name in
+    let ic = open_in path in
+    let tree = input_line ic in
+    let msg = input_line ic in
+    let user = input_line ic in
+    let parent = input_line ic in
+    close_in ic; { author = user; message = msg; tree = tree; parent = parent }
+  with
+    | Sys_error _ -> raise (Fatal ("commit - " ^ commit ^ ": not found"))
+    | Invalid_argument _ -> raise (Fatal ("commit - " ^ commit ^ ": not valid"))
+    | End_of_file -> raise (Fatal ("commit - " ^ commit ^ ": corrupted"))
+
 
 (**************************** HEAD Ptr Manipulation ***************************)
 (******************************************************************************)

@@ -7,9 +7,8 @@
 type commit = {
   author: string;
   message: string;
-  date: string;
-  tree_ptr: string;
-  prev_commit_ptr: string;
+  tree: string;
+  parent: string;
 }
 
 (* type blob represents a compressed file object *)
