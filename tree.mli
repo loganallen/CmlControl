@@ -12,6 +12,8 @@ module type TreeSig = sig
 
   val tree_to_index : t -> index
 
+  val read_tree : string -> t
+
   val write_tree : t -> string
 
 end

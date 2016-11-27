@@ -14,6 +14,8 @@ module type TreeSig = sig
 
   val tree_to_index : t -> index
 
+  val read_tree : string -> t
+
   val write_tree : t -> string
 
 end
@@ -61,6 +63,8 @@ module Tree = struct
     List.fold_left insert empty idx
 
   let tree_to_index (tree : t) = []
+
+  let read_tree (ptr : string) = empty
 
   let rec write_tree tree =
     let rec tree_data acc = function
