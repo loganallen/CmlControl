@@ -118,11 +118,6 @@ let rm (args: string list) : unit =
   if args = [] then
     raise (Fatal "no files specified")
   else
-    (* let cwd = Sys.getcwd () in
-    let path = match cml_path "./" with
-    | Some s -> s
-    | None -> raise (Fatal "Not a Cml repository (or any of the parent directories)")
-    in *)
     let remove_from_idx file =
       let rm_helper acc (path,hash) =
         if path_contains_name path file then acc else (path,hash)::acc
