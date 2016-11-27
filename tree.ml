@@ -15,7 +15,7 @@ module type TreeSig = sig
   (* converts a tree to an index *)
   val tree_to_index : t -> index
   (* reads a tree from the filesystem and converts it to a tree *)
-  val read_tree : string -> t
+  val read_tree : string -> string -> t
   (* writes the tree to the filesystem *)
   val write_tree : t -> string
 

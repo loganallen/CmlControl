@@ -68,7 +68,7 @@ let get_object_path (hash : string) =
   let subdir = String.sub hash 0 2 in
   let fn = String.sub hash 2 (String.length hash - 2) in
   let path = root ^ subdir ^ "/" ^ fn in
-  if Sys.file_exists path then Some path else None
+  if Sys.file_exists path then path else raise (Fatal ("tree - "^hash^": doesn't exist"))
 
 (************************* File Compression & Hashing *************************)
 (******************************************************************************)

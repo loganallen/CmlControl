@@ -46,8 +46,8 @@ val chdir_to_cml : unit -> unit
 
 (* returns the path of an object represented by hash
  * precondition: hash is a valid  40 char string
- * postcondition: get_object_path return None if hash object doesn't exist *)
- val get_object_path : string -> string option
+ * postcondition: get_object_path raise Fatal if hash doens't exist *)
+ val get_object_path : string -> string
 
 (************************* File Compression & Hashing *************************)
 (******************************************************************************)
