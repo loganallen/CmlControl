@@ -30,7 +30,7 @@ let add (args: string list) : unit =
         let cwd = get_all_files ["./"] [] in
         let ch = get_changed cwd idx in
         let ut = get_untracked cwd idx in
-          List.fold_left add_help idx (ut@ch) |> set_index
+        List.fold_left add_help idx (ut@ch) |> set_index
       else
         add_help idx f |> set_index
   end

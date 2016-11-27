@@ -28,13 +28,6 @@ exception Fatal of string
  * otherwise raises an exception *)
 val cml_initialized: string -> bool
 
-(* ($) is an infix operator for appending a char to a string *)
-val ($): string -> char -> string
-
-(* returns a pairs (d1,path) where [d1] is the first 2 chars of the hash
- * and [path] is the .cml/objects path of the hash *)
-val split_hash: string -> string * string
-
 (************************* File Compression & Hashing *************************)
 (******************************************************************************)
 

@@ -1,21 +1,22 @@
 open Unix
+open Common
 
 module type TreeSig = sig
 
   type t
-
   type index = (string * string) list
 
+  (* an empty Tree *)
   val empty : t
-
+  (* inserts a file_name to hash mapping into the given tree *)
   val insert : t -> string * string -> t
-
+  (* converts an index to a tree *)
   val index_to_tree : index -> t
-
+  (* converts a tree to an index *)
   val tree_to_index : t -> index
-
+  (* reads a tree from the filesystem and converts it to a tree *)
   val read_tree : string -> t
-
+  (* writes the tree to the filesystem *)
   val write_tree : t -> string
 
 end
@@ -26,16 +27,9 @@ module Tree = struct
 
   type index = (string * string) list
 
-  let empty = Tree (".", [])
+  let empty : t = Tree (".", [])
 
-  (* returns (dir_name, file_name) for any string with the format "dir_name/file_name" *)
-  let split_path fn =
-    let split = String.index fn '/' in
-    let dir_name = String.sub fn 0 split in
-    let file_name = String.sub fn (split + 1) (String.length fn - split - 1) in
-    (dir_name, file_name)
-
-  let rec insert tree (fn, hn) =
+  let rec insert (tree : t) (fn, hn) : t =
     let rec loop acc (fn, hn) = function
       | [] ->
         begin
@@ -59,10 +53,10 @@ module Tree = struct
       | Tree (n, lst) -> Tree (n, loop [] (fn, hn) lst)
       | _ -> failwith "error"
 
-  let index_to_tree (idx : index) =
+  let index_to_tree (idx : index) : t =
     List.fold_left insert empty idx
 
-  let tree_to_index (tree : t) =
+  let tree_to_index (tree : t) : index =
     let rec helper path acc = function
       | [] -> acc
       | (Tree (n, lst))::t ->
@@ -72,29 +66,50 @@ module Tree = struct
       | Tree (n, lst) -> helper n [] lst
       | Blob _ -> []
 
-  let read_tree (ptr : string) = empty
+  let read_tree (ptr : string) : t =
+    let rec read_tree_help (acc:t) (ch:in_channel) =
+      try
+        let raw = input_line ch in
+        if raw = "" then
+          let _ = close_in ch in acc
+        else begin
+          let sp1 = 1 + String.index raw ' ' in
+          let sp2 = String.index_from raw sp1 ' ' in
+          let typ = String.sub raw 0 (sp1 - 1) in
+          let hsh = String.sub raw sp1 (sp2 - sp1) in
+          let fn = String.sub raw (sp2 + 1) (String.length raw - (sp2 + 1)) in
+          if typ = "blob" then
+            read_tree_help (insert acc (fn,hsh)) ch
+          else (* tree *)
+            let (_,path) = split_hash hsh in
+            let sub_trees = open_in path |> read_tree_help empty in
+            read_tree_help (insert acc (fn,)) ch
+        end
+      with
+      | End_of_file -> let _ = close_in ch in acc
+    in
+    let (_,path) = split_hash ptr in
+    open_in path |> read_tree_help empty
 
-  let rec write_tree tree =
+  let rec write_tree (tree : t) : string =
     let rec tree_data acc = function
       | [] -> acc
       | (Blob (fn,hn))::t -> tree_data (("blob " ^ hn ^ " " ^ fn)::acc) t
       | (Tree (n, lst))::t -> tree_data (("tree " ^ (write_tree (Tree (n, lst))) ^ " " ^ n)::acc) t
-    in let rec write_lines oc = function
-      | [] -> close_out oc;
-      | h::t -> Printf.fprintf oc "%s\n" h; write_lines oc t
+    in let rec write_lines ch = function
+      | [] -> close_out ch;
+      | h::t -> Printf.fprintf ch "%s\n" h; write_lines ch t
     in match tree with
       | Tree (n, lst) ->
         begin
           let temp_name = ".cml/temp_"^n in
-          let oc = open_out temp_name in
-          let _ = write_lines oc (tree_data [] lst) in
+          let ch = open_out temp_name in
+          let _ = tree_data [] lst |> write_lines ch in
           let hsh = Utils.hash temp_name in
-          let d1 = String.sub hsh 0 2 in
+          let (d1,path) = split_hash hsh in
           if not (Sys.file_exists (".cml/objects/"^d1)) then
           mkdir (".cml/objects/"^d1) 0o777;
-          let f1 = String.sub hsh 2 (String.length hsh -2) in
-          let path = ".cml/objects/"^d1^"/"^f1 in
-          Sys.rename temp_name path; (d1 ^ f1)
+          Sys.rename temp_name path; hsh
         end
       | _ -> failwith "write-tree error"
 

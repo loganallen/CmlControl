@@ -1,6 +1,7 @@
 open Unix
 open Cryptokit
 open Print
+open Common
 
 type commit = {
   author: string;
@@ -24,17 +25,6 @@ let perm = 0o777
  * otherwise raises an exception *)
 let cml_initialized (path : string) : bool =
   Sys.file_exists ".cml"
-
-(* ($) is an infix operator for appending a char to a string *)
-let ($) (str : string) (c : char) : string =  str ^ Char.escaped c
-
-(* returns a pairs (d1,path) where [d1] is the first 2 chars of the hash
- * and [path] is the .cml/objects path of the hash *)
-let split_hash (hash : string) : string * string =
-  let d1 = String.sub hash 0 2 in
-  let f1 = String.sub hash 2 (String.length hash - 2) in
-  let path = ".cml/objects/"^d1^"/"^f1 in
-    (d1,path)
 
 (************************* File Compression & Hashing *************************)
 (******************************************************************************)
