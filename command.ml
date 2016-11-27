@@ -1,6 +1,7 @@
 open Utils
 open Print
 open Unix
+open Tree
 
 type command =
 | Add | Branch | Checkout | Commit | Diff | Help | Init | Log
@@ -83,7 +84,8 @@ let commit (args: string list) : unit =
   let idx = get_index () in
   let last_commit = try get_head () with Fatal n -> "None" in
   let username = get_user_info () in
-  let nh = create_commit idx "test" username last_commit in
+  let tree = Tree.index_to_tree idx |> Tree.write_tree in
+  let nh = create_commit tree "test" username last_commit in
   set_head nh
 
 (* show changes between working tree and previous commits *)

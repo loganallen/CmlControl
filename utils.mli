@@ -14,10 +14,6 @@ type commit = {
 
 (* type blob represents a compressed file object *)
 type blob = string
-(* type tree represents a directory with pointers to blobs/other trees
- * note: pointers in this case are string file names
- *)
-type tree = Blob of string * string | Tree of string * tree list
 
 (* type index is a list of mappings from filename to its hash,
  * referred to as the index in git *)
@@ -58,11 +54,8 @@ val decompress: string -> string -> unit
 (* creates a blob object for the given file. Returns the hash. *)
 val create_blob: string -> string
 
-(* creates a tree object for the given directory. Returns the hash.*)
-val create_tree: index -> string
-
 (* creates a commit object for the given commit. Returns the hash. *)
-val create_commit: index -> string -> string -> string -> string
+val create_commit: string -> string -> string -> string -> string
 
 (**************************** HEAD Ptr Manipulation ***************************)
 (******************************************************************************)
