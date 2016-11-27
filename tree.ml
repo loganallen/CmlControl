@@ -91,16 +91,20 @@ module Tree = struct
     let (_,path) = split_hash ptr in
     open_in path |> read_tree_help empty*)
 
+  let parse_tree_line (raw : string) =
+    let obj_type = String.sub raw 0 4 in
+    let obj_hash = String.sub raw 5 40 in
+    let obj_name = String.sub raw 46 (String.length raw - 46) in
+    (obj_type, obj_hash, obj_name)
 
   let rec read_tree (tree_name : string) (ptr : string) : t =
     let rec loop ic dirs acc =
       try
         let raw = input_line ic in
-        let hsh = String.sub raw 5 40 in
-        let name = String.sub raw 46 (String.length raw - 46) in
-        match String.sub raw 0 4 with
-          | "blob" -> loop ic dirs ((Blob (name, hsh))::acc)
-          | "tree" -> loop ic ((name, hsh)::dirs) acc
+        let (obj_type, obj_hash, obj_name) = parse_tree_line raw in
+        match obj_type with
+          | "blob" -> loop ic dirs ((Blob (obj_name, obj_hash))::acc)
+          | "tree" -> loop ic ((obj_name, obj_hash)::dirs) acc
           | _ -> failwith "read_tree: error"
       with
         End_of_file -> close_in ic; acc@(List.fold_left (fun acc (dn, ptr) -> (read_tree dn ptr)::acc) [] dirs)
