@@ -24,9 +24,30 @@ exception Fatal of string
 (***************************** Generic Helpers ********************************)
 (******************************************************************************)
 
-(* returns true if the current directory (or parent) is an initialized Cml repo,
- * otherwise raises an exception *)
+(* returns the option path to the nearest .cml directory from the cwd
+ * (current working directory). *)
+ val cml_path : string -> string option
+
+(* returns true if the path contains an initialized Cml repo,
+ * otherwise returns false *)
 val cml_initialized: string -> bool
+
+(* returns true if the current directory (or parent) is an initialized Cml repo,
+ * otherwise returns false *)
+val cml_initialized_r : string -> bool
+
+(* ($) is an infix operator for appending a char to a string *)
+val ($): string -> char -> string
+
+(* sets the cwd (current working directory) to the nearest .cml directory.
+ * Raises Fatal exception if directory is not a Cml repository
+ * (or any of the parent directories) *)
+val chdir_to_cml : unit -> unit
+
+(* returns the path of an object represented by hash
+ * precondition: hash is a valid  40 char string
+ * postcondition: get_object_path return None if hash object doesn't exist *)
+ val get_object_path : string -> string option
 
 (************************* File Compression & Hashing *************************)
 (******************************************************************************)
