@@ -61,6 +61,14 @@ let chdir_to_cml () =
 (* ($) is an infix operator for appending a char to a string *)
 let ($) (str : string) (c : char) : string =  str ^ Char.escaped c
 
+(* returns the path of an object with file name hash
+ * precondition: hash is a valid  40 char string *)
+let get_object_path (hash : string) =
+  let root = ".cml/objects/" in
+  let subdir = String.sub hash 0 2 in
+  let fn = String.sub hash 2 (String.length hash - 2) in
+  let path = root ^ subdir ^ "/" ^ fn in
+  if Sys.file_exists path then Some path else None
 
 (************************* File Compression & Hashing *************************)
 (******************************************************************************)
