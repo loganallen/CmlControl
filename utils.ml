@@ -28,6 +28,14 @@ let cml_initialized (path : string) : bool =
 (* ($) is an infix operator for appending a char to a string *)
 let ($) (str : string) (c : char) : string =  str ^ Char.escaped c
 
+(* returns a pairs (d1,path) where [d1] is the first 2 chars of the hash
+ * and [path] is the .cml/objects path of the hash *)
+let split_hash (hash : string) : string * string =
+  let d1 = String.sub hash 0 2 in
+  let f1 = String.sub hash 2 (String.length hash - 2) in
+  let path = ".cml/objects/"^d1^"/"^f1 in
+    (d1,path)
+
 (************************* File Compression & Hashing *************************)
 (******************************************************************************)
 
@@ -83,12 +91,10 @@ let decompress (file_name : string) (dest_path : string) : unit =
 (* creates a blob object for the given file. Returns the hash. *)
 let create_blob (file_name: string) : string =
   let hsh = hash file_name in
-  let d1 = String.sub hsh 0 2 in
+  let (d1,path) = split_hash hsh in
   if not (Sys.file_exists (".cml/objects/"^d1)) then
     mkdir (".cml/objects/"^d1) perm;
-  let f1 = String.sub hsh 2 (String.length hsh -2) in
-  let path = ".cml/objects/"^d1^"/"^f1 in
-    open_out path |> close_out; copy file_name path; d1^f1
+    open_out path |> close_out; copy file_name path; hsh
 
 (* creates a commit object for the given commit. Returns the hash. *)
 let create_commit (commit : string) (msg: string) (username : string) (parent : string) : string =
@@ -101,28 +107,25 @@ let create_commit (commit : string) (msg: string) (username : string) (parent : 
   let lines = [commit;msg;username;parent] in
   let _ = write_commit oc lines in
   let hsh = hash temp_name in
-  let d1 = String.sub hsh 0 2 in
-  if not (Sys.file_exists (".cml/objects/"^d1)) then
-  mkdir (".cml/objects/"^d1) perm;
-  let f1 = String.sub hsh 2 (String.length hsh -2) in
-  let path = ".cml/objects/"^d1^"/"^f1 in
-  Sys.rename temp_name path; (d1 ^ f1)
+  let (d1,path) = split_hash hsh in
+    if not (Sys.file_exists (".cml/objects/"^d1)) then
+      mkdir (".cml/objects/"^d1) perm;
+    Sys.rename temp_name path; hsh
 
-let parse_commit (commit : string) : commit =
+(* returns a commit record for the given commit ptr *)
+let parse_commit (ptr : string) : commit =
   try
-    let dir = String.sub commit 0 2 in
-    let name = String.sub commit 3 (String.length commit - 2) in
-    let path = ".cml/objects/" ^ dir ^ name in
-    let ic = open_in path in
-    let tree = input_line ic in
-    let msg = input_line ic in
-    let user = input_line ic in
-    let parent = input_line ic in
-    close_in ic; { author = user; message = msg; tree = tree; parent = parent }
+    let (d1,path) = split_hash ptr in
+    let ch = open_in path in
+    let tree = input_line ch in
+    let msg = input_line ch in
+    let user = input_line ch in
+    let parent = input_line ch in
+    close_in ch; { author = user; message = msg; tree = tree; parent = parent }
   with
-    | Sys_error _ -> raise (Fatal ("commit - " ^ commit ^ ": not found"))
-    | Invalid_argument _ -> raise (Fatal ("commit - " ^ commit ^ ": not valid"))
-    | End_of_file -> raise (Fatal ("commit - " ^ commit ^ ": corrupted"))
+    | Sys_error _ -> raise (Fatal ("commit - "^ptr^": not found"))
+    | Invalid_argument _ -> raise (Fatal ("commit - "^ptr^": not valid"))
+    | End_of_file -> raise (Fatal ("commit - "^ptr^": corrupted"))
 
 
 (**************************** HEAD Ptr Manipulation ***************************)

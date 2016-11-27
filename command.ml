@@ -81,12 +81,30 @@ let checkout (args: string list) : unit =
  * stores the current contents of the index in a new commit
  * along with commit metadata. *)
 let commit (args: string list) : unit =
-  let idx = get_index () in
-  let last_commit = try get_head () with Fatal n -> "None" in
   let username = get_user_info () in
-  let tree = Tree.index_to_tree idx |> Tree.write_tree in
-  let nh = create_commit tree "test" username last_commit in
-  set_head nh
+  let new_head =
+    match args with
+    | [] -> raise (Fatal "no commit arguments found, see [--help]")
+    | h::[] -> begin
+      let err =
+        if h = "-am" || h = "-m" then
+          "missing commit message, try ["^h^" <message>]"
+        else
+          "unrecognized flag, see [--help]"
+      in raise (Fatal err)
+    end
+    | flag::lst -> begin
+      if flag <> "-am" && flag <> "-m" then
+        raise (Fatal "unrecognized flags, see [--help]")
+      else
+        let last_commit = try get_head () with Fatal n -> "None" in
+        let tree = get_index () |> Tree.index_to_tree |> Tree.write_tree in
+        let msg = List.rev lst |> List.fold_left (fun acc s -> s^" "^acc) "" in
+          if flag = "-am" then add ["-A"];
+          create_commit tree msg username last_commit
+    end
+  in
+  set_head new_head
 
 (* show changes between working tree and previous commits *)
 let diff (args: string list) : unit =
@@ -109,7 +127,13 @@ let init () : unit =
 
 (* display the current branches commit history *)
 let log () : unit =
-  failwith "Unimplemented"
+  let rec log_loop ptr cmt =
+    let _ = print_commit ptr cmt.author cmt.message in
+    if cmt.parent = "None" then ()
+    else cmt.parent |> parse_commit |> log_loop cmt.parent
+  in
+  let head = get_head () in
+  parse_commit head |> log_loop head
 
 (* join two or more development histories together *)
 let merge (args: string list) : unit =
