@@ -417,8 +417,7 @@ let get_user_info () : string =
     let ch = open_in ".cml/config" in
     let raw = input_line ch in
     let split = (String.index raw ' ') + 1 in
-    let len = (String.length raw) - split in
-    close_in ch; String.sub raw split len
+    close_in ch; String.sub raw split (String.length raw - split)
   with
   | Sys_error _ -> raise (Fatal "username not set, set with [--user <name>]")
 

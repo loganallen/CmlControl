@@ -109,21 +109,22 @@ let commit (args: string list) : unit =
           begin
             let idx = get_index () in
             let cwd = get_all_files ["./"] [] in
+            if (get_changed cwd idx) = [] then
             match get_changed cwd idx with
             | []  -> if (get_staged_help idx) = [] then
-            raise (Fatal "nothing added to commit but untracked files are present")
-            | lst -> add lst
+              raise (Fatal "nothing added to commit but untracked files are present")
+            | files -> add files
           end;
         let idx = get_index () in
-          match idx with
-          | [] -> raise (Fatal "nothing added to commit")
-          | _  -> begin
-            let tree = Tree.index_to_tree idx |> Tree.write_tree in
-            let msg = List.rev lst |> List.fold_left (fun acc s -> s^" "^acc) "" in
-            let tm = time () |> localtime |> Time.get_time in
-            let last_commit = try get_head () with Fatal n -> "None" in
-              create_commit tree user tm msg last_commit
-          end
+        if idx = [] then raise (Fatal "nothing added to commit")
+        else begin
+          let tree = Tree.index_to_tree idx |> Tree.write_tree in
+          let msg = List.rev lst |> List.fold_left (fun acc s -> s^" "^acc) ""
+                    |> String.trim in
+          let tm = time () |> localtime |> Time.get_time in
+          let last_commit = try get_head () with Fatal n -> "None" in
+            create_commit tree user tm msg last_commit
+        end
     end
   in
   set_head new_head
@@ -199,7 +200,10 @@ let status () : unit =
 let user (args: string list) : unit =
   match args with
   | []   -> let name = get_user_info () in print ("Current user: "^name)
-  | h::_ -> set_user_info h
+  | lst -> begin
+    List.rev lst |> List.fold_left (fun acc s -> s^" "^acc) "" |>
+    String.trim |> set_user_info
+  end
 
 (* parses bash string input and returns a Cml input type *)
 let parse_input (args : string array) : input =
