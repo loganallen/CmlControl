@@ -97,7 +97,7 @@ module Tree = struct
           | "tree" -> loop ic ((obj_name, obj_hash)::dirs) acc
           | _ -> raise (Tree_ex (Read, "Error: invalid object type in object " ^ ptr))
       with
-        End_of_file -> close_in ic; acc@(List.map map_helper dirs)
+      | End_of_file -> close_in ic; acc@(List.map map_helper dirs)
     in
     let ic = open_in (Utils.get_object_path ptr) in
     Tree(tree_name, loop ic [] [])
@@ -107,10 +107,12 @@ module Tree = struct
       | [] -> acc
       | (Blob (fn,hn))::t -> tree_data (("blob " ^ hn ^ " " ^ fn)::acc) t
       | (Tree (n, lst))::t -> tree_data (("tree " ^ (write_tree (Tree (n, lst))) ^ " " ^ n)::acc) t
-    in let rec write_lines ch = function
+    in
+    let rec write_lines ch = function
       | [] -> close_out ch;
       | h::t -> Printf.fprintf ch "%s\n" h; write_lines ch t
-    in match tree with
+    in
+    match tree with
       | Tree (n, lst) ->
         begin
           let temp_name = ".cml/temp_"^n in

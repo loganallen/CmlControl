@@ -60,8 +60,9 @@ let print_untracked (files : string list) : unit =
   end
 
 (* prints the commit message for [cml log] *)
-let print_commit (ptr : string) (author : string) (msg : string) : unit =
-  print_color ("commit "^ptr) "y"; print ("Author: "^author); print_newline ();
+let print_commit (ptr : string) (author : string) (time : string) (msg : string) : unit =
+  print_color ("commit "^ptr) "y"; print ("Author: "^author);
+  print ("Date:   "^time); print_newline ();
   print_indent msg "" 2; print_newline ()
 
 (* prints a help log for all Cml commands *)

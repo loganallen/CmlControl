@@ -4,9 +4,10 @@ open Print
 open Common
 
 type commit = {
-  author: string;
-  message: string;
   tree: string;
+  author: string;
+  date: string;
+  message: string;
   parent: string;
 }
 
@@ -131,14 +132,14 @@ let create_blob (file_name: string) : string =
     open_out path |> close_out; copy file_name path; hsh
 
 (* creates a commit object for the given commit. Returns the hash. *)
-let create_commit (commit : string) (msg: string) (username : string) (parent : string) : string =
+let create_commit (ptr : string) (user : string) (date : string) (msg: string) (parent : string) : string =
   let rec write_commit oc = function
     | [] -> close_out oc
     | h::t -> Printf.fprintf oc "%s\n" h; write_commit oc t
   in
-  let temp_name = ".cml/temp_commit"^commit in
+  let temp_name = ".cml/temp_commit"^ptr in
   let oc = open_out temp_name in
-  let lines = [commit;msg;username;parent] in
+  let lines = [ptr; user; date; msg; parent] in
   let _ = write_commit oc lines in
   let hsh = hash temp_name in
   let (d1,path) = split_hash hsh in
@@ -152,10 +153,11 @@ let parse_commit (ptr : string) : commit =
     let (d1,path) = split_hash ptr in
     let ch = open_in path in
     let tree = input_line ch in
-    let msg = input_line ch in
     let user = input_line ch in
-    let parent = input_line ch in
-    close_in ch; { author = user; message = msg; tree = tree; parent = parent }
+    let time = input_line ch in
+    let msg = input_line ch in
+    let parent = input_line ch in close_in ch;
+      {tree = tree; author = user; date = time; message = msg; parent = parent}
   with
     | Sys_error _ -> raise (Fatal ("commit - "^ptr^": not found"))
     | Invalid_argument _ -> raise (Fatal ("commit - "^ptr^": not valid"))
