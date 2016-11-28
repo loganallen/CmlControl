@@ -153,11 +153,8 @@ val get_branches: unit -> string list
 (* returns string representation of repo's current branch *)
 val get_current_branch: unit -> string
 
-(* recursively creates branch sub-directories as needed *)
-val branch_help: string -> string -> unit
-
-(* create a new branch if it doesn't exist *)
-val create_branch: string -> unit
+(* create a new branch at the specified ptr if it doesn't exist *)
+val create_branch: string -> string -> unit
 
 (* delete a branch if it exists *)
 val delete_branch: string -> unit

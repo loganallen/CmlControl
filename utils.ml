@@ -402,7 +402,7 @@ let get_current_branch () : string =
     | End_of_file -> raise (Fatal "HEAD not initialized")
 
 (* recursively creates branch sub-directories as needed *)
-let rec branch_help (path : string) (branch : string) : unit =
+let rec branch_help (path : string) (branch : string) : out_channel =
   try
     let slash = String.index branch '/' in
     let dir = String.sub branch 0 slash in
@@ -411,18 +411,21 @@ let rec branch_help (path : string) (branch : string) : unit =
     String.sub branch (slash+1) ((String.length branch) - (slash+1)) |>
       branch_help (prefix^"/")
   with
-  | Not_found -> open_out (path^"/"^branch) |> close_out
+  | Not_found -> open_out (path^"/"^branch)
 
 (* create a new branch if it doesn't exist *)
-let create_branch (branch : string) : unit =
+let create_branch (branch : string) (ptr : string) : unit =
   if (get_branches () |> List.mem branch) then
     raise (Fatal ("a branch named "^branch^" already exists"))
   else
     let _ = validate_branch branch in
-    if String.contains branch '/' then
-      branch_help ".cml/heads/" branch
-    else
-      open_out (".cml/heads/"^branch) |> close_out
+    let ch = begin
+      if String.contains branch '/' then
+        branch_help ".cml/heads/" branch
+      else
+        open_out (".cml/heads/"^branch)
+    end in
+    let _ = output_string ch ptr in close_out ch
 
 (* delete a branch if it exists *)
 let delete_branch (branch : string) : unit =

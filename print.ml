@@ -110,7 +110,6 @@ let print_help_merge () : unit =
   print_indent "merge\t\tJoin two or more development histories together" "b" 1;
   print_indent "usage:  <branch>" "y" 8
 
-
 (* prints a help log for all Cml commands *)
 let print_help () : unit =
   print_camel (); print_newline ();
