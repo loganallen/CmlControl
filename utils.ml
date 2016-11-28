@@ -1,17 +1,17 @@
 open Unix
 open Cryptokit
 open Print
+open Common
 
 type commit = {
   author: string;
   message: string;
-  date: string;
-  tree_ptr: string;
-  prev_commit_ptr: string;
+  tree: string;
+  parent: string;
 }
 
 type blob = string
-type tree = string list
+
 type index = (string * string) list
 
 exception Fatal of string
@@ -58,10 +58,17 @@ let chdir_to_cml () =
   | Some path -> Sys.chdir path
   | None -> raise (Fatal "Not a Cml repository (or any of the parent directories)")
 
-
 (* ($) is an infix operator for appending a char to a string *)
 let ($) (str : string) (c : char) : string =  str ^ Char.escaped c
 
+(* returns the path of an object with file name hash
+ * precondition: hash is a valid  40 char string *)
+let get_object_path (hash : string) =
+  let root = ".cml/objects/" in
+  let subdir = String.sub hash 0 2 in
+  let fn = String.sub hash 2 (String.length hash - 2) in
+  let path = root ^ subdir ^ "/" ^ fn in
+  if Sys.file_exists path then path else raise (Fatal ("tree - "^hash^": doesn't exist"))
 
 (* returns true if [name] is a file or directory name in [path] *)
 let path_contains_name path name =
@@ -133,20 +140,42 @@ let decompress (file_name : string) (dest_path : string) : unit =
 (* creates a blob object for the given file. Returns the hash. *)
 let create_blob (file_name: string) : string =
   let hsh = hash file_name in
-  let d1 = String.sub hsh 0 2 in
+  let (d1,path) = split_hash hsh in
   if not (Sys.file_exists (".cml/objects/"^d1)) then
     mkdir (".cml/objects/"^d1) perm;
-  let f1 = String.sub hsh 2 (String.length hsh -2) in
-  let path = ".cml/objects/"^d1^"/"^f1 in
-    open_out path |> close_out; copy file_name path; d1^f1
-
-(* creates a tree object for the given directory. Returns the hash.*)
-let create_tree (dir_name: string) : string =
-  failwith "Unimplemented"
+    open_out path |> close_out; copy file_name path; hsh
 
 (* creates a commit object for the given commit. Returns the hash. *)
-let create_commit (msg: string) : string =
-  failwith "Unimplemented"
+let create_commit (commit : string) (msg: string) (username : string) (parent : string) : string =
+  let rec write_commit oc = function
+    | [] -> close_out oc
+    | h::t -> Printf.fprintf oc "%s\n" h; write_commit oc t
+  in
+  let temp_name = ".cml/temp_commit"^commit in
+  let oc = open_out temp_name in
+  let lines = [commit;msg;username;parent] in
+  let _ = write_commit oc lines in
+  let hsh = hash temp_name in
+  let (d1,path) = split_hash hsh in
+    if not (Sys.file_exists (".cml/objects/"^d1)) then
+      mkdir (".cml/objects/"^d1) perm;
+    Sys.rename temp_name path; hsh
+
+(* returns a commit record for the given commit ptr *)
+let parse_commit (ptr : string) : commit =
+  try
+    let (d1,path) = split_hash ptr in
+    let ch = open_in path in
+    let tree = input_line ch in
+    let msg = input_line ch in
+    let user = input_line ch in
+    let parent = input_line ch in
+    close_in ch; { author = user; message = msg; tree = tree; parent = parent }
+  with
+    | Sys_error _ -> raise (Fatal ("commit - "^ptr^": not found"))
+    | Invalid_argument _ -> raise (Fatal ("commit - "^ptr^": not valid"))
+    | End_of_file -> raise (Fatal ("commit - "^ptr^": corrupted"))
+
 
 (**************************** HEAD Ptr Manipulation ***************************)
 (******************************************************************************)
@@ -276,11 +305,11 @@ let rec get_all_files (dirs : string list) (acc : string list) : string list =
 
 (* returns a list of all files staged (added) for commit *)
 (* precondition: all files have objects in [.cml/objects/] *)
-let rec get_staged (idx : index) : string list =
+let rec get_staged (idx : index) (commit_idx : index) : string list =
+  List.iter (fun (f,h) -> print f) commit_idx;
   let find_staged acc (f,h) =
-    let d1 = String.sub h 0 2 in
-    let f1 = String.sub h 2 (String.length h - 2) in
-      if (Sys.file_exists (".cml/objects/"^d1^"/"^f1)) then f::acc else acc
+    let hash = try List.assoc f commit_idx with Not_found -> "nil" in
+    if hash = h then acc else f::acc
   in
   List.fold_left find_staged [] idx |> List.sort (Pervasives.compare)
 
@@ -296,7 +325,7 @@ let get_changed (cwd : string list) (idx : index) : string list =
   in
   List.fold_left find_changed [] cwd |> List.sort (Pervasives.compare)
 
-(* returns a list of untracked files *)
+(* returns a list of untracked files (i.e. not in the index) *)
 let get_untracked (cwd : string list) (idx : index) : string list =
   let find_untracked acc fn =
     try

@@ -7,17 +7,12 @@
 type commit = {
   author: string;
   message: string;
-  date: string;
-  tree_ptr: string;
-  prev_commit_ptr: string;
+  tree: string;
+  parent: string;
 }
 
 (* type blob represents a compressed file object *)
 type blob = string
-(* type tree represents a directory with pointers to blobs/other trees
- * note: pointers in this case are string file names
- *)
-type tree = string list
 
 (* type index is a list of mappings from filename to its hash,
  * referred to as the index in git *)
@@ -58,6 +53,11 @@ val string_contains : string -> string -> bool
 (* returns [str] without [sub] *)
 val remove_from_string : string -> string -> string
 
+(* returns the path of an object represented by hash
+ * precondition: hash is a valid  40 char string
+ * postcondition: get_object_path raise Fatal if hash doens't exist *)
+ val get_object_path : string -> string
+
 (************************* File Compression & Hashing *************************)
 (******************************************************************************)
 
@@ -80,11 +80,11 @@ val decompress: string -> string -> unit
 (* creates a blob object for the given file. Returns the hash. *)
 val create_blob: string -> string
 
-(* creates a tree object for the given directory. Returns the hash.*)
-val create_tree: string -> string
-
 (* creates a commit object for the given commit. Returns the hash. *)
-val create_commit: string -> string
+val create_commit: string -> string -> string -> string -> string
+
+(* returns a commit record for the given commit ptr *)
+val parse_commit: string -> commit
 
 (**************************** HEAD Ptr Manipulation ***************************)
 (******************************************************************************)
@@ -131,7 +131,7 @@ val is_bad_dir: string -> bool
 val get_all_files: string list -> string list -> string list
 
 (* returns a list of all files staged (added) for commit *)
-val get_staged: index -> string list
+val get_staged: index -> index -> string list
 
 (* returns a list of changed files *)
 val get_changed: string list -> index -> string list

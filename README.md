@@ -9,6 +9,8 @@ Cml has the following dependencies: <br>
 	~ cryptokit
 	~ ANSITerminal
 	~ camlzip
+	~ str
+	~ unix
 
 All of these can be installed using: `opam install`
 

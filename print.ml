@@ -59,6 +59,11 @@ let print_untracked (files : string list) : unit =
     List.iter (fun s -> print_indent s "red" 3) files; print_newline ()
   end
 
+(* prints the commit message for [cml log] *)
+let print_commit (ptr : string) (author : string) (msg : string) : unit =
+  print_color ("commit "^ptr) "y"; print ("Author: "^author); print_newline ();
+  print_indent msg "" 2; print_newline ()
+
 (* prints a help log for all Cml commands *)
 let print_help () : unit =
   print_camel (); print_newline ();

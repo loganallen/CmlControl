@@ -28,5 +28,8 @@ val print_changed: string list -> unit
 (* prints untracked files *)
 val print_untracked: string list -> unit
 
+(* prints the commit message for [cml log] *)
+val print_commit: string -> string -> string -> unit
+
 (* prints a help log for all Cml commands *)
 val print_help: unit -> unit
