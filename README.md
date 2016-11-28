@@ -11,6 +11,7 @@ Cml has the following dependencies: <br>
 	~ camlzip
 	~ str
 	~ unix
+	~ ocamldiff
 
 All of these can be installed using: `opam install`
 
