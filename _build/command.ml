@@ -175,6 +175,10 @@ let merge (args: string list) : unit =
 let reset (args: string list) : unit =
   failwith "Unimplemented"
 
+let rec print_lst = function
+  | [] -> ()
+  | h::t -> print_endline h; print_lst t
+
 (* remove files from working tree and index *)
 let rm (args: string list) : unit =
   if args = [] then
@@ -198,6 +202,7 @@ let rm (args: string list) : unit =
             get_all_files [rel_path'] []
             |> List.map (fun s ->
               let name = Str.replace_first (Str.regexp "^/") "" (path_from_cml^"/") in
+              print_endline ("name: "^name);
               Str.replace_first (Str.regexp name) "" s)
             |> List.map (fun s -> (path_from_cml^"/"^s))
             |> List.map (fun s -> Str.global_replace (Str.regexp "\\.\\./") "" s)
@@ -208,6 +213,8 @@ let rm (args: string list) : unit =
             |> List.map (fun s -> Str.replace_first (Str.regexp "^/") "" s) in
         let idx' = List.filter (fun (s,_) -> not (List.mem s rm_files)) idx
         in
+        print_endline path_from_cml;
+        print_lst rm_files;
         chdir_to_cml ();
         set_index idx';
         Sys.chdir cwd
