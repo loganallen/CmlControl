@@ -2,8 +2,10 @@
 #require "ANSITerminal";;
 #require "camlzip";;
 #require "cryptokit";;
+#require "diff";;
 #load "common.cmo";;
 #load "print.cmo";;
+#load "diff.cmo";;
 #load "utils.cmo";;
 #load "tree.cmo";;
 #load "command.cmo";;
@@ -15,3 +17,4 @@ open Cml;;
 open Print;;
 open Tree;;
 open Common;;
+open Diff;;

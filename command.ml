@@ -108,7 +108,10 @@ let commit (args: string list) : unit =
 
 (* show changes between working tree and previous commits *)
 let diff (args: string list) : unit =
-  failwith "Unimplemented"
+  let idx = get_index () in
+  match args with
+    | [] -> Diff.print_diff_files_mult (List.map (fun (fn, hn) -> (fn, get_object_path hn)) idx)
+    | file_name::_ -> Diff.print_diff_files file_name (get_object_path (List.assoc file_name idx))
 
 (* display help information about CmlControl. *)
 let help () : unit =
