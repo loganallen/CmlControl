@@ -20,7 +20,7 @@ module type TreeSig = sig
   (* writes the tree to the filesystem *)
   val write_tree : t -> string
   (* updates working repo with tree content *)
-  val recreate_tree : t -> unit
+  val recreate_tree : string -> t -> unit
 
 end
 
@@ -115,7 +115,14 @@ module Tree = struct
         end
       | _ -> failwith "write-tree error"
 
-    let recreate_tree (tree : t) : unit =
-      ()
+    let rec recreate_tree (path : string) (tree : t) : unit =
+      match tree with
+        | Blob (fn, hsh) -> Utils.copy (Utils.get_object_path hsh) (path ^ "/" ^ fn)
+        | Tree (dn, lst) ->
+          begin
+            let n_path = if path = "" then dn else path ^ "/" ^ dn in
+            if not (Sys.file_exists n_path) then mkdir n_path 0o777;
+            List.iter (recreate_tree n_path) lst
+          end
 
 end
