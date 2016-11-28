@@ -49,11 +49,7 @@ let branch (args: string list) : unit =
   match args with
   | [] -> begin
     let cur = get_current_branch () in
-    let branch_print b =
-      if b = cur then (print_string "* "; print_color cur "g")
-      else print ("  "^b)
-    in
-    get_branches () |> List.iter branch_print
+    get_branches () |> List.iter (branch_print cur)
   end
   | b::[] -> begin
     if b = "-d" || b = "-D" then raise (Fatal "branch name required")
