@@ -31,5 +31,32 @@ val print_untracked: string list -> unit
 (* prints the commit message for [cml log] *)
 val print_commit: string -> string -> string -> string -> unit
 
+(* print help info for add *)
+val print_help_add: unit -> unit
+
+(* print help info for reset *)
+val print_help_reset: unit -> unit
+
+(* print help info for rm *)
+val print_help_rm: unit -> unit
+
+(* print help info for stash *)
+val print_help_stash: unit -> unit
+
+(* print help info for branch *)
+val print_help_branch: unit -> unit
+
+(* print help info for checkout *)
+val print_help_checkout: unit -> unit
+
+(* print help info for commit *)
+val print_help_commit: unit -> unit
+
+(* print help info for diff *)
+val print_help_diff: unit -> unit
+
+(* print help info for merge *)
+val print_help_merge: unit -> unit
+
 (* prints a help log for all Cml commands *)
 val print_help: unit -> unit

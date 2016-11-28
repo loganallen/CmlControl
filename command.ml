@@ -223,6 +223,7 @@ let parse_input (args : string array) : input =
     | "rm"       -> {cmd = Rm; args = t}
     | "stash"    -> {cmd = Stash; args = t}
     | "status"   -> {cmd = Status; args = t}
+    | "help"     -> {cmd = Help; args = t}
     | "--help"   -> {cmd = Help; args = t}
     | "--user"   -> {cmd = User; args = t}
     | cmd        -> raise (Parsing cmd)
