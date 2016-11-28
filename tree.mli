@@ -22,6 +22,9 @@ module type TreeSig = sig
   (* writes the tree to the filesystem *)
   val write_tree : t -> string
 
+  (* updates working repo with tree content *)
+  val recreate_tree : t -> unit
+
 end
 
 module Tree : TreeSig

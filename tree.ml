@@ -18,6 +18,8 @@ module type TreeSig = sig
   val read_tree : string -> string -> t
   (* writes the tree to the filesystem *)
   val write_tree : t -> string
+  (* updates working repo with tree content *)
+  val recreate_tree : t -> unit
 
 end
 
@@ -66,39 +68,16 @@ module Tree = struct
       | Tree (n, lst) -> helper n [] lst
       | Blob _ -> []
 
-  (*let read_tree (ptr : string) : t =
-    let rec read_tree_help (acc:t) (ch:in_channel) =
-      try
-        let raw = input_line ch in
-        if raw = "" then
-          let _ = close_in ch in acc
-        else begin
-          let sp1 = 1 + String.index raw ' ' in
-          let sp2 = String.index_from raw sp1 ' ' in
-          let typ = String.sub raw 0 (sp1 - 1) in
-          let hsh = String.sub raw sp1 (sp2 - sp1) in
-          let fn = String.sub raw (sp2 + 1) (String.length raw - (sp2 + 1)) in
-          if typ = "blob" then
-            read_tree_help (insert acc (fn,hsh)) ch
-          else (* tree *)
-            let (_,path) = split_hash hsh in
-            let sub_trees = open_in path |> read_tree_help empty in
-            read_tree_help (insert acc (fn,)) ch
-        end
-      with
-      | End_of_file -> let _ = close_in ch in acc
-    in
-    let (_,path) = split_hash ptr in
-    open_in path |> read_tree_help empty*)
-
   let parse_tree_line (raw : string) =
-    let obj_type = String.sub raw 0 4 in
-    let obj_hash = String.sub raw 5 40 in
-    let obj_name = String.sub raw 46 (String.length raw - 46) in
+    let sp1 = 1 + String.index raw ' ' in
+    let sp2 = String.index_from raw sp1 ' ' in
+    let obj_type = String.sub raw 0 (sp1 - 1) in
+    let obj_hash = String.sub raw sp1 (sp2 - sp1) in
+    let obj_name = String.sub raw (sp2 + 1) (String.length raw - (sp2 + 1)) in
     (obj_type, obj_hash, obj_name)
 
   let rec read_tree (tree_name : string) (ptr : string) : t =
-    let fold_helper acc (dn, ptr) = (read_tree dn ptr)::acc in
+    let map_helper (dn, ptr) = read_tree dn ptr in
     let rec loop ic dirs acc =
       try
         let raw = input_line ic in
@@ -108,7 +87,7 @@ module Tree = struct
           | "tree" -> loop ic ((obj_name, obj_hash)::dirs) acc
           | _ -> failwith "read_tree: error"
       with
-        End_of_file -> close_in ic; acc@(List.fold_left fold_helper [] dirs)
+        End_of_file -> close_in ic; acc@(List.map map_helper dirs)
     in
     let ic = open_in (Utils.get_object_path ptr) in
     Tree(tree_name, loop ic [] [])
@@ -134,5 +113,8 @@ module Tree = struct
           Sys.rename temp_name path; hsh
         end
       | _ -> failwith "write-tree error"
+
+    let recreate_tree (tree : t) : unit =
+      ()
 
 end
