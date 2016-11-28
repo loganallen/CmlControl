@@ -2,6 +2,7 @@
 #require "ANSITerminal";;
 #require "camlzip";;
 #require "cryptokit";;
+#load "common.cmo";;
 #load "print.cmo";;
 #load "utils.cmo";;
 #load "tree.cmo";;
@@ -13,3 +14,4 @@ open Command;;
 open Cml;;
 open Print;;
 open Tree;;
+open Common;;

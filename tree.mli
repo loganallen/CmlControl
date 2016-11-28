@@ -23,7 +23,7 @@ module type TreeSig = sig
   val write_tree : t -> string
 
   (* updates working repo with tree content *)
-  val recreate_tree : t -> unit
+  val recreate_tree : string -> t -> unit
 
 end
 
