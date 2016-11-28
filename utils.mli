@@ -55,9 +55,6 @@ val compress: string -> string -> unit
  *)
 val decompress: string -> string -> unit
 
-(* converts new_line characters to actual real new lines *)
-val new_line: string -> string
-
 (* creates a blob object for the given file. Returns the hash. *)
 val create_blob: string -> string
 
