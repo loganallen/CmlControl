@@ -30,7 +30,7 @@ module Tree = struct
 
   type index = Utils.index
 
-  let empty : t = Tree (".", [])
+  let empty : t = Tree ("", [])
 
   let rec insert (tree : t) (fn, hn) : t =
     let rec loop acc (fn, hn) = function
@@ -62,9 +62,12 @@ module Tree = struct
   let tree_to_index (tree : t) : index =
     let rec helper path acc = function
       | [] -> acc
-      | (Tree (n, lst))::t ->
-          helper path (helper (if path = "" then n else path ^ "/" ^ n) [] lst) t
-      | (Blob (fn, hn))::t -> helper path (((path ^ fn), hn)::acc) t
+      | (Tree (dn, lst))::t ->
+          let path' = if path = "" then dn else path^"/"^dn in
+          helper path ((helper path' [] lst)@acc) t
+      | (Blob (fn, hn))::t ->
+          let path' = if path = "" then fn else path^"/"^fn in
+          helper path ((path', hn)::acc) t
     in match tree with
       | Tree (n, lst) -> helper n [] lst
       | Blob _ -> []

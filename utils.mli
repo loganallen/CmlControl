@@ -122,7 +122,7 @@ val is_bad_dir: string -> bool
 val get_all_files: string list -> string list -> string list
 
 (* returns a list of all files staged (added) for commit *)
-val get_staged: index -> string list
+val get_staged: index -> index -> string list
 
 (* returns a list of changed files *)
 val get_changed: string list -> index -> string list

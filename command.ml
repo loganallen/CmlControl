@@ -156,13 +156,19 @@ let status () : unit =
     print ("On branch "^(get_current_branch ())^"\n");
     let cwd = get_all_files ["./"] [] in
     let idx = get_index () in
-    let st = get_staged idx in
+    let st = try
+      let cmt = get_head () |> parse_commit in
+      Tree.read_tree "" cmt.tree |> Tree.tree_to_index |> get_staged idx
+    with
+    | Fatal _ -> print "fatal"; get_staged idx []
+    in
     let ch = get_changed cwd idx in
     let ut = get_untracked cwd idx in
       match (st,ch,ut) with
       | [],[],[] -> print "no changes to be committed, working tree clean"
       | _ -> let _ = print_staged st in
              let _ = print_changed ch in print_untracked ut
+
 
 (* set the user info to [username] *)
 let user (args: string list) : unit =

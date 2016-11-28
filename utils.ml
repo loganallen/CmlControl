@@ -290,11 +290,11 @@ let rec get_all_files (dirs : string list) (acc : string list) : string list =
 
 (* returns a list of all files staged (added) for commit *)
 (* precondition: all files have objects in [.cml/objects/] *)
-let rec get_staged (idx : index) : string list =
+let rec get_staged (idx : index) (commit_idx : index) : string list =
+  List.iter (fun (f,h) -> print f) commit_idx;
   let find_staged acc (f,h) =
-    let d1 = String.sub h 0 2 in
-    let f1 = String.sub h 2 (String.length h - 2) in
-      if (Sys.file_exists (".cml/objects/"^d1^"/"^f1)) then f::acc else acc
+    let hash = try List.assoc f commit_idx with Not_found -> "nil" in
+    if hash = h then acc else f::acc
   in
   List.fold_left find_staged [] idx |> List.sort (Pervasives.compare)
 
@@ -310,7 +310,7 @@ let get_changed (cwd : string list) (idx : index) : string list =
   in
   List.fold_left find_changed [] cwd |> List.sort (Pervasives.compare)
 
-(* returns a list of untracked files *)
+(* returns a list of untracked files (i.e. not in the index) *)
 let get_untracked (cwd : string list) (idx : index) : string list =
   let find_untracked acc fn =
     try
