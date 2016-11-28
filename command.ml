@@ -113,6 +113,11 @@ let merge (args: string list) : unit =
 let reset (args: string list) : unit =
   failwith "Unimplemented"
 
+let rec print_list lst =
+  match lst with
+  | [] -> ()
+  | h::t -> print_endline h; print_list t
+
 (* remove files from working tree and index *)
 let rm (args: string list) : unit =
   if args = [] then
@@ -124,17 +129,24 @@ let rm (args: string list) : unit =
     Sys.chdir old_path;
     let remove_from_idx file =
       if Sys.file_exists file then
-        let abs_file_path = if file_path = "" then
-            file
+        let f_path = if file = "." then "./" else file in
+        let abs_file_path =
+          if file_path = "" then
+            if Sys.is_directory file then "" else f_path
           else
-            file_path^"/"^file |> Str.replace_first (Str.regexp "^/") "" in
-          let file' = begin
-            if Sys.is_directory file then
-              List.map (Str.replace_first (Str.regexp "//") "/") (get_all_files [file] [])
-            else
-              [abs_file_path]
-          end
+            (let f = if f_path = "./" then "" else f_path in
+            file_path^"/"^f |> Str.replace_first (Str.regexp "^/") "")
         in
+        let file' = begin
+          if Sys.is_directory file then
+            List.map (Str.replace_first (Str.regexp "//") "/") (get_all_files [f_path] [])
+            |> List.map (fun s -> abs_file_path^s)
+          else
+            [abs_file_path]
+        end
+        in
+        print_endline "file': ";
+        print_list file';
         let rm_predicate (path,_) =
           not (List.mem path file')
         in
