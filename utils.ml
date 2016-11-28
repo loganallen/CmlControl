@@ -39,6 +39,18 @@ let cml_path path =
   String.iter (fun c -> if c = '/' then incr i else ()) cwd;
   cml_path_helper !i path
 
+(* returns the absolute path to the nearest cml repository *)
+let abs_cml_path () =
+  let cwd = Sys.getcwd () in
+  let path = match cml_path (cwd^"/") with
+    | None -> raise (Fatal "Not a Cml repository (or any of the parent directories)")
+    | Some s -> s
+  in
+  Sys.chdir path;
+  let abs_path = Sys.getcwd () in
+  Sys.chdir cwd;
+  abs_path
+
 (* returns true if the path contains an initialized Cml repo,
  * otherwise returns false *)
 let cml_initialized (path : string) : bool =
@@ -70,6 +82,35 @@ let get_object_path (hash : string) =
   let fn = String.sub hash 2 (String.length hash - 2) in
   let path = root ^ subdir ^ "/" ^ fn in
   if Sys.file_exists path then path else raise (Fatal ("tree - "^hash^": doesn't exist"))
+
+(* returns [str] without [sub] *)
+let remove_from_string str sub =
+  Str.replace_first (Str.regexp sub) "" str
+
+let current_dir () =
+  Filename.basename (Sys.getcwd ())
+
+(* returns the absolute path from the repository givent the relative path
+ * from the cwd *)
+let abs_path_from_cml rel_path =
+  let path_to_cml = abs_cml_path () in
+  let cwd = Sys.getcwd () in
+  let rel_path_dirname =
+    if Sys.is_directory rel_path then
+      Filename.basename rel_path
+    else
+      Filename.dirname rel_path
+  in
+  let rel_path_filename = Filename.basename rel_path in
+  Sys.chdir rel_path_dirname;
+  let abs_path = Sys.getcwd () in
+  Sys.chdir cwd;
+  let final_path = remove_from_string abs_path path_to_cml in
+  if Sys.is_directory rel_path then
+    final_path
+  else
+    (final_path^"/"^rel_path_filename)
+
 
 (************************* File Compression & Hashing *************************)
 (******************************************************************************)

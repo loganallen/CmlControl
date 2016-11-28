@@ -29,6 +29,9 @@ exception Fatal of string
  * (current working directory). *)
  val cml_path : string -> string option
 
+(* returns the absolute path to the nearest cml repository *)
+val abs_cml_path : unit -> string
+
 (* returns true if the path contains an initialized Cml repo,
  * otherwise returns false *)
 val cml_initialized: string -> bool
@@ -44,6 +47,13 @@ val ($): string -> char -> string
  * Raises Fatal exception if directory is not a Cml repository
  * (or any of the parent directories) *)
 val chdir_to_cml : unit -> unit
+
+(* returns the absolute path from the repository givent the relative path
+ * from the cwd *)
+val abs_path_from_cml : string -> string
+
+(* returns [str] without [sub] *)
+val remove_from_string : string -> string -> string
 
 (* returns the path of an object represented by hash
  * precondition: hash is a valid  40 char string
