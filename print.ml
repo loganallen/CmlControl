@@ -60,33 +60,74 @@ let print_untracked (files : string list) : unit =
   end
 
 (* prints the commit message for [cml log] *)
-let print_commit (ptr : string) (author : string) (msg : string) : unit =
-  print_color ("commit "^ptr) "y"; print ("Author: "^author); print_newline ();
+let print_commit (ptr : string) (author : string) (time : string) (msg : string) : unit =
+  print_color ("commit "^ptr) "y"; print ("Author: "^author);
+  print ("Date:   "^time); print_newline ();
   print_indent msg "" 2; print_newline ()
+
+(* print help info for add *)
+let print_help_add () : unit =
+  print_indent "add\t\tAdd file contents to the index" "b" 1;
+  print_indent "usage:  -A | . | <filename> " "y" 8
+
+(* print help info for reset *)
+let print_help_reset () : unit =
+  print_indent "reset\t\tReset the current HEAD to a specified state" "b" 1;
+  print_indent "usage:  <commit>" "y" 8
+
+(* print help info for rm *)
+let print_help_rm () : unit =
+  print_indent "rm\t\tRemove files from the working tree and index" "b" 1;
+  print_indent "usage:  . | <filename>" "y" 8
+
+(* print help info for stash *)
+let print_help_stash () : unit =
+  print_indent "stash\t\tStashes changes made to the current working tree" "b" 1;
+  print_indent "usage: [ apply ] will reapply the stashed changes" "y" 8
+
+(* print help info for branch *)
+let print_help_branch () : unit =
+  print_indent "branch\tCreate, list, or delete branches" "b" 1;
+  print_indent "usage:  <branch> | \" \" | [-d | -D] <branch>" "y" 8
+
+(* print help info for checkout *)
+let print_help_checkout () : unit =
+  print_indent "checkout\tSwitch branches or restore working tree files" "b" 1;
+  print_indent "usage:  <branch> | <commit>" "y" 8
+
+(* print help info for commit *)
+let print_help_commit () : unit =
+  print_indent "commit\tRecord changes to the repository" "b" 1;
+  print_indent "usage:  [-am | -m] <message>" "y" 8
+
+(* print help info for diff *)
+let print_help_diff () : unit =
+  print_indent "diff\t\tShow changes between working tree and previous commits" "b" 1;
+  print_indent "usage:  \" \" | <filename>" "y" 8
+
+(* print help info for merge *)
+let print_help_merge () : unit =
+  print_indent "merge\t\tJoin two or more development histories together" "b" 1;
+  print_indent "usage:  <branch>" "y" 8
+
 
 (* prints a help log for all Cml commands *)
 let print_help () : unit =
   print_camel (); print_newline ();
-  print_color "usage: [--help] [--user [<name>]]" "b"; print_newline ();
+  print_color "usage: [--help | help] [--user [<name>]]" "b"; print_newline ();
   print "The following are cml commands and usages:";
   print_newline ();
   print_color "starting a cml version control repository" "";
   print_indent "init\t\tCreate an empty Cml repository" "b" 1;
   print_newline ();
   print "work on current changes";
-  print_indent "add\t\tAdd file contents to the index" "b" 1;
-  print_indent "reset\t\tReset the current HEAD to a specified state" "b" 1;
-  print_indent "rm\t\tRemove files from the working tree and index" "b" 1;
-  print_indent "stash\t\tStashes changes made to the current working tree" "b" 1;
+  print_help_add (); print_help_reset (); print_help_rm (); print_help_stash ();
   print_newline ();
   print "examine the history and state";
   print_indent "log\t\tShow commit logs" "b" 1;
   print_indent "status\tShow the working tree status" "b" 1;
   print_newline ();
   print "grow and tweak the cml history";
-  print_indent "branch\tList, create, or delete branches" "b" 1;
-  print_indent "checkout\tSwitch branches or restore working tree files" "b" 1;
-  print_indent "commit\tRecord changes to the repository" "b" 1;
-  print_indent "diff\t\tShow changes between working tree and previous commits" "b" 1;
-  print_indent "merge\t\tJoin two or more development histories together" "b" 1;
+  print_help_branch (); print_help_checkout (); print_help_commit ();
+  print_help_diff (); print_help_merge ();
   print_newline (); print_camel ();

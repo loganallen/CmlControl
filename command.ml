@@ -13,6 +13,14 @@ exception Parsing of string
 
 let perm = 0o777
 
+(* helper function that returns a list of files staged for commit *)
+let get_staged_help (idx : index) : string list =
+  try
+    let cmt = get_head () |> parse_commit in
+    Tree.read_tree "" cmt.tree |> Tree.tree_to_index |> get_staged idx
+  with
+  | Fatal _ -> get_staged idx []
+
 (* add file contents to the index *)
 let add (args: string list) : unit =
   let add_help idx_acc file =
@@ -23,7 +31,7 @@ let add (args: string list) : unit =
       raise (Fatal ("pathspec '"^file^"' does not match an file(s)"))
   in
   match args with
-  | [] -> raise (Fatal "nothing files specified")
+  | [] -> raise (Fatal "no files specified")
   | f::[] -> begin
     let idx = get_index () in
       if f = "." || f = "-A" then (* add all files *)
@@ -81,7 +89,7 @@ let checkout (args: string list) : unit =
  * stores the current contents of the index in a new commit
  * along with commit metadata. *)
 let commit (args: string list) : unit =
-  let username = get_user_info () in
+  let user = get_user_info () in
   let new_head =
     match args with
     | [] -> raise (Fatal "no commit arguments found, see [--help]")
@@ -97,18 +105,36 @@ let commit (args: string list) : unit =
       if flag <> "-am" && flag <> "-m" then
         raise (Fatal "unrecognized flags, see [--help]")
       else
-        let last_commit = try get_head () with Fatal n -> "None" in
-        let tree = get_index () |> Tree.index_to_tree |> Tree.write_tree in
-        let msg = List.rev lst |> List.fold_left (fun acc s -> s^" "^acc) "" in
-          if flag = "-am" then add ["-A"];
-          create_commit tree msg username last_commit
+        if flag = "-am" then
+          begin
+            let idx = get_index () in
+            let cwd = get_all_files ["./"] [] in
+            if (get_changed cwd idx) = [] then
+            match get_changed cwd idx with
+            | []  -> if (get_staged_help idx) = [] then
+              raise (Fatal "nothing added to commit but untracked files are present")
+            | files -> add files
+          end;
+        let idx = get_index () in
+        if idx = [] then raise (Fatal "nothing added to commit")
+        else begin
+          let tree = Tree.index_to_tree idx |> Tree.write_tree in
+          let msg = List.rev lst |> List.fold_left (fun acc s -> s^" "^acc) ""
+                    |> String.trim in
+          let tm = time () |> localtime |> Time.get_time in
+          let last_commit = try get_head () with Fatal n -> "None" in
+            create_commit tree user tm msg last_commit
+        end
     end
   in
   set_head new_head
 
 (* show changes between working tree and previous commits *)
 let diff (args: string list) : unit =
-  failwith "Unimplemented"
+  let idx = get_index () in
+  match args with
+    | [] -> Diff.print_diff_files_mult (List.map (fun (fn, hn) -> (fn, get_object_path hn)) idx)
+    | file_name::_ -> Diff.print_diff_files file_name (get_object_path (List.assoc file_name idx))
 
 (* display help information about CmlControl. *)
 let help () : unit =
@@ -128,12 +154,18 @@ let init () : unit =
 (* display the current branches commit history *)
 let log () : unit =
   let rec log_loop ptr cmt =
-    let _ = print_commit ptr cmt.author cmt.message in
+    let _ = print_commit ptr cmt.author cmt.date cmt.message in
     if cmt.parent = "None" then ()
     else cmt.parent |> parse_commit |> log_loop cmt.parent
-  in
-  let head = get_head () in
-  parse_commit head |> log_loop head
+  in try
+    let head = get_head () in parse_commit head |> log_loop head
+  with
+  | Fatal m -> begin
+    if m = "HEAD not initialized" then
+      let br = get_current_branch () in
+      raise (Fatal ("current branch '"^br^"' does not have any commits yet"))
+    else raise (Fatal m)
+  end
 
 (* join two or more development histories together *)
 let merge (args: string list) : unit =
@@ -191,12 +223,7 @@ let status () : unit =
     print ("On branch "^(get_current_branch ())^"\n");
     let cwd = get_all_files ["./"] [] in
     let idx = get_index () in
-    let st = try
-      let cmt = get_head () |> parse_commit in
-      Tree.read_tree "" cmt.tree |> Tree.tree_to_index |> get_staged idx
-    with
-    | Fatal _ -> print "fatal"; get_staged idx []
-    in
+    let st = get_staged_help idx in
     let ch = get_changed cwd idx in
     let ut = get_untracked cwd idx in
       match (st,ch,ut) with
@@ -204,12 +231,14 @@ let status () : unit =
       | _ -> let _ = print_staged st in
              let _ = print_changed ch in print_untracked ut
 
-
 (* set the user info to [username] *)
 let user (args: string list) : unit =
   match args with
   | []   -> let name = get_user_info () in print ("Current user: "^name)
-  | h::_ -> set_user_info h
+  | lst -> begin
+    List.rev lst |> List.fold_left (fun acc s -> s^" "^acc) "" |>
+    String.trim |> set_user_info
+  end
 
 (* parses bash string input and returns a Cml input type *)
 let parse_input (args : string array) : input =
@@ -229,6 +258,7 @@ let parse_input (args : string array) : input =
     | "rm"       -> {cmd = Rm; args = t}
     | "stash"    -> {cmd = Stash; args = t}
     | "status"   -> {cmd = Status; args = t}
+    | "help"     -> {cmd = Help; args = t}
     | "--help"   -> {cmd = Help; args = t}
     | "--user"   -> {cmd = User; args = t}
     | cmd        -> raise (Parsing cmd)

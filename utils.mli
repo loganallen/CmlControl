@@ -5,9 +5,10 @@
  * note: pointers in this case are string file names.
  *)
 type commit = {
-  author: string;
-  message: string;
   tree: string;
+  author: string;
+  date: string;
+  message: string;
   parent: string;
 }
 
@@ -82,7 +83,7 @@ val decompress: string -> string -> unit
 val create_blob: string -> string
 
 (* creates a commit object for the given commit. Returns the hash. *)
-val create_commit: string -> string -> string -> string -> string
+val create_commit: string -> string -> string -> string -> string -> string
 
 (* returns a commit record for the given commit ptr *)
 val parse_commit: string -> commit
