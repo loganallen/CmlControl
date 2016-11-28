@@ -2,7 +2,7 @@ module type TreeSig = sig
 
   type t
 
-  type index = (string * string) list
+  type index = Utils.index
 
   (* an empty Tree *)
   val empty : t

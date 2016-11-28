@@ -4,7 +4,8 @@ open Common
 module type TreeSig = sig
 
   type t
-  type index = (string * string) list
+
+  type index = Utils.index
 
   (* an empty Tree *)
   val empty : t
@@ -27,7 +28,7 @@ module Tree = struct
 
   type t = Blob of string * string | Tree of string * t list
 
-  type index = (string * string) list
+  type index = Utils.index
 
   let empty : t = Tree (".", [])
 
