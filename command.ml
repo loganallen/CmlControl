@@ -128,12 +128,12 @@ let rm (args: string list) : unit =
             file
           else
             file_path^"/"^file |> Str.replace_first (Str.regexp "^/") "" in
-            let file' = begin
-              if Sys.is_directory file then
-                List.map (Str.replace_first (Str.regexp "//") "/") (get_all_files [file] [])
-              else
-                [abs_file_path]
-            end
+          let file' = begin
+            if Sys.is_directory file then
+              List.map (Str.replace_first (Str.regexp "//") "/") (get_all_files [file] [])
+            else
+              [abs_file_path]
+          end
         in
         let rm_predicate (path,_) =
           not (List.mem path file')
