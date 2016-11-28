@@ -197,7 +197,8 @@ let rm (args: string list) : unit =
             end in
             get_all_files [rel_path'] []
             |> List.map (fun s ->
-              let name = Str.replace_first (Str.regexp "^/") "" (path_from_cml^"/") in
+              let name = Str.replace_first (Str.regexp "^/") "" (rel_path')
+                |> Str.global_replace (Str.regexp "\\.") "\\." in
               Str.replace_first (Str.regexp name) "" s)
             |> List.map (fun s -> (path_from_cml^"/"^s))
             |> List.map (fun s -> Str.global_replace (Str.regexp "\\.\\./") "" s)
