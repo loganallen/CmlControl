@@ -53,35 +53,6 @@ let copy (file_name : string) (dest_path : string) : unit =
   with
     Sys_error _ -> raise (Fatal "utils.copy, file not found")
 
-(* compress compresses a file/directory
- * takes initial path and final path as arguments.
- *)
-let compress (file_name : string) (dest_path : string) : unit =
-  let oc = Gzip.open_out dest_path in
-  let ic = open_in file_name in
-  let rec loop ic oc =
-    try
-    let raw = input_line ic ^ "@cmlcml@" in
-      Gzip.output_line oc raw 0 (String.length raw); loop ic oc
-    with
-      | Sys_error _ -> raise (Fatal (file_name^" not found"))
-      | End_of_file -> close_in ic; Gzip.close_out oc
-  in loop ic oc
-
-(* decompress decompresses a file/directory
- * takes initial and final path as arguments.
- *)
-let decompress (file_name : string) (dest_path : string) : unit =
-  let rec loop ic acc =
-    try loop ic (acc $ (Gzip.input_char ic)) with End_of_file -> Gzip.close_in ic; acc
-  in try
-    let ic = Gzip.open_in file_name in
-    let oc = open_out dest_path in
-    Printf.fprintf oc "%s" (loop ic ""); close_out oc
-  with
-    | Sys_error _ -> failwith (file_name ^ " not found")
-    | _ -> raise (Fatal "Gzip error - file empty or not Gzip")
-
 
 (* takes file_path as input and returns a string list of lines from the file *)
 let read_file (file_name : string) =
@@ -89,12 +60,16 @@ let lines = ref [] in
 let chan = open_in file_name in
 try
   while true; do
+    (* let strip = Str.global_replace (Str.regexp "\\\t") "" (input_line chan) in *)
     let split = Str.split (Str.regexp "@cmlcml@") (input_line chan) in
     lines := split @ !lines
   done; !lines
 with
   | End_of_file -> close_in chan;
   !lines
+
+let remove_tabs (lines: string list) =
+List.map(fun line -> Str.global_replace (Str.regexp "\\\\t") "  " line) lines
 
 (* takes a string lis *)
 let write_file (file_name: string) (lines: string list) =
@@ -109,7 +84,38 @@ let write_file (file_name: string) (lines: string list) =
 
 let write_newlines file_name =
 let lines = read_file file_name in
-write_file file_name lines
+let clean_lines = remove_tabs lines in
+write_file file_name clean_lines
+
+(* compress compresses a file/directory
+ * takes initial path and final path as arguments.
+ *)
+let compress (file_name : string) (dest_path : string) : unit =
+  let oc = Gzip.open_out dest_path in
+  let ic = open_in file_name in
+  let rec loop ic oc =
+    try
+    let raw = input_line ic ^ "@cmlcml@" in
+      Gzip.output oc raw 0 (String.length raw); loop ic oc
+    with
+      | Sys_error _ -> raise (Fatal (file_name^" not found"))
+      | End_of_file -> close_in ic; Gzip.close_out oc
+  in loop ic oc
+
+(* decompress decompresses a file/directory
+ * takes initial and final path as arguments.
+ *)
+let decompress (file_name : string) (dest_path : string) : unit =
+  let rec loop ic acc =
+    try loop ic (acc $ (Gzip.input_char ic)) with End_of_file -> Gzip.close_in ic; acc
+  in try
+    let ic = Gzip.open_in file_name in
+    let oc = open_out dest_path in
+    Printf.fprintf oc "%s" (loop ic ""); close_out oc;
+    write_newlines dest_path
+  with
+    | Sys_error _ -> failwith (file_name ^ " not found")
+    | _ -> raise (Fatal "Gzip error - file empty or not Gzip")
 
 
 (* creates a blob object for the given file. Returns the hash. *)
