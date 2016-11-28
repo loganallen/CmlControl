@@ -4,6 +4,7 @@
 #require "cryptokit";;
 #load "print.cmo";;
 #load "utils.cmo";;
+#load "tree.cmo";;
 #load "command.cmo";;
 #load "cml.cmo";;
 
@@ -11,3 +12,4 @@ open Utils;;
 open Command;;
 open Cml;;
 open Print;;
+open Tree;;
