@@ -1,25 +1,24 @@
 open Unix
 open Common
 
+(* variant type representing one of the tree operations *)
+type op = Insert | Read | Write
+
+(* exception type for tree module: includes operartion and msg *)
+exception Tree_ex of op * string
+
 module type TreeSig = sig
 
   type t
 
   type index = Utils.index
 
-  (* an empty Tree *)
   val empty : t
-  (* inserts a file_name to hash mapping into the given tree *)
   val insert : t -> string * string -> t
-  (* converts an index to a tree *)
   val index_to_tree : index -> t
-  (* converts a tree to an index *)
   val tree_to_index : t -> index
-  (* reads a tree from the filesystem and converts it to a tree *)
   val read_tree : string -> string -> t
-  (* writes the tree to the filesystem *)
   val write_tree : t -> string
-  (* updates working repo with tree content *)
   val recreate_tree : string -> t -> unit
 
 end
@@ -32,6 +31,8 @@ module Tree = struct
 
   let empty : t = Tree ("", [])
 
+  (* [insert (fn, hn)] inserts a Blob into the tree.
+   * precondition: tree is a variant Tree, otherwise exception is thrown *)
   let rec insert (tree : t) (fn, hn) : t =
     let rec loop acc (fn, hn) = function
       | [] ->
@@ -54,11 +55,13 @@ module Tree = struct
       | (Blob (fx, hx))::t -> loop ((Blob (fx, hx))::acc) (fn, hn) t
     in match tree with
       | Tree (n, lst) -> Tree (n, loop [] (fn, hn) lst)
-      | _ -> failwith "error"
+      | _ -> raise (Tree_ex (Insert, "Error: cannot insert into blob"))
 
   let index_to_tree (idx : index) : t =
     List.fold_left insert empty idx
 
+  (* [tree_to_index tree] returns a Util.index from a tree
+   * precondition: tree is of variant type Tree, else returns empty index *)
   let tree_to_index (tree : t) : index =
     let rec helper path acc = function
       | [] -> acc
@@ -72,6 +75,9 @@ module Tree = struct
       | Tree (n, lst) -> helper n [] lst
       | Blob _ -> []
 
+  (* [parse_tree_line str] is a helper for the tree module
+   * precondition: str is matched by ("tree"||"blob") ^ " " ^ hash ^ " " ^ name
+   * returns tuple with parsed data *)
   let parse_tree_line (raw : string) =
     let sp1 = 1 + String.index raw ' ' in
     let sp2 = String.index_from raw sp1 ' ' in
@@ -89,7 +95,7 @@ module Tree = struct
         match obj_type with
           | "blob" -> loop ic dirs ((Blob (obj_name, obj_hash))::acc)
           | "tree" -> loop ic ((obj_name, obj_hash)::dirs) acc
-          | _ -> failwith "read_tree: error"
+          | _ -> raise (Tree_ex (Read, "Error: invalid object type in object " ^ ptr))
       with
         End_of_file -> close_in ic; acc@(List.map map_helper dirs)
     in
@@ -116,16 +122,16 @@ module Tree = struct
           mkdir (".cml/objects/"^d1) 0o777;
           Sys.rename temp_name path; hsh
         end
-      | _ -> failwith "write-tree error"
+      | _ -> raise (Tree_ex (Write, "Error: invalid tree, cannot write tree for blob"))
 
-    let rec recreate_tree (path : string) (tree : t) : unit =
-      match tree with
-        | Blob (fn, hsh) -> Utils.copy (Utils.get_object_path hsh) (path ^ "/" ^ fn)
-        | Tree (dn, lst) ->
-          begin
-            let n_path = if path = "" then dn else path ^ "/" ^ dn in
-            if not (Sys.file_exists n_path) then mkdir n_path 0o777;
-            List.iter (recreate_tree n_path) lst
-          end
+  let rec recreate_tree (path : string) (tree : t) : unit =
+    match tree with
+      | Blob (fn, hsh) -> Utils.copy (Utils.get_object_path hsh) (path ^ "/" ^ fn)
+      | Tree (dn, lst) ->
+        begin
+          let n_path = if path = "" then dn else path ^ "/" ^ dn in
+          if not (Sys.file_exists n_path) then mkdir n_path 0o777;
+          List.iter (recreate_tree n_path) lst
+        end
 
 end

@@ -1,28 +1,35 @@
+(* variant type representint a tree operation *)
+type op = Insert | Read | Write
+
+(* exception type for tree module: includes operartion and msg *)
+exception Tree_ex of op * string
+
 module type TreeSig = sig
 
   type t
 
+  (* type index is the same as defined in Utils *)
   type index = Utils.index
 
   (* an empty Tree *)
   val empty : t
 
-  (* inserts a file_name to hash mapping into the given tree *)
+  (* [insert (fn, hn)] inserts a Blob into the tree. *)
   val insert : t -> string * string -> t
 
-  (* converts an index to a tree *)
+  (* [index_to_tree idx] returns a tree from a Utils.index *)
   val index_to_tree : index -> t
 
-  (* converts a tree to an index *)
+  (* [tree_to_index tree] returns a Util.index from a tree *)
   val tree_to_index : t -> index
 
-  (* reads a tree from the filesystem and converts it to a tree *)
+  (* [read_tree ptr] reads a tree from the filesystem and converts it to type t *)
   val read_tree : string -> string -> t
 
-  (* writes the tree to the filesystem *)
+  (* [write_tree tree] writes a tree to the filesystem *)
   val write_tree : t -> string
 
-  (* updates working repo with tree content *)
+  (* [recreate_tree nm tree] updates working repo with tree content *)
   val recreate_tree : string -> t -> unit
 
 end
