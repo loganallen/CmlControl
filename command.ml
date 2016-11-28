@@ -172,7 +172,7 @@ let execute (i : input) : unit =
       | Commit   -> commit i.args
       | Diff     -> diff i.args
       | Help     -> help ()
-  		| Init     -> init ()
+      | Init     -> init ()
       | Log      -> log ()
       | Merge    -> merge i.args
       | Reset    -> reset i.args
