@@ -97,7 +97,7 @@ let abs_path_from_cml rel_path =
   let cwd = Sys.getcwd () in
   let rel_path_dirname =
     if Sys.is_directory rel_path then
-      Filename.basename rel_path
+      rel_path
     else
       Filename.dirname rel_path
   in
