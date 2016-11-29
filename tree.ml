@@ -47,7 +47,6 @@ module Tree = struct
           try
             let (dir_name, file_name) = split_path fn in
             if dir_name = n then
-              let _ = print_endline "here" in
               (insert (Tree (n, lst)) (file_name, hn))::(acc @ t)
             else raise Not_found
           with Not_found -> loop ((Tree (n, lst))::acc) (fn, hn) t

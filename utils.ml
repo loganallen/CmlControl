@@ -326,6 +326,31 @@ let set_index (idx : index) : unit =
   in
   write_index (open_out ".cml/index") idx
 
+(* removes [rm_files] list from the index *)
+let rm_files_from_idx rm_files =
+  let cwd = Sys.getcwd () in
+  chdir_to_cml ();
+  let idx = get_index () in
+  let idx' = List.filter (fun (s,_) -> not (List.mem s rm_files)) idx in
+  set_index idx';
+  Sys.chdir cwd
+
+(* adds [add_files] list from the index *)
+let add_files_to_idx add_files =
+  let acc_idx acc file =
+    let hsh = create_blob file in
+    if List.mem (file,hsh) acc then
+      acc
+    else
+      update_index (file,hsh) acc
+  in
+  let cwd = Sys.getcwd () in
+  chdir_to_cml ();
+  let idx = get_index () in
+  let idx' = List.fold_left acc_idx idx add_files in
+  set_index idx';
+  Sys.chdir cwd
+
 (****************************** File Fetching *********************************)
 (******************************************************************************)
 
@@ -368,12 +393,23 @@ let rec get_all_files (dirs : string list) (acc : string list) : string list =
 (* returns a list of all files staged (added) for commit *)
 (* precondition: all files have objects in [.cml/objects/] *)
 let rec get_staged (idx : index) (commit_idx : index) : string list =
-  List.iter (fun (f,h) -> print f) commit_idx;
   let find_staged acc (f,h) =
     let hash = try List.assoc f commit_idx with Not_found -> "nil" in
     if hash = h then acc else f::acc
   in
   List.fold_left find_staged [] idx |> List.sort (Pervasives.compare)
+
+(* returns a mapping of changed files to their old obj hashes *)
+let get_changed_as_index (cwd : string list) (idx : index) : index =
+  let find_changed acc fn =
+    try
+      let old_hash = List.assoc fn idx in
+      let new_hash = hash fn in
+      if old_hash = new_hash then acc else (fn,old_hash)::acc
+    with
+    | Not_found -> acc
+  in
+  List.fold_left find_changed [] cwd |> List.sort (Pervasives.compare)
 
 (* returns a list of changed files (different from the working index) *)
 let get_changed (cwd : string list) (idx : index) : string list =
@@ -402,7 +438,7 @@ let get_untracked (cwd : string list) (idx : index) : string list =
 
 (* validate the branch name *)
 let validate_branch (branch : string) : unit =
-  if (String.sub branch 0 1) = "." || (String.sub branch 0 1) = "-" then
+  if branch.[0] = '.' || branch.[0] = '-' then
     raise (Fatal "invalid branch name")
   else ()
 

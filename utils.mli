@@ -136,6 +136,12 @@ val update_index: string * string -> index -> index
 (* initializes an index in the cml directory *)
 val set_index: index -> unit
 
+(* removes [rm_files] list from the index *)
+val rm_files_from_idx : string list -> unit
+
+(* adds [add_files] list from the index *)
+val add_files_to_idx : string list -> unit
+
 (****************************** File Fetching *********************************)
 (******************************************************************************)
 
@@ -147,6 +153,9 @@ val get_all_files: string list -> string list -> string list
 
 (* returns a list of all files staged (added) for commit *)
 val get_staged: index -> index -> string list
+
+(* returns a mapping of changed files to their old obj hashes *)
+val get_changed_as_index: string list -> index -> index
 
 (* returns a list of changed files *)
 val get_changed: string list -> index -> string list
