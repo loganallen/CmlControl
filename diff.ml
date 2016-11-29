@@ -9,7 +9,6 @@ let diff_file (new_file : string) (old_file : string) : unit =
   let diffs = Odiff.files_diffs old_file new_file in
   if diffs = [] then () else
     Print.print_color ("diff --cml " ^ new_file) "";
-    (* Odiff.print_diffs Pervasives.stdout diffs *)
     List.iter print_diff diffs
 
 (* prints diffs all pairs of files in a list *)

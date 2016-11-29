@@ -395,7 +395,7 @@ let get_untracked (cwd : string list) (idx : index) : string list =
     try
       let _ = List.assoc fn idx in acc
     with
-    | Not_found -> if fn.[0] = '.' then acc else fn::acc
+    | Not_found -> fn::acc
   in
   List.fold_left find_untracked [] cwd |> List.sort (Pervasives.compare)
 
