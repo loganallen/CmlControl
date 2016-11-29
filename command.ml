@@ -91,16 +91,17 @@ let branch (args: string list) : unit =
 
 (* switch branches or restore working tree files *)
 let checkout (args: string list) : unit =
+  let isdetached = detached_head () in
   match args with
   | []    -> raise (Fatal "branch name or HEAD version required")
   | [arg] ->
     begin
-        if (get_branches () |> List.mem arg) then switch_branch arg
+        if (get_branches () |> List.mem arg) then switch_branch arg isdetached
         else if ((get_all_files ["./"] []) |> List.mem arg) then
           get_index () |> checkout_file arg
         else
           try
-            if detached_head () && arg = get_detached_head () then
+            if isdetached && arg = get_detached_head () then
               print ("Already detached HEAD at " ^ arg)
             else
               let commit = parse_commit arg in
@@ -114,7 +115,7 @@ let checkout (args: string list) : unit =
     end
   | flag::b::_ -> begin
     if flag = "-b" || flag = "-B" then
-      let _ = get_head () |> create_branch b in switch_branch b
+      let _ = get_head () |> create_branch b in switch_branch b isdetached
     else
       raise (Fatal ("invalid flags, see [--help]"))
   end

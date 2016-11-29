@@ -513,8 +513,9 @@ let delete_branch (branch : string) : unit =
 
 (* switch current working branch *)
 (* precondition: [branch] exists *)
-let switch_branch (branch : string) : unit =
-  if (get_current_branch () = branch) then
+let switch_branch (branch : string) (isdetached : bool) : unit =
+  let cur = if isdetached then "" else get_current_branch () in
+  if cur = branch then
     print ("Already on branch '"^branch^"'")
   else
     let ch = open_out ".cml/HEAD" in

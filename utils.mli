@@ -183,7 +183,7 @@ val delete_branch: string -> unit
 
 (* switch current working branch *)
 (* precondition: [branch] exists *)
-val switch_branch: string -> unit
+val switch_branch: string -> bool -> unit
 
 (******************************** User Info ***********************************)
 (******************************************************************************)
