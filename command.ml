@@ -21,71 +21,125 @@ let get_staged_help (idx : index) : string list =
   with
   | Fatal _ -> get_staged idx []
 
+let rec print_list = function
+  | [] -> ()
+  | h::t -> print_endline h; print_list t
+
+(* returns a list of the file names in [rel_path] to cwd, (the returned
+ * filenames are relative to cml repo) *)
+let get_files_from_rel_path rel_path =
+  let path_from_cml = abs_path_from_cml rel_path in
+  begin
+    if Sys.is_directory rel_path then
+      let rel_path' = begin
+        if Str.string_match (Str.regexp ".*/$") rel_path 0 then
+          rel_path
+        else
+          rel_path^"/"
+      end in
+      get_all_files [rel_path'] []
+      |> List.map (fun s ->
+        let name = Str.replace_first (Str.regexp "^/") "" (rel_path')
+          |> Str.global_replace (Str.regexp "\\.") "\\." in
+        Str.replace_first (Str.regexp name) "" s)
+      |> List.map (fun s -> (path_from_cml^"/"^s))
+      |> List.map (fun s -> Str.global_replace (Str.regexp "\\.\\./") "" s)
+      |> List.map (fun s -> Str.global_replace (Str.regexp "\\./") "" s)
+    else
+      [path_from_cml]
+  end |> List.map (fun s -> Str.replace_first (Str.regexp "//") "/" s)
+      |> List.map (fun s -> Str.replace_first (Str.regexp "^/") "" s)
+
 (* add file contents to the index *)
 let add (args: string list) : unit =
-  let add_help idx_acc file =
-    if Sys.file_exists file then
-      let hash = create_blob file in
-      update_index (file,hash) idx_acc
-    else
-      raise (Fatal ("pathspec '"^file^"' does not match an file(s)"))
-  in
-  match args with
-  | [] -> raise (Fatal "no files specified")
-  | f::[] -> begin
-    let idx = get_index () in
-      if f = "." || f = "-A" then (* add all files *)
-        let cwd = get_all_files ["./"] [] in
-        let ch = get_changed cwd idx in
-        let ut = get_untracked cwd idx in
-        List.fold_left add_help idx (ut@ch) |> set_index
-      else
-        add_help idx f |> set_index
-  end
-  | _ -> List.fold_left add_help (get_index ()) args |> set_index
+  if args = [] then
+    raise (Fatal "no files specified")
+  else
+    let add_to_idx rel_path =
+      if Sys.file_exists rel_path then begin
+        let add_files = get_files_from_rel_path rel_path in
+        add_files_to_idx add_files
+      end else if rel_path = "-A" then begin
+        let cwd = Sys.getcwd () in
+        chdir_to_cml ();
+        let add_files = get_all_files ["./"] [] in
+        Sys.chdir cwd;
+        add_files_to_idx add_files
+      end else
+        raise (Fatal ("pathspec '"^rel_path^"' does not match an file(s)"))
+    in
+    List.iter add_to_idx args
 
 (* list, create, or delete branches *)
 let branch (args: string list) : unit =
+  chdir_to_cml ();
+  let isdetached = detached_head () in
   match args with
   | [] -> begin
-    let cur = get_current_branch () in
+    let cur = if isdetached then "" else get_current_branch () in
     get_branches () |> List.iter (branch_print cur)
   end
   | b::[] -> begin
     if b = "-d" || b = "-D" then raise (Fatal "branch name required")
-    else get_head () |> create_branch b
+    else
+      let ptr = if isdetached then get_detached_head () else get_head () in
+      create_branch b ptr
   end
   | flag::b::_ -> begin
     if flag = "-d" || flag = "-D" then delete_branch b
     else raise (Fatal "invalid flags, see [--help]")
   end
 
+(* switches state of repo to state of given commit_hash *)
+let switch_version (commit_hash : string) : unit =
+  let commit = parse_commit commit_hash in
+  let tree = Tree.read_tree "" commit.tree in
+  Tree.recreate_tree "" tree;
+  set_index (Tree.tree_to_index tree)
+
 (* switch branches or restore working tree files *)
 let checkout (args: string list) : unit =
+  chdir_to_cml ();
+  let isdetached = detached_head () in
   match args with
   | []    -> raise (Fatal "branch name or HEAD version required")
-  | h::[] -> begin
-    if h = "-b" || h = "-B" then
-      raise (Fatal "branch name required")
-    else
-      begin
-        if (get_branches () |> List.mem h) then switch_branch h
-        else if (get_versions () |> List.mem h) then switch_version h
-        else raise (Fatal ("pathspec '"^h^"' does not match an file(s)"))
-      end
-  end
-  | flag::b::_ -> begin
-    if flag = "-b" || flag = "-B" then
-      let _ = get_head () |> create_branch b in switch_branch b
-    else
-      raise (Fatal ("invalid flags, see [--help]"))
-  end
+  | [arg] ->
+    begin
+        if (get_branches () |> List.mem arg) then
+          let _  = switch_version (get_branch_ptr arg) in
+          let _ = switch_branch arg isdetached in
+          print ("Switched to branch '"^arg^"'")
+        else if ((get_all_files ["./"] []) |> List.mem arg) then
+          get_index () |> checkout_file arg
+        else
+          try
+            if isdetached && arg = get_detached_head () then
+              print ("Already detached HEAD at " ^ arg)
+            else
+              let commit = parse_commit arg in
+              let tree = Tree.read_tree "" commit.tree in
+              Tree.recreate_tree "" tree;
+              set_index (Tree.tree_to_index tree);
+              set_detached_head arg;
+              print_detached_warning arg
+          with
+            | Fatal _ -> raise (Fatal ("pathspec '"^arg^"' does not match an file(s)/branch/commit"))
+    end
+  | flag::b::_ ->
+    begin
+      if flag = "-b" || flag = "-B" then
+        let _ = get_head () |> create_branch b in switch_branch b isdetached
+      else
+        raise (Fatal ("invalid flags, see [--help]"))
+    end
 
 (* record changes to the repository:
  * stores the current contents of the index in a new commit
  * along with commit metadata. *)
 let commit (args: string list) : unit =
+  chdir_to_cml ();
   let user = get_user_info () in
+  let isdetached = detached_head () in
   let new_head =
     match args with
     | [] -> raise (Fatal "no commit arguments found, see [--help]")
@@ -118,19 +172,41 @@ let commit (args: string list) : unit =
           let msg = List.rev lst |> List.fold_left (fun acc s -> s^" "^acc) ""
                     |> String.trim in
           let tm = time () |> localtime |> Time.get_time in
-          let last_commit = try get_head () with Fatal n -> "None" in
-            create_commit tree user tm msg last_commit
+          let last_commit =
+            try if isdetached then get_detached_head () else get_head ()
+            with Fatal n -> "None" in
+          create_commit tree user tm msg last_commit
         end
     end
   in
-  set_head new_head
+  if isdetached then
+    let _ = set_detached_head new_head in
+    print_detached_warning new_head
+  else set_head new_head
+
+(* diff map helper function *)
+let diff_map_help (file, hash) = (file, get_object_path hash)
 
 (* show changes between working tree and previous commits *)
 let diff (args: string list) : unit =
-  let idx = get_index () in
-  match args with
-    | [] -> Diff.print_diff_files_mult (List.map (fun (fn, hn) -> (fn, get_object_path hn)) idx)
-    | file_name::_ -> Diff.print_diff_files file_name (get_object_path (List.assoc file_name idx))
+  let ch_idx = get_index () |> get_changed_as_index (get_all_files ["./"] []) in
+  try match args with
+    | [] -> List.map diff_map_help ch_idx |> Diff.diff_mult
+    | hd::[] -> begin
+      if hd = "." || hd = "-a" then
+        List.map diff_map_help ch_idx |> Diff.diff_mult
+      else
+        get_object_path (List.assoc hd ch_idx) |> Diff.diff_file hd
+    end
+    | hd::t -> begin
+      if hd = "." || hd = "-a" then
+        raise (Fatal "invalid arguments, see [--help]")
+      else
+        List.map (fun f -> (f, get_object_path (List.assoc f ch_idx))) args
+        |> Diff.diff_mult
+    end
+  with
+  | Not_found -> ()
 
 (* display help information about CmlControl. *)
 let help () : unit =
@@ -149,6 +225,7 @@ let init () : unit =
 
 (* display the current branches commit history *)
 let log () : unit =
+  chdir_to_cml ();
   let rec log_loop ptr cmt =
     let _ = print_commit ptr cmt.author cmt.date cmt.message in
     if cmt.parent = "None" then ()
@@ -175,44 +252,27 @@ let reset (args: string list) : unit =
 let rm (args: string list) : unit =
   if args = [] then
     raise (Fatal "no files specified")
-  else
+  else begin
+    let cwd = Sys.getcwd () in
+    chdir_to_cml ();
+    let idx = get_index () in
+    let removable_files = get_staged_help idx in
+    Sys.chdir cwd;
     let remove_from_idx rel_path =
-      if Sys.file_exists rel_path then
-        let path_from_cml = abs_path_from_cml rel_path in
+      if Sys.file_exists rel_path then begin
+        let rm_files = get_files_from_rel_path rel_path in
+        rm_files_from_idx rm_files removable_files
+      end else if rel_path = "-A" then begin
         let cwd = Sys.getcwd () in
         chdir_to_cml ();
-        let idx = get_index () in
+        let rm_files = get_all_files ["./"] [] in
         Sys.chdir cwd;
-        let rm_files = begin
-          if Sys.is_directory rel_path then
-            let rel_path' = begin
-              if Str.string_match (Str.regexp ".*/$") rel_path 0 then
-                rel_path
-              else
-                rel_path^"/"
-            end in
-            get_all_files [rel_path'] []
-            |> List.map (fun s ->
-              let name = Str.replace_first (Str.regexp "^/") "" (rel_path')
-                |> Str.global_replace (Str.regexp "\\.") "\\." in
-              Str.replace_first (Str.regexp name) "" s)
-            |> List.map (fun s -> (path_from_cml^"/"^s))
-            |> List.map (fun s -> Str.global_replace (Str.regexp "\\.\\./") "" s)
-            |> List.map (fun s -> Str.global_replace (Str.regexp "\\./") "" s)
-          else
-            [path_from_cml]
-        end |> List.map (fun s -> Str.replace_first (Str.regexp "//") "/" s)
-            |> List.map (fun s -> Str.replace_first (Str.regexp "^/") "" s) in
-        let idx' = List.filter (fun (s,_) -> not (List.mem s rm_files)) idx
-        in
-        chdir_to_cml ();
-        set_index idx';
-        Sys.chdir cwd
-      else
+        rm_files_from_idx rm_files removable_files
+      end else
         raise (Fatal ("pathspec '"^rel_path^"' does not match an file(s)"))
     in
     List.iter remove_from_idx args
-
+  end
 
 (* stashes changes made to the current working tree *)
 let stash (args: string list) : unit =
@@ -226,22 +286,31 @@ let stash (args: string list) : unit =
                 else raise (Fatal ("not a valid argument to the stash command"))
              end
 
+(* helper for printing status message *)
+let status_message () =
+  if detached_head () then
+    let head = get_detached_head () in
+    print_color ("HEAD detached at " ^ head) "r"
+  else
+    print ("On branch "^(get_current_branch ())^"\n")
+
 (* show the working tree status *)
 let status () : unit =
-    chdir_to_cml ();
-    print ("On branch "^(get_current_branch ())^"\n");
-    let cwd = get_all_files ["./"] [] in
-    let idx = get_index () in
-    let st = get_staged_help idx in
-    let ch = get_changed cwd idx in
-    let ut = get_untracked cwd idx in
-      match (st,ch,ut) with
-      | [],[],[] -> print "no changes to be committed, working tree clean"
-      | _ -> let _ = print_staged st in
-             let _ = print_changed ch in print_untracked ut
+  chdir_to_cml ();
+  status_message ();
+  let cwd = get_all_files ["./"] [] in
+  let idx = get_index () in
+  let st = get_staged_help idx in
+  let ch = get_changed cwd idx in
+  let ut = get_untracked cwd idx in
+    match (st,ch,ut) with
+    | [],[],[] -> print "no changes to be committed, working tree clean"
+    | _ -> let _ = print_staged st in
+           let _ = print_changed ch in print_untracked ut
 
 (* set the user info to [username] *)
 let user (args: string list) : unit =
+  chdir_to_cml ();
   match args with
   | []   -> let name = get_user_info () in print ("Current user: "^name)
   | lst -> begin

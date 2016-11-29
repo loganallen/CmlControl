@@ -134,4 +134,9 @@ let print_help () : unit =
   print "grow and tweak the cml history";
   print_help_branch (); print_help_checkout (); print_help_commit ();
   print_help_diff (); print_help_merge ();
-  print_newline (); print_camel ();
+  print_newline (); print_camel ()
+
+(* print a warning message to user about being in detached HEAD mode *)
+let print_detached_warning (commit : string) : unit =
+  print_color "warning: cml is in detached HEAD mode" "r";
+  print_string "detached HEAD set at "; print_color commit "y"

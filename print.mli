@@ -36,3 +36,6 @@ val print_commit: string -> string -> string -> string -> unit
 
 (* prints a help log for all Cml commands *)
 val print_help: unit -> unit
+
+(* print a warning message to user about being in detached HEAD mode *)
+val print_detached_warning: string -> unit

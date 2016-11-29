@@ -97,18 +97,24 @@ val get_head: unit -> string
 (* sets the HEAD of the cml repository *)
 val set_head: string -> unit
 
+(* sets the HEAD of the cml repository to a commit hash *)
+val set_detached_head: string -> unit
+
+(* returns the commit hash the head was detached at *)
+val get_detached_head: unit -> string
+
+(* returns true if repo currently is in detached head mode, else false *)
+val detached_head: unit -> bool
+
 (* returns the HASH of a head of the given branch *)
 val get_branch_ptr: string -> string
 
 (* initializes a given commit to a given branch name *)
 val set_branch_ptr: string -> string -> unit
 
-(* returns a list of all versions of HEAD *)
-val get_versions: unit -> string list
-
-(* go to an old version of HEAD *)
-(* precondition: [version] of HEAD exists *)
-val switch_version: string -> unit
+(* overwrites file with version added to supplied index
+ * if the file is not in the index, do nothing *)
+val checkout_file: string -> index -> unit
 
 (***************************** Index Manipulation *****************************)
 (******************************************************************************)
@@ -123,6 +129,12 @@ val update_index: string * string -> index -> index
 (* initializes an index in the cml directory *)
 val set_index: index -> unit
 
+(* removes [rm_files] list from the index *)
+val rm_files_from_idx : string list -> string list -> unit
+
+(* adds [add_files] list from the index *)
+val add_files_to_idx : string list -> unit
+
 (****************************** File Fetching *********************************)
 (******************************************************************************)
 
@@ -134,6 +146,9 @@ val get_all_files: string list -> string list -> string list
 
 (* returns a list of all files staged (added) for commit *)
 val get_staged: index -> index -> string list
+
+(* returns a mapping of changed files to their old obj hashes *)
+val get_changed_as_index: string list -> index -> index
 
 (* returns a list of changed files *)
 val get_changed: string list -> index -> string list
@@ -161,7 +176,7 @@ val delete_branch: string -> unit
 
 (* switch current working branch *)
 (* precondition: [branch] exists *)
-val switch_branch: string -> unit
+val switch_branch: string -> bool -> unit
 
 (******************************** User Info ***********************************)
 (******************************************************************************)

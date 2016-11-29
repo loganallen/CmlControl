@@ -47,7 +47,6 @@ module Tree = struct
           try
             let (dir_name, file_name) = split_path fn in
             if dir_name = n then
-              let _ = print_endline "here" in
               (insert (Tree (n, lst)) (file_name, hn))::(acc @ t)
             else raise Not_found
           with Not_found -> loop ((Tree (n, lst))::acc) (fn, hn) t
@@ -95,7 +94,7 @@ module Tree = struct
         match obj_type with
           | "blob" -> loop ic dirs ((Blob (obj_name, obj_hash))::acc)
           | "tree" -> loop ic ((obj_name, obj_hash)::dirs) acc
-          | _ -> raise (Tree_ex (Read, "Error: invalid object type in object " ^ ptr))
+          | _ -> raise (Tree_ex (Read, "Error: invalid object type in " ^ ptr))
       with
       | End_of_file -> close_in ic; acc@(List.map map_helper dirs)
     in
@@ -106,7 +105,8 @@ module Tree = struct
     let rec tree_data acc = function
       | [] -> acc
       | (Blob (fn,hn))::t -> tree_data (("blob " ^ hn ^ " " ^ fn)::acc) t
-      | (Tree (n, lst))::t -> tree_data (("tree " ^ (write_tree (Tree (n, lst))) ^ " " ^ n)::acc) t
+      | (Tree (n, lst))::t -> tree_data (("tree " ^
+                                (write_tree (Tree (n, lst))) ^ " " ^ n)::acc) t
     in
     let rec write_lines ch = function
       | [] -> close_out ch;
@@ -124,16 +124,18 @@ module Tree = struct
           mkdir (".cml/objects/"^d1) 0o777;
           Sys.rename temp_name path; hsh
         end
-      | _ -> raise (Tree_ex (Write, "Error: invalid tree, cannot write tree for blob"))
+      | _ -> raise (Tree_ex (Write,
+                            "Error: invalid tree, cannot write tree for blob"))
 
   let rec recreate_tree (path : string) (tree : t) : unit =
     match tree with
-      | Blob (fn, hsh) -> Utils.copy (Utils.get_object_path hsh) (path ^ "/" ^ fn)
+      | Blob (fn, hsh) -> Utils.copy (Utils.get_object_path hsh)
+                                    (if path = "" then fn else path ^ "/" ^ fn)
       | Tree (dn, lst) ->
         begin
-          let n_path = if path = "" then dn else path ^ "/" ^ dn in
-          if not (Sys.file_exists n_path) then mkdir n_path 0o777;
-          List.iter (recreate_tree n_path) lst
+          let np = if path = "" then dn else path ^ "/" ^ dn in
+          if not (Sys.file_exists np) && np <> "" then mkdir np 0o777;
+          List.iter (recreate_tree np) lst
         end
 
 end
