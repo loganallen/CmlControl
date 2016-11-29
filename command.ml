@@ -21,16 +21,82 @@ let get_staged_help (idx : index) : string list =
   with
   | Fatal _ -> get_staged idx []
 
+let rec print_list = function
+  | [] -> ()
+  | h::t -> print_endline h; print_list t
+
 (* add file contents to the index *)
 let add (args: string list) : unit =
-  let add_help idx_acc file =
+  if args = [] then
+    raise (Fatal "no files specified")
+  else
+    let add_to_idx rel_path =
+      if Sys.file_exists rel_path then
+        let path_from_cml = abs_path_from_cml rel_path in
+        let cwd = Sys.getcwd () in
+        chdir_to_cml ();
+        let idx = get_index () in
+        Sys.chdir cwd;
+        let add_files = begin
+          if Sys.is_directory rel_path then
+            let rel_path' = begin
+              if Str.string_match (Str.regexp ".*/$") rel_path 0 then
+                rel_path
+              else
+                rel_path^"/"
+            end in
+            get_all_files [rel_path'] []
+            |> List.map (fun s ->
+              let name = Str.replace_first (Str.regexp "^/") "" (rel_path')
+                |> Str.global_replace (Str.regexp "\\.") "\\." in
+              Str.replace_first (Str.regexp name) "" s)
+            |> List.map (fun s -> (path_from_cml^"/"^s))
+            |> List.map (fun s -> Str.global_replace (Str.regexp "\\.\\./") "" s)
+            |> List.map (fun s -> Str.global_replace (Str.regexp "\\./") "" s)
+          else
+            [path_from_cml]
+        end |> List.map (fun s -> Str.replace_first (Str.regexp "//") "/" s)
+            |> List.map (fun s -> Str.replace_first (Str.regexp "^/") "" s) in
+        print_list add_files;
+        let acc_idx acc file =
+          let hsh = create_blob file in
+          if List.mem (file,hsh) acc then
+            acc
+          else begin
+            update_index (file,hsh) acc
+          end
+        in
+        chdir_to_cml ();
+        let idx' = List.fold_left acc_idx idx add_files in
+        set_index idx';
+        Sys.chdir cwd
+      else
+        raise (Fatal ("pathspec '"^rel_path^"' does not match an file(s)"))
+    in
+    List.iter add_to_idx args
+
+
+  (* let add_help idx_acc file =
     if Sys.file_exists file then
       let hash = create_blob file in
       update_index (file,hash) idx_acc
     else
       raise (Fatal ("pathspec '"^file^"' does not match an file(s)"))
   in
-  match args with
+  let add_file idx f =
+    if f = "." || f = "./" || f = "-A" || f = "-a" then (* add all files *)
+      let cwd = get_all_files ["./"] [] in
+      let ch = get_changed cwd idx in
+      let ut = get_untracked cwd idx in
+      List.fold_left add_help idx (ut@ch) |> set_index
+    else
+      add_help idx f |> set_index
+  in
+  if args = [] then
+    raise (Fatal "no files specified")
+  else
+    List.iter (add_file (get_index ())) args *)
+  (* match args with
   | [] -> raise (Fatal "no files specified")
   | f::[] -> begin
     let idx = get_index () in
@@ -42,7 +108,7 @@ let add (args: string list) : unit =
       else
         add_help idx f |> set_index
   end
-  | _ -> List.fold_left add_help (get_index ()) args |> set_index
+  | _ -> List.fold_left add_help (get_index ()) args |> set_index *)
 
 (* list, create, or delete branches *)
 let branch (args: string list) : unit =
