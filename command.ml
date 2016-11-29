@@ -223,16 +223,21 @@ let rm (args: string list) : unit =
   if args = [] then
     raise (Fatal "no files specified")
   else begin
+    let cwd = Sys.getcwd () in
+    chdir_to_cml ();
+    let idx = get_index () in
+    let removable_files = get_staged_help idx in
+    Sys.chdir cwd;
     let remove_from_idx rel_path =
       if Sys.file_exists rel_path then begin
         let rm_files = get_files_from_rel_path rel_path in
-        rm_files_from_idx rm_files
+        rm_files_from_idx rm_files removable_files
       end else if rel_path = "-A" then begin
         let cwd = Sys.getcwd () in
         chdir_to_cml ();
         let rm_files = get_all_files ["./"] [] in
         Sys.chdir cwd;
-        rm_files_from_idx rm_files
+        rm_files_from_idx rm_files removable_files
       end else
         raise (Fatal ("pathspec '"^rel_path^"' does not match an file(s)"))
     in
