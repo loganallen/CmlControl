@@ -253,7 +253,7 @@ let get_detached_head () : string =
 (* returns true if repo currently is in detached head mode, else false *)
 let detached_head () : bool =
   let raw = get_detached_head () in
-  String.sub raw 0 4 = "head"
+  String.sub raw 0 4 <> "head"
 
 (* returns the HASH of a head of the given branch *)
 let get_branch_ptr (branch_name : string) : string =

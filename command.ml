@@ -224,10 +224,18 @@ let rm (args: string list) : unit =
 let stash (args: string list) : unit =
   failwith "Unimplemented"
 
+(* helper for printing status message *)
+let status_message () =
+  if detached_head () then
+    let head = get_detached_head () in
+    print_color ("HEAD detached at " ^ head) "r"
+  else
+    print ("On branch "^(get_current_branch ())^"\n")
+
 (* show the working tree status *)
 let status () : unit =
   chdir_to_cml ();
-  print ("On branch "^(get_current_branch ())^"\n");
+  status_message ();
   let cwd = get_all_files ["./"] [] in
   let idx = get_index () in
   let st = get_staged_help idx in
