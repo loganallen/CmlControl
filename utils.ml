@@ -294,11 +294,11 @@ let set_index (idx : index) : unit =
   write_index (open_out ".cml/index") idx
 
 (* removes [rm_files] list from the index *)
-let rm_files_from_idx rm_files =
+let rm_files_from_idx rm_files removable_files =
   let cwd = Sys.getcwd () in
   chdir_to_cml ();
   let idx = get_index () in
-  let idx' = List.filter (fun (s,_) -> not (List.mem s rm_files)) idx in
+  let idx' = List.filter (fun (s,_) -> not ((List.mem s rm_files) && (List.mem s removable_files))) idx in
   set_index idx';
   Sys.chdir cwd
 
