@@ -135,6 +135,9 @@ val get_all_files: string list -> string list -> string list
 (* returns a list of all files staged (added) for commit *)
 val get_staged: index -> index -> string list
 
+(* returns a mapping of changed files to their old obj hashes *)
+val get_changed_as_index: string list -> index -> index
+
 (* returns a list of changed files *)
 val get_changed: string list -> index -> string list
 

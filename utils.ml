@@ -341,6 +341,18 @@ let rec get_staged (idx : index) (commit_idx : index) : string list =
   in
   List.fold_left find_staged [] idx |> List.sort (Pervasives.compare)
 
+(* returns a mapping of changed files to their old obj hashes *)
+let get_changed_as_index (cwd : string list) (idx : index) : index =
+  let find_changed acc fn =
+    try
+      let old_hash = List.assoc fn idx in
+      let new_hash = hash fn in
+      if old_hash = new_hash then acc else (fn,old_hash)::acc
+    with
+    | Not_found -> acc
+  in
+  List.fold_left find_changed [] cwd |> List.sort (Pervasives.compare)
+
 (* returns a list of changed files (different from the working index) *)
 let get_changed (cwd : string list) (idx : index) : string list =
   let find_changed acc fn =
