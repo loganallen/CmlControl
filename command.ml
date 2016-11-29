@@ -106,7 +106,7 @@ let checkout (args: string list) : unit =
   | [arg] ->
     begin
         if (get_branches () |> List.mem arg) then
-          let _  = switch_version (get_branch_ptr arg) in
+          let _ = switch_version (get_branch_ptr arg) in
           let _ = switch_branch arg isdetached in
           print ("Switched to branch '"^arg^"'")
         else if ((get_all_files ["./"] []) |> List.mem arg) then
