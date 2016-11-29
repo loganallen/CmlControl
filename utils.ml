@@ -293,6 +293,31 @@ let set_index (idx : index) : unit =
   in
   write_index (open_out ".cml/index") idx
 
+(* removes [rm_files] list from the index *)
+let rm_files_from_idx rm_files =
+  let cwd = Sys.getcwd () in
+  chdir_to_cml ();
+  let idx = get_index () in
+  let idx' = List.filter (fun (s,_) -> not (List.mem s rm_files)) idx in
+  set_index idx';
+  Sys.chdir cwd
+
+(* adds [add_files] list from the index *)
+let add_files_to_idx add_files =
+  let acc_idx acc file =
+    let hsh = create_blob file in
+    if List.mem (file,hsh) acc then
+      acc
+    else
+      update_index (file,hsh) acc
+  in
+  let cwd = Sys.getcwd () in
+  chdir_to_cml ();
+  let idx = get_index () in
+  let idx' = List.fold_left acc_idx idx add_files in
+  set_index idx';
+  Sys.chdir cwd
+
 (****************************** File Fetching *********************************)
 (******************************************************************************)
 
