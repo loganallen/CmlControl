@@ -25,6 +25,8 @@ let rec print_list = function
   | [] -> ()
   | h::t -> print_endline h; print_list t
 
+(* returns a list of the file names in [rel_path] to cwd, (the returned
+ * filenames are relative to cml repo) *)
 let get_files_from_rel_path rel_path =
   let path_from_cml = abs_path_from_cml rel_path in
   begin
@@ -54,53 +56,15 @@ let add (args: string list) : unit =
     raise (Fatal "no files specified")
   else
     let add_to_idx rel_path =
-      let acc_idx acc file =
-        let hsh = create_blob file in
-        if List.mem (file,hsh) acc then
-          acc
-        else begin
-          update_index (file,hsh) acc
-        end
-      in
-      let cwd = Sys.getcwd () in
       if Sys.file_exists rel_path then begin
-        (* let path_from_cml = abs_path_from_cml rel_path in *)
-        chdir_to_cml ();
-        let idx = get_index () in
-        Sys.chdir cwd;
         let add_files = get_files_from_rel_path rel_path in
-        (* let add_files = begin
-          if Sys.is_directory rel_path then
-            let rel_path' = begin
-              if Str.string_match (Str.regexp ".*/$") rel_path 0 then
-                rel_path
-              else
-                rel_path^"/"
-            end in
-            get_all_files [rel_path'] []
-            |> List.map (fun s ->
-              let name = Str.replace_first (Str.regexp "^/") "" (rel_path')
-                |> Str.global_replace (Str.regexp "\\.") "\\." in
-              Str.replace_first (Str.regexp name) "" s)
-            |> List.map (fun s -> (path_from_cml^"/"^s))
-            |> List.map (fun s -> Str.global_replace (Str.regexp "\\.\\./") "" s)
-            |> List.map (fun s -> Str.global_replace (Str.regexp "\\./") "" s)
-          else
-            [path_from_cml]
-        end |> List.map (fun s -> Str.replace_first (Str.regexp "//") "/" s)
-            |> List.map (fun s -> Str.replace_first (Str.regexp "^/") "" s) in *)
-        print_list add_files;
-        chdir_to_cml ();
-        let idx' = List.fold_left acc_idx idx add_files in
-        set_index idx';
-        Sys.chdir cwd
+        add_files_to_idx add_files
       end else if rel_path = "-A" then begin
+        let cwd = Sys.getcwd () in
         chdir_to_cml ();
         let add_files = get_all_files ["./"] [] in
-        let idx = get_index () in
-        let idx' = List.fold_left acc_idx idx add_files in
-        set_index idx';
-        Sys.chdir cwd
+        Sys.chdir cwd;
+        add_files_to_idx add_files
       end else
         raise (Fatal ("pathspec '"^rel_path^"' does not match an file(s)"))
     in
@@ -241,43 +205,22 @@ let reset (args: string list) : unit =
 let rm (args: string list) : unit =
   if args = [] then
     raise (Fatal "no files specified")
-  else
+  else begin
     let remove_from_idx rel_path =
-      if Sys.file_exists rel_path then
-        let path_from_cml = abs_path_from_cml rel_path in
+      if Sys.file_exists rel_path then begin
+        let rm_files = get_files_from_rel_path rel_path in
+        rm_files_from_idx rm_files
+      end else if rel_path = "-A" then begin
         let cwd = Sys.getcwd () in
         chdir_to_cml ();
-        let idx = get_index () in
+        let rm_files = get_all_files ["./"] [] in
         Sys.chdir cwd;
-        let rm_files = begin
-          if Sys.is_directory rel_path then
-            let rel_path' = begin
-              if Str.string_match (Str.regexp ".*/$") rel_path 0 then
-                rel_path
-              else
-                rel_path^"/"
-            end in
-            get_all_files [rel_path'] []
-            |> List.map (fun s ->
-              let name = Str.replace_first (Str.regexp "^/") "" (rel_path')
-                |> Str.global_replace (Str.regexp "\\.") "\\." in
-              Str.replace_first (Str.regexp name) "" s)
-            |> List.map (fun s -> (path_from_cml^"/"^s))
-            |> List.map (fun s -> Str.global_replace (Str.regexp "\\.\\./") "" s)
-            |> List.map (fun s -> Str.global_replace (Str.regexp "\\./") "" s)
-          else
-            [path_from_cml]
-        end |> List.map (fun s -> Str.replace_first (Str.regexp "//") "/" s)
-            |> List.map (fun s -> Str.replace_first (Str.regexp "^/") "" s) in
-        let idx' = List.filter (fun (s,_) -> not (List.mem s rm_files)) idx
-        in
-        chdir_to_cml ();
-        set_index idx';
-        Sys.chdir cwd
-      else
+        rm_files_from_idx rm_files
+      end else
         raise (Fatal ("pathspec '"^rel_path^"' does not match an file(s)"))
     in
     List.iter remove_from_idx args
+  end
 
 
 (* stashes changes made to the current working tree *)

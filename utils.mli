@@ -123,6 +123,12 @@ val update_index: string * string -> index -> index
 (* initializes an index in the cml directory *)
 val set_index: index -> unit
 
+(* removes [rm_files] list from the index *)
+val rm_files_from_idx : string list -> unit
+
+(* adds [add_files] list from the index *)
+val add_files_to_idx : string list -> unit
+
 (****************************** File Fetching *********************************)
 (******************************************************************************)
 
