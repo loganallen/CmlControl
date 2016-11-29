@@ -216,7 +216,12 @@ let rm (args: string list) : unit =
 
 (* stashes changes made to the current working tree *)
 let stash (args: string list) : unit =
-  failwith "Unimplemented"
+  match args with
+  | [] -> 
+  | h::[] -> begin
+                if h = "pop" then
+                else raise (Fatal ("not a valid argument to the stash command"))
+             end
 
 (* show the working tree status *)
 let status () : unit =
