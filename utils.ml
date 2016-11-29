@@ -233,6 +233,28 @@ let set_head (commit_hash : string) : unit =
 		| Sys_error _ -> raise (Fatal "could not set HEAD")
 		| End_of_file -> raise (Fatal "HEAD not initialized")
 
+(* sets the HEAD of the cml repository to a commit hash *)
+let set_detached_head (commit_hash : string) : unit =
+  try
+    let oc = open_out ".cml/HEAD" in
+    output_string oc commit_hash; close_out oc
+  with
+    | Sys_error _ -> raise (Fatal "could not set detached HEAD")
+
+(* returns the commit hash the head was detached at *)
+let get_detached_head () : string =
+  try
+    let ic = open_in ".cml/HEAD" in
+    let raw = input_line ic in
+    close_in ic; raw
+  with
+  | Sys_error _ -> raise (Fatal "could not get detached HEAD")
+
+(* returns true if repo currently is in detached head mode, else false *)
+let detached_head () : bool =
+  let raw = get_detached_head () in
+  String.sub raw 0 4 = "head"
+
 (* returns the HASH of a head of the given branch *)
 let get_branch_ptr (branch_name : string) : string =
 	try
@@ -260,6 +282,15 @@ let get_versions () : string list =
 (* precondition: [version] of HEAD exists *)
 let switch_version (version : string) : unit =
   ()
+
+(* overwrites file with version added to supplied index
+ * if the file is not in the index, do nothing *)
+let checkout_file (file_name : string) (idx : index) : unit =
+  try
+    let obj_path = get_object_path (List.assoc file_name idx) in
+    copy obj_path file_name
+  with
+    | Not_found -> ()
 
 (***************************** Index Manipulation *****************************)
 (******************************************************************************)

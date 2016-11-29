@@ -68,16 +68,23 @@ let branch (args: string list) : unit =
 let checkout (args: string list) : unit =
   match args with
   | []    -> raise (Fatal "branch name or HEAD version required")
-  | h::[] -> begin
-    if h = "-b" || h = "-B" then
-      raise (Fatal "branch name required")
-    else
-      begin
-        if (get_branches () |> List.mem h) then switch_branch h
-        else if (get_versions () |> List.mem h) then switch_version h
-        else raise (Fatal ("pathspec '"^h^"' does not match an file(s)"))
-      end
-  end
+  | [arg] ->
+    begin
+        if (get_branches () |> List.mem arg) then switch_branch arg
+        else if ((get_all_files ["./"] []) |> List.mem arg) then
+          get_index () |> checkout_file arg
+        else
+          try
+            let commit = parse_commit arg in (* check if arg is object hash *)
+            let tree = Tree.read_tree "" commit.tree in
+            Tree.recreate_tree "" tree;
+            set_index (Tree.tree_to_index tree);
+            set_detached_head arg;
+            print ("checked out commit " ^ arg);
+            print_color "warning: now in detached HEAD mode" "r"
+          with
+            | Fatal _ -> raise (Fatal ("pathspec '"^arg^"' does not match an file(s)/branch/commit"))
+    end
   | flag::b::_ -> begin
     if flag = "-b" || flag = "-B" then
       let _ = create_branch b in switch_branch b
@@ -177,46 +184,7 @@ let reset (args: string list) : unit =
 
 (* remove files from working tree and index *)
 let rm (args: string list) : unit =
-  if args = [] then
-    raise (Fatal "no files specified")
-  else
-    let remove_from_idx rel_path =
-      if Sys.file_exists rel_path then
-        let path_from_cml = abs_path_from_cml rel_path in
-        let cwd = Sys.getcwd () in
-        chdir_to_cml ();
-        let idx = get_index () in
-        Sys.chdir cwd;
-        let rm_files = begin
-          if Sys.is_directory rel_path then
-            let rel_path' = begin
-              if Str.string_match (Str.regexp ".*/$") rel_path 0 then
-                rel_path
-              else
-                rel_path^"/"
-            end in
-            get_all_files [rel_path'] []
-            |> List.map (fun s ->
-              let name = Str.replace_first (Str.regexp "^/") "" (rel_path')
-                |> Str.global_replace (Str.regexp "\\.") "\\." in
-              Str.replace_first (Str.regexp name) "" s)
-            |> List.map (fun s -> (path_from_cml^"/"^s))
-            |> List.map (fun s -> Str.global_replace (Str.regexp "\\.\\./") "" s)
-            |> List.map (fun s -> Str.global_replace (Str.regexp "\\./") "" s)
-          else
-            [path_from_cml]
-        end |> List.map (fun s -> Str.replace_first (Str.regexp "//") "/" s)
-            |> List.map (fun s -> Str.replace_first (Str.regexp "^/") "" s) in
-        let idx' = List.filter (fun (s,_) -> not (List.mem s rm_files)) idx
-        in
-        chdir_to_cml ();
-        set_index idx';
-        Sys.chdir cwd
-      else
-        raise (Fatal ("pathspec '"^rel_path^"' does not match an file(s)"))
-    in
-    List.iter remove_from_idx args
-
+  failwith "Unimplemented"
 
 (* stashes changes made to the current working tree *)
 let stash (args: string list) : unit =
@@ -224,7 +192,6 @@ let stash (args: string list) : unit =
 
 (* show the working tree status *)
 let status () : unit =
-    chdir_to_cml ();
     print ("On branch "^(get_current_branch ())^"\n");
     let cwd = get_all_files ["./"] [] in
     let idx = get_index () in
@@ -263,7 +230,6 @@ let parse_input (args : string array) : input =
     | "rm"       -> {cmd = Rm; args = t}
     | "stash"    -> {cmd = Stash; args = t}
     | "status"   -> {cmd = Status; args = t}
-    | "help"     -> {cmd = Help; args = t}
     | "--help"   -> {cmd = Help; args = t}
     | "--user"   -> {cmd = User; args = t}
     | cmd        -> raise (Parsing cmd)

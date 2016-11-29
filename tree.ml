@@ -128,11 +128,11 @@ module Tree = struct
 
   let rec recreate_tree (path : string) (tree : t) : unit =
     match tree with
-      | Blob (fn, hsh) -> Utils.copy (Utils.get_object_path hsh) (path ^ "/" ^ fn)
+      | Blob (fn, hsh) -> Utils.copy (Utils.get_object_path hsh) (if path = "" then fn else path ^ "/" ^ fn)
       | Tree (dn, lst) ->
         begin
           let n_path = if path = "" then dn else path ^ "/" ^ dn in
-          if not (Sys.file_exists n_path) then mkdir n_path 0o777;
+          if not (Sys.file_exists n_path) && n_path <> "" then mkdir n_path 0o777;
           List.iter (recreate_tree n_path) lst
         end
 
