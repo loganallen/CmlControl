@@ -60,6 +60,16 @@ val remove_from_string : string -> string -> string
  * postcondition: get_object_path raise Fatal if hash doens't exist *)
  val get_object_path : string -> string
 
+(* returns whether the given argument is a flag (if arg is of the form
+ * dash [-] followed by any number of characters > 0) *)
+val arg_is_flag : string -> bool
+
+(* precondition: [arg] is a flag.
+ * postcondition: returns the list of flags from the argument.
+ * example: [get_flags_from_arg "-hi" ~ ["h"; "i"]]
+ * example: [get_flags_from_arg "--hi" ~ ["hi"]] *)
+val get_flags_from_arg : string -> string list
+
 (************************* File Compression & Hashing *************************)
 (******************************************************************************)
 
@@ -124,7 +134,11 @@ val update_index: string * string -> index -> index
 val set_index: index -> unit
 
 (* removes [rm_files] list from the index *)
-val rm_files_from_idx : string list -> string list -> unit
+val rm_files_from_idx : string list -> unit
+
+(* removes [rm_files] list from the repository (deletes physical files).
+ * the files given must be the path from .cml repo *)
+val rm_files_from_repo : string list -> unit
 
 (* adds [add_files] list from the index *)
 val add_files_to_idx : string list -> unit

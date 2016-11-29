@@ -8,10 +8,32 @@ type command =
 | Merge | Reset | Rm | Stash | Status | User
 
 type input = { cmd: command; args: string list }
+type args_input = { flags: string list; args: string list }
 
 exception Parsing of string
 
 let perm = 0o777
+
+(* parses string of args into flags and actual arguments *)
+let parse_args (args : string list) : args_input =
+  let acc_flags = fun acc arg ->
+    if arg_is_flag arg then (get_flags_from_arg arg) @ acc else acc
+  in
+  let acc_args = fun acc arg ->
+    if arg_is_flag arg then acc else arg::acc
+  in
+  {
+    flags = List.fold_left acc_flags [] args;
+    args = List.fold_left acc_args [] args;
+  }
+
+let rec verify_allowed_flags allowed_flags flags =
+  match flags with
+  | [] -> ()
+  | h::t -> begin
+    if List.mem h allowed_flags then verify_allowed_flags allowed_flags t
+    else raise (Fatal ("invalid flag '"^h^"'"))
+  end
 
 (* helper function that returns a list of files staged for commit *)
 let get_staged_help (idx : index) : string list =
@@ -220,25 +242,23 @@ let reset (args: string list) : unit =
 
 (* remove files from working tree and index *)
 let rm (args: string list) : unit =
+  let { flags; args; } = parse_args args in
+  let allowed_flags = ["f"] in
+  verify_allowed_flags allowed_flags flags;
   if args = [] then
     raise (Fatal "no files specified")
   else begin
-    let cwd = Sys.getcwd () in
-    chdir_to_cml ();
-    (* let idx = get_index () in
-    let removable_files = get_staged_help idx in *)
-    let removable_files = get_all_files ["./"] [] in
-    Sys.chdir cwd;
     let remove_from_idx rel_path =
       if Sys.file_exists rel_path then begin
         let rm_files = get_files_from_rel_path rel_path in
-        rm_files_from_idx rm_files removable_files
-      end else if rel_path = "-A" then begin
-        let cwd = Sys.getcwd () in
-        chdir_to_cml ();
-        let rm_files = get_all_files ["./"] [] in
-        Sys.chdir cwd;
-        rm_files_from_idx rm_files removable_files
+        rm_files_from_idx rm_files;
+        if List.mem "f" flags then begin
+          if Sys.is_directory rel_path then begin
+            rm_files_from_repo rm_files;
+            Unix.rmdir rel_path
+          end else
+            rm_files_from_repo rm_files
+        end else ()
       end else
         raise (Fatal ("pathspec '"^rel_path^"' does not match an file(s)"))
     in
