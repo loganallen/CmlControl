@@ -125,15 +125,17 @@ let commit (args: string list) : unit =
   in
   set_head new_head
 
+(* diff map helper function *)
+let diff_map_help (file, hash) = (file, get_object_path hash)
+
 (* show changes between working tree and previous commits *)
 let diff (args: string list) : unit =
   let ch_idx = get_index () |> get_changed_as_index (get_all_files ["./"] []) in
   try match args with
-    | [] -> List.map (fun (f,h) -> (f, get_object_path h)) ch_idx
-            |> Diff.diff_mult
+    | [] -> List.map diff_map_help ch_idx |> Diff.diff_mult
     | hd::[] -> begin
       if hd = "." || hd = "-a" then
-        List.map (fun (f,h) -> (f, get_object_path h)) ch_idx |> Diff.diff_mult
+        List.map diff_map_help ch_idx |> Diff.diff_mult
       else
         get_object_path (List.assoc hd ch_idx) |> Diff.diff_file hd
     end
