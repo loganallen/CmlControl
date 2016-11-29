@@ -275,16 +275,6 @@ let set_branch_ptr (branch_name : string) (commit_hash : string) : unit =
 	with
 		| Sys_error _ -> raise (Fatal "write error")
 
-
-(* returns a list of all versions of HEAD *)
-let get_versions () : string list =
-  []
-
-(* go to an old version of HEAD *)
-(* precondition: [version] of HEAD exists *)
-let switch_version (version : string) : unit =
-  ()
-
 (* overwrites file with version added to supplied index
  * if the file is not in the index, do nothing *)
 let checkout_file (file_name : string) (idx : index) : unit =
@@ -519,9 +509,7 @@ let switch_branch (branch : string) (isdetached : bool) : unit =
     print ("Already on branch '"^branch^"'")
   else
     let ch = open_out ".cml/HEAD" in
-    output_string ch ("heads/"^branch); close_out ch;
-    let _ = print ("Switched to branch '"^branch^"'") in
-    get_branch_ptr branch |> switch_version
+    output_string ch ("heads/"^branch); close_out ch
 
 (******************************** User Info ***********************************)
 (******************************************************************************)

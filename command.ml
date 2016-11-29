@@ -90,6 +90,13 @@ let branch (args: string list) : unit =
     else raise (Fatal "invalid flags, see [--help]")
   end
 
+(* switches state of repo to state of given commit_hash *)
+let switch_version (commit_hash : string) : unit =
+  let commit = parse_commit commit_hash in
+  let tree = Tree.read_tree "" commit.tree in
+  Tree.recreate_tree "" tree;
+  set_index (Tree.tree_to_index tree)
+
 (* switch branches or restore working tree files *)
 let checkout (args: string list) : unit =
   chdir_to_cml ();
@@ -98,7 +105,10 @@ let checkout (args: string list) : unit =
   | []    -> raise (Fatal "branch name or HEAD version required")
   | [arg] ->
     begin
-        if (get_branches () |> List.mem arg) then switch_branch arg isdetached
+        if (get_branches () |> List.mem arg) then
+          let _  = switch_version (get_branch_ptr arg) in
+          let _ = switch_branch arg isdetached in
+          print ("Switched to branch '"^arg^"'")
         else if ((get_all_files ["./"] []) |> List.mem arg) then
           get_index () |> checkout_file arg
         else
@@ -115,12 +125,13 @@ let checkout (args: string list) : unit =
           with
             | Fatal _ -> raise (Fatal ("pathspec '"^arg^"' does not match an file(s)/branch/commit"))
     end
-  | flag::b::_ -> begin
-    if flag = "-b" || flag = "-B" then
-      let _ = get_head () |> create_branch b in switch_branch b isdetached
-    else
-      raise (Fatal ("invalid flags, see [--help]"))
-  end
+  | flag::b::_ ->
+    begin
+      if flag = "-b" || flag = "-B" then
+        let _ = get_head () |> create_branch b in switch_branch b isdetached
+      else
+        raise (Fatal ("invalid flags, see [--help]"))
+    end
 
 (* record changes to the repository:
  * stores the current contents of the index in a new commit

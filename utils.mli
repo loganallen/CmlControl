@@ -112,13 +112,6 @@ val get_branch_ptr: string -> string
 (* initializes a given commit to a given branch name *)
 val set_branch_ptr: string -> string -> unit
 
-(* returns a list of all versions of HEAD *)
-val get_versions: unit -> string list
-
-(* go to an old version of HEAD *)
-(* precondition: [version] of HEAD exists *)
-val switch_version: string -> unit
-
 (* overwrites file with version added to supplied index
  * if the file is not in the index, do nothing *)
 val checkout_file: string -> index -> unit
