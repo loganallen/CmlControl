@@ -334,7 +334,6 @@ let rec get_all_files (dirs : string list) (acc : string list) : string list =
 (* returns a list of all files staged (added) for commit *)
 (* precondition: all files have objects in [.cml/objects/] *)
 let rec get_staged (idx : index) (commit_idx : index) : string list =
-  List.iter (fun (f,h) -> print f) commit_idx;
   let find_staged acc (f,h) =
     let hash = try List.assoc f commit_idx with Not_found -> "nil" in
     if hash = h then acc else f::acc
@@ -380,7 +379,7 @@ let get_untracked (cwd : string list) (idx : index) : string list =
 
 (* validate the branch name *)
 let validate_branch (branch : string) : unit =
-  if (String.sub branch 0 1) = "." || (String.sub branch 0 1) = "-" then
+  if branch.[0] = '.' || branch.[0] = '-' then
     raise (Fatal "invalid branch name")
   else ()
 
