@@ -272,17 +272,24 @@ let stash (args: string list) : unit =
 
 (* show the working tree status *)
 let status () : unit =
-    chdir_to_cml ();
-    print ("On branch "^(get_current_branch ())^"\n");
-    let cwd = get_all_files ["./"] [] in
-    let idx = get_index () in
-    let st = get_staged_help idx in
-    let ch = get_changed cwd idx in
-    let ut = get_untracked cwd idx in
-      match (st,ch,ut) with
-      | [],[],[] -> print "no changes to be committed, working tree clean"
-      | _ -> let _ = print_staged st in
-             let _ = print_changed ch in print_untracked ut
+  let cwd = Sys.getcwd () in
+  chdir_to_cml ();
+  print ("On branch "^(get_current_branch ())^"\n");
+  let cwd_files = get_all_files ["./"] [] in
+  let idx = get_index () in
+  let st = get_staged_help idx in
+  let ch = get_changed cwd_files idx in
+  let ut = get_untracked cwd_files idx in
+  Sys.chdir cwd;
+  let st' = st |> List.map get_rel_path in
+  let ch' = ch |> List.map get_rel_path in
+  let ut' = ut |> List.map get_rel_path in
+  match (st', ch', ut') with
+    | [],[],[] -> print "no changes to be committed, working tree clean"
+    | _ -> begin
+      let _ = print_staged st' in
+      let _ = print_changed ch' in print_untracked ut'
+    end
 
 (* set the user info to [username] *)
 let user (args: string list) : unit =

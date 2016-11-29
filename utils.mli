@@ -52,6 +52,10 @@ val chdir_to_cml : unit -> unit
  * from the cwd *)
 val abs_path_from_cml : string -> string
 
+(* returns the relative path from the cwd to the given path relative to the
+ * cml repo (essentially the input is the path in idx) *)
+val get_rel_path : string -> string
+
 (* returns [str] without [sub] *)
 val remove_from_string : string -> string -> string
 

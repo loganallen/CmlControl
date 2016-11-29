@@ -111,6 +111,34 @@ let abs_path_from_cml rel_path =
   else
     (final_path^"/"^rel_path_filename)
 
+(* returns the relative path from the cwd to the given path relative to the
+ * cml repo (essentially the input is the path in idx) *)
+let get_rel_path idx_path =
+  let rec add_back_string acc dir_path file_path =
+    let path_regexp = Str.regexp ("^"^dir_path) in
+    if Str.string_match path_regexp file_path 0 then
+      (acc^(Str.replace_first path_regexp "" file_path))
+    else begin
+      try begin
+        let i = Str.search_backward (Str.regexp "/.*/$") dir_path (String.length dir_path) in
+        let dir_path' = Str.string_before dir_path (i+1) in
+        add_back_string ("../"^acc) dir_path' file_path
+      end with
+        | Not_found -> ("../"^acc^file_path)
+    end
+  in
+  let path_to_cml = match cml_path "" with
+    | None -> raise (Fatal "Not a Cml repository (or any of the parent directories)")
+    | Some s -> s
+  in
+  if path_to_cml = "" then
+    idx_path
+  else begin
+    let dir_path_from_cml = (abs_path_from_cml "./")^"/"
+      |> Str.replace_first (Str.regexp "^/") "" in
+    idx_path |> add_back_string "" dir_path_from_cml
+  end
+
 (* returns whether the given argument is a flag (if arg is of the form
  * dash [-] followed by any number of characters > 0) *)
 let arg_is_flag arg =
