@@ -308,8 +308,9 @@ let add_files_to_idx add_files =
     let hsh = create_blob file in
     if List.mem (file,hsh) acc then
       acc
-    else
+    else begin
       update_index (file,hsh) acc
+    end
   in
   let cwd = Sys.getcwd () in
   chdir_to_cml ();
