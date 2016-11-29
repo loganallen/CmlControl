@@ -81,7 +81,8 @@ let get_object_path (hash : string) =
   let subdir = String.sub hash 0 2 in
   let fn = String.sub hash 2 (String.length hash - 2) in
   let path = root ^ subdir ^ "/" ^ fn in
-  if Sys.file_exists path then path else raise (Fatal ("tree - "^hash^": doesn't exist"))
+  if Sys.file_exists path then path
+  else raise (Fatal ("tree - "^hash^": doesn't exist"))
 
 (* returns [str] without [sub] *)
 let remove_from_string str sub =
@@ -128,7 +129,8 @@ let hash (file_name : string) : string =
 (* [copy filename destination] creates exact copy of filename at destination *)
 let copy (file_name : string) (dest_path : string) : unit =
   let rec loop ic oc =
-    try Printf.fprintf oc ("%s\n") (input_line ic); loop ic oc with End_of_file -> close_in ic; close_out oc
+    try Printf.fprintf oc ("%s\n") (input_line ic); loop ic oc
+    with End_of_file -> close_in ic; close_out oc
   in try
     let ic = open_in file_name in
     let oc = open_out dest_path in
@@ -344,23 +346,24 @@ let rec get_all_files (dirs : string list) (acc : string list) : string list =
   let rec loop dir_h path files directories =
     try
       let temp = readdir dir_h in
-      let f_name = (if path = "" || path = "./" then temp else (path^"/"^temp)) in
-      if Sys.is_directory f_name then
-        loop dir_h path files (f_name::directories)
+      let fn = (if path = "" || path = "./" then temp else (path^"/"^temp)) in
+      if Sys.is_directory fn then
+        loop dir_h path files (fn::directories)
       else
-        loop dir_h path (f_name::files) directories
+        loop dir_h path (fn::files) directories
     with
       End_of_file -> closedir dir_h; (files, directories)
   in match dirs with
     | [] -> List.sort (Pervasives.compare) acc
-    | dir_name::t -> begin
-      if is_bad_dir dir_name then
-        get_all_files t acc
-      else
-        let dir_h = opendir dir_name in
-        let (files, directories) = loop dir_h dir_name acc [] in
-        get_all_files (t@directories) files
-    end
+    | dir_name::t ->
+      begin
+        if is_bad_dir dir_name then
+          get_all_files t acc
+        else
+          let dir_h = opendir dir_name in
+          let (files, directories) = loop dir_h dir_name acc [] in
+          get_all_files (t@directories) files
+      end
 
 (* returns a list of all files staged (added) for commit *)
 (* precondition: all files have objects in [.cml/objects/] *)
