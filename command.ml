@@ -225,8 +225,9 @@ let rm (args: string list) : unit =
   else begin
     let cwd = Sys.getcwd () in
     chdir_to_cml ();
-    let idx = get_index () in
-    let removable_files = get_staged_help idx in
+    (* let idx = get_index () in
+    let removable_files = get_staged_help idx in *)
+    let removable_files = get_all_files ["./"] [] in
     Sys.chdir cwd;
     let remove_from_idx rel_path =
       if Sys.file_exists rel_path then begin
