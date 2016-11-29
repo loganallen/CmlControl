@@ -217,9 +217,12 @@ let rm (args: string list) : unit =
 (* stashes changes made to the current working tree *)
 let stash (args: string list) : unit =
   match args with
-  | [] -> 
+  | [] ->    begin
+              let oc = open_out ".cml/heads/stash" in
+              output_string oc "this";
+             end
   | h::[] -> begin
-                if h = "pop" then
+                if h = "pop" then raise (Fatal ("this is not actaully an error"))
                 else raise (Fatal ("not a valid argument to the stash command"))
              end
 
