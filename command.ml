@@ -72,6 +72,7 @@ let add (args: string list) : unit =
 
 (* list, create, or delete branches *)
 let branch (args: string list) : unit =
+  chdir_to_cml ();
   let isdetached = detached_head () in
   match args with
   | [] -> begin
@@ -91,6 +92,7 @@ let branch (args: string list) : unit =
 
 (* switch branches or restore working tree files *)
 let checkout (args: string list) : unit =
+  chdir_to_cml ();
   let isdetached = detached_head () in
   match args with
   | []    -> raise (Fatal "branch name or HEAD version required")
@@ -124,6 +126,7 @@ let checkout (args: string list) : unit =
  * stores the current contents of the index in a new commit
  * along with commit metadata. *)
 let commit (args: string list) : unit =
+  chdir_to_cml ();
   let user = get_user_info () in
   let isdetached = detached_head () in
   let new_head =
@@ -211,6 +214,7 @@ let init () : unit =
 
 (* display the current branches commit history *)
 let log () : unit =
+  chdir_to_cml ();
   let rec log_loop ptr cmt =
     let _ = print_commit ptr cmt.author cmt.date cmt.message in
     if cmt.parent = "None" then ()
@@ -238,16 +242,21 @@ let rm (args: string list) : unit =
   if args = [] then
     raise (Fatal "no files specified")
   else begin
+    let cwd = Sys.getcwd () in
+    chdir_to_cml ();
+    let idx = get_index () in
+    let removable_files = get_staged_help idx in
+    Sys.chdir cwd;
     let remove_from_idx rel_path =
       if Sys.file_exists rel_path then begin
         let rm_files = get_files_from_rel_path rel_path in
-        rm_files_from_idx rm_files
+        rm_files_from_idx rm_files removable_files
       end else if rel_path = "-A" then begin
         let cwd = Sys.getcwd () in
         chdir_to_cml ();
         let rm_files = get_all_files ["./"] [] in
         Sys.chdir cwd;
-        rm_files_from_idx rm_files
+        rm_files_from_idx rm_files removable_files
       end else
         raise (Fatal ("pathspec '"^rel_path^"' does not match an file(s)"))
     in
@@ -282,6 +291,7 @@ let status () : unit =
 
 (* set the user info to [username] *)
 let user (args: string list) : unit =
+  chdir_to_cml ();
   match args with
   | []   -> let name = get_user_info () in print ("Current user: "^name)
   | lst -> begin
