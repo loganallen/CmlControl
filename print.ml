@@ -29,6 +29,11 @@ let print_newline () :  unit =
 let print_camel () : unit =
 	print_endline "🐪 "
 
+(* prints the given branch (with a * if it's the current branch) *)
+let branch_print (cur : string) (branch : string) : unit =
+  if branch = cur then (print_string "* "; print_color cur "g")
+  else print ("  "^branch)
+
 (* prints the files staged for a commit *)
 let print_staged (files : string list) : unit =
   match files with
@@ -109,7 +114,6 @@ let print_help_diff () : unit =
 let print_help_merge () : unit =
   print_indent "merge\t\tJoin two or more development histories together" "b" 1;
   print_indent "usage:  <branch>" "y" 8
-
 
 (* prints a help log for all Cml commands *)
 let print_help () : unit =
