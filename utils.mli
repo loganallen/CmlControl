@@ -141,6 +141,9 @@ val get_all_files: string list -> string list -> string list
 (* returns a list of all files staged (added) for commit *)
 val get_staged: index -> index -> string list
 
+(* returns a mapping of changed files to their old obj hashes *)
+val get_changed_as_index: string list -> index -> index
+
 (* returns a list of changed files *)
 val get_changed: string list -> index -> string list
 
@@ -159,11 +162,8 @@ val get_branches: unit -> string list
 (* returns string representation of repo's current branch *)
 val get_current_branch: unit -> string
 
-(* recursively creates branch sub-directories as needed *)
-val branch_help: string -> string -> unit
-
-(* create a new branch if it doesn't exist *)
-val create_branch: string -> unit
+(* create a new branch at the specified ptr if it doesn't exist *)
+val create_branch: string -> string -> unit
 
 (* delete a branch if it exists *)
 val delete_branch: string -> unit

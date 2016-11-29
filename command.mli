@@ -14,9 +14,6 @@ type input = { cmd: command; args: string list }
 (* Parsing exception for unrecognized cml commands *)
 exception Parsing of string
 
-(* helper function that returns a list of files staged for commit *)
-val get_staged_help: Utils.index -> string list
-
 (* add file contents to the index *)
 val add: string list -> unit
 

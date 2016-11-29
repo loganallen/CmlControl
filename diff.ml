@@ -1,14 +1,15 @@
-let print_diff_files (mine : string) (other : string) : unit =
-  let diffs = Odiff.files_diffs mine other in
+let diff_file (old_file : string) (new_file : string) : unit =
+  let diffs = Odiff.files_diffs old_file new_file in
   if diffs = [] then () else
-    Print.print_color ("--" ^ mine) "b";
+    Print.print_color ("--" ^ old_file) "b";
     Odiff.print_diffs Pervasives.stdout diffs
 
-let rec print_diff_files_mult (lst : (string * string) list) : unit =
+let rec diff_mult (lst : (string * string) list) : unit =
   match lst with
     | [] -> ()
-    | (mine, other)::[] -> print_diff_files mine other
-    | (mine, other)::t -> print_diff_files mine other;
-                          Print.print_newline ();
-                          Print.print_color "--------------------" "r";
-                          Print.print_newline (); print_diff_files_mult t
+    | (old_file,new_file)::[] -> diff_file old_file new_file
+    | (old_file,new_file)::t  -> begin
+        diff_file old_file new_file;
+        Print.print_newline (); Print.print_color "--------------------" "r";
+        Print.print_newline (); diff_mult t
+      end

@@ -360,12 +360,23 @@ let rec get_all_files (dirs : string list) (acc : string list) : string list =
 (* returns a list of all files staged (added) for commit *)
 (* precondition: all files have objects in [.cml/objects/] *)
 let rec get_staged (idx : index) (commit_idx : index) : string list =
-  List.iter (fun (f,h) -> print f) commit_idx;
   let find_staged acc (f,h) =
     let hash = try List.assoc f commit_idx with Not_found -> "nil" in
     if hash = h then acc else f::acc
   in
   List.fold_left find_staged [] idx |> List.sort (Pervasives.compare)
+
+(* returns a mapping of changed files to their old obj hashes *)
+let get_changed_as_index (cwd : string list) (idx : index) : index =
+  let find_changed acc fn =
+    try
+      let old_hash = List.assoc fn idx in
+      let new_hash = hash fn in
+      if old_hash = new_hash then acc else (fn,old_hash)::acc
+    with
+    | Not_found -> acc
+  in
+  List.fold_left find_changed [] cwd |> List.sort (Pervasives.compare)
 
 (* returns a list of changed files (different from the working index) *)
 let get_changed (cwd : string list) (idx : index) : string list =
@@ -394,7 +405,7 @@ let get_untracked (cwd : string list) (idx : index) : string list =
 
 (* validate the branch name *)
 let validate_branch (branch : string) : unit =
-  if (String.sub branch 0 1) = "." || (String.sub branch 0 1) = "-" then
+  if branch.[0] = '.' || branch.[0] = '-' then
     raise (Fatal "invalid branch name")
   else ()
 
@@ -428,7 +439,7 @@ let get_current_branch () : string =
     | End_of_file -> raise (Fatal "HEAD not initialized")
 
 (* recursively creates branch sub-directories as needed *)
-let rec branch_help (path : string) (branch : string) : unit =
+let rec branch_help (path : string) (branch : string) : out_channel =
   try
     let slash = String.index branch '/' in
     let dir = String.sub branch 0 slash in
@@ -437,18 +448,21 @@ let rec branch_help (path : string) (branch : string) : unit =
     String.sub branch (slash+1) ((String.length branch) - (slash+1)) |>
       branch_help (prefix^"/")
   with
-  | Not_found -> open_out (path^"/"^branch) |> close_out
+  | Not_found -> open_out (path^"/"^branch)
 
 (* create a new branch if it doesn't exist *)
-let create_branch (branch : string) : unit =
+let create_branch (branch : string) (ptr : string) : unit =
   if (get_branches () |> List.mem branch) then
     raise (Fatal ("a branch named "^branch^" already exists"))
   else
     let _ = validate_branch branch in
-    if String.contains branch '/' then
-      branch_help ".cml/heads/" branch
-    else
-      open_out (".cml/heads/"^branch) |> close_out
+    let ch = begin
+      if String.contains branch '/' then
+        branch_help ".cml/heads/" branch
+      else
+        open_out (".cml/heads/"^branch)
+    end in
+    let _ = output_string ch ptr in close_out ch
 
 (* delete a branch if it exists *)
 let delete_branch (branch : string) : unit =

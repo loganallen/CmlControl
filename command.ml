@@ -75,15 +75,11 @@ let branch (args: string list) : unit =
   match args with
   | [] -> begin
     let cur = get_current_branch () in
-    let branch_print b =
-      if b = cur then (print_string "* "; print_color cur "g")
-      else print ("  "^b)
-    in
-    get_branches () |> List.iter branch_print
+    get_branches () |> List.iter (branch_print cur)
   end
   | b::[] -> begin
     if b = "-d" || b = "-D" then raise (Fatal "branch name required")
-    else create_branch b
+    else get_head () |> create_branch b
   end
   | flag::b::_ -> begin
     if flag = "-d" || flag = "-D" then delete_branch b
@@ -106,7 +102,7 @@ let checkout (args: string list) : unit =
   end
   | flag::b::_ -> begin
     if flag = "-b" || flag = "-B" then
-      let _ = create_branch b in switch_branch b
+      let _ = get_head () |> create_branch b in switch_branch b
     else
       raise (Fatal ("invalid flags, see [--help]"))
   end
@@ -155,12 +151,29 @@ let commit (args: string list) : unit =
   in
   set_head new_head
 
+(* diff map helper function *)
+let diff_map_help (file, hash) = (file, get_object_path hash)
+
 (* show changes between working tree and previous commits *)
 let diff (args: string list) : unit =
-  let idx = get_index () in
-  match args with
-    | [] -> Diff.print_diff_files_mult (List.map (fun (fn, hn) -> (fn, get_object_path hn)) idx)
-    | file_name::_ -> Diff.print_diff_files file_name (get_object_path (List.assoc file_name idx))
+  let ch_idx = get_index () |> get_changed_as_index (get_all_files ["./"] []) in
+  try match args with
+    | [] -> List.map diff_map_help ch_idx |> Diff.diff_mult
+    | hd::[] -> begin
+      if hd = "." || hd = "-a" then
+        List.map diff_map_help ch_idx |> Diff.diff_mult
+      else
+        get_object_path (List.assoc hd ch_idx) |> Diff.diff_file hd
+    end
+    | hd::t -> begin
+      if hd = "." || hd = "-a" then
+        raise (Fatal "invalid arguments, see [--help]")
+      else
+        List.map (fun f -> (f, get_object_path (List.assoc f ch_idx))) args
+        |> Diff.diff_mult
+    end
+  with
+  | Not_found -> ()
 
 (* display help information about CmlControl. *)
 let help () : unit =
@@ -172,7 +185,7 @@ let init () : unit =
     raise (Fatal "Cml repository already initialized")
   else
     mkdir ".cml" perm; mkdir ".cml/heads" perm; mkdir ".cml/objects" perm;
-    let _ = create_branch "master" in
+    let _ = create_branch "master" "" in
 		let out = open_out ".cml/HEAD" in
 		output_string out "heads/master"; close_out out;
     print_color "initialized empty Cml repository" "b"
