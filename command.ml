@@ -72,14 +72,17 @@ let add (args: string list) : unit =
 
 (* list, create, or delete branches *)
 let branch (args: string list) : unit =
+  let isdetached = detached_head () in
   match args with
   | [] -> begin
-    let cur = get_current_branch () in
+    let cur = if isdetached then "" else get_current_branch () in
     get_branches () |> List.iter (branch_print cur)
   end
   | b::[] -> begin
     if b = "-d" || b = "-D" then raise (Fatal "branch name required")
-    else get_head () |> create_branch b
+    else
+      let ptr = if isdetached then get_detached_head () else get_head () in
+      create_branch b ptr
   end
   | flag::b::_ -> begin
     if flag = "-d" || flag = "-D" then delete_branch b
@@ -97,13 +100,15 @@ let checkout (args: string list) : unit =
           get_index () |> checkout_file arg
         else
           try
-            let commit = parse_commit arg in (* check if arg is object hash *)
-            let tree = Tree.read_tree "" commit.tree in
-            Tree.recreate_tree "" tree;
-            set_index (Tree.tree_to_index tree);
-            set_detached_head arg;
-            print ("checked out commit " ^ arg);
-            print_color "warning: now in detached HEAD mode" "r"
+            if detached_head () && arg = get_detached_head () then
+              print ("Already detached HEAD at " ^ arg)
+            else
+              let commit = parse_commit arg in
+              let tree = Tree.read_tree "" commit.tree in
+              Tree.recreate_tree "" tree;
+              set_index (Tree.tree_to_index tree);
+              set_detached_head arg;
+              print_detached_warning arg
           with
             | Fatal _ -> raise (Fatal ("pathspec '"^arg^"' does not match an file(s)/branch/commit"))
     end
@@ -119,6 +124,7 @@ let checkout (args: string list) : unit =
  * along with commit metadata. *)
 let commit (args: string list) : unit =
   let user = get_user_info () in
+  let isdetached = detached_head () in
   let new_head =
     match args with
     | [] -> raise (Fatal "no commit arguments found, see [--help]")
@@ -151,12 +157,17 @@ let commit (args: string list) : unit =
           let msg = List.rev lst |> List.fold_left (fun acc s -> s^" "^acc) ""
                     |> String.trim in
           let tm = time () |> localtime |> Time.get_time in
-          let last_commit = try get_head () with Fatal n -> "None" in
-            create_commit tree user tm msg last_commit
+          let last_commit =
+            try if isdetached then get_detached_head () else get_head ()
+            with Fatal n -> "None" in
+          create_commit tree user tm msg last_commit
         end
     end
   in
-  set_head new_head
+  if isdetached then
+    let _ = set_detached_head new_head in
+    print_detached_warning new_head
+  else set_head new_head
 
 (* diff map helper function *)
 let diff_map_help (file, hash) = (file, get_object_path hash)
