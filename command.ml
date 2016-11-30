@@ -328,7 +328,6 @@ let reset (args: string list) : unit =
   begin if List.length flags > 1 then
     raise (Fatal "usage: git reset [--soft | --mixed | --hard] [<commit>]")
   else () end;
-  (* let cwd = Sys.getcwd () in *)
   chdir_to_cml ();
   let head_hash = match args with
     | [] -> get_head ()
