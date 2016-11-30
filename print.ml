@@ -41,8 +41,7 @@ let print_staged (staged_files : string list) (deleted_files : string list): uni
   | _  -> begin
     print "Changes to be committed:";
     print_indent "(use \"cml rm <filename>...\" to unstage)\n" "" 1;
-    List.iter (fun s -> print_indent s "green" 3) staged_files;
-    List.iter (fun s -> print_indent ("deleted:    "^s) "green" 3) deleted_files;
+    List.iter (fun s -> print_indent s "green" 3) ((staged_files @ deleted_files) |> List.sort Pervasives.compare);
     print_newline ()
   end
 
