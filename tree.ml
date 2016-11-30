@@ -11,7 +11,7 @@ module type TreeSig = sig
 
   type t
 
-  type index = Utils.index
+  type index = (string * string) list
 
   val empty : t
   val insert : t -> string * string -> t
@@ -27,7 +27,7 @@ module Tree = struct
 
   type t = Blob of string * string | Tree of string * t list
 
-  type index = Utils.index
+  type index = (string * string) list
 
   let empty : t = Tree ("", [])
 
@@ -98,7 +98,7 @@ module Tree = struct
       with
       | End_of_file -> close_in ic; acc@(List.map map_helper dirs)
     in
-    let ic = open_in (Utils.get_object_path ptr) in
+    let ic = open_in (get_object_path ptr) in
     Tree(tree_name, loop ic [] [])
 
   let rec write_tree (tree : t) : string =
@@ -129,7 +129,7 @@ module Tree = struct
 
   let rec recreate_tree (path : string) (tree : t) : unit =
     match tree with
-      | Blob (fn, hsh) -> Utils.copy (Utils.get_object_path hsh)
+      | Blob (fn, hsh) -> Crypto.copy (get_object_path hsh)
                                     (if path = "" then fn else path ^ "/" ^ fn)
       | Tree (dn, lst) ->
         begin

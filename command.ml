@@ -144,17 +144,6 @@ let branch (args: string list) : unit =
     else raise (Fatal "invalid flags, see [--help]")
   end
 
-(* switches state of repo to state of given commit_hash *)
-let switch_version (commit_hash : string) : unit =
-  let ohead = parse_commit (get_head ()) in
-  let oindex = Tree.read_tree "" ohead.tree |> Tree.tree_to_index in
-  let nhead = parse_commit commit_hash in
-  let ntree = Tree.read_tree "" nhead.tree in
-  let nindex = Tree.tree_to_index ntree in
-  List.iter (fun (fn, hn) -> Sys.remove fn ) oindex;
-  Tree.recreate_tree "" ntree;
-  set_index nindex
-
 (* switch branches or restore working tree files *)
 let checkout (args: string list) : unit =
   chdir_to_cml ();

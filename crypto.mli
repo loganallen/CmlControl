@@ -32,3 +32,6 @@ val decompress_contents : string -> string list
 (* returns the string list of lines in the file_name
  * precondition: file_name exists from the cwd *)
 (*val parse_lines : string -> string list*)
+
+(* copy creates copy of a file in a new destination *)
+val copy: string -> string -> unit

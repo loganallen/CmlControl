@@ -71,11 +71,8 @@ val arg_is_flag : string -> bool
  * example: [get_flags_from_arg "--hi" ~ ["hi"]] *)
 val get_flags_from_arg : string -> string list
 
-(************************* File Compression & Hashing *************************)
+(************************ Object Creation & Parsing  **************************)
 (******************************************************************************)
-
-(* copy creates copy of a file in a new destination *)
-val copy: string -> string -> unit
 
 (* creates a blob object for the given file. Returns the hash. *)
 val create_blob: string -> string
@@ -179,6 +176,9 @@ val delete_branch: string -> unit
 (* switch current working branch *)
 (* precondition: [branch] exists *)
 val switch_branch: string -> bool -> unit
+
+(* switches state of repo to state of given commit_hash *)
+val switch_version: string -> unit
 
 (******************************** User Info ***********************************)
 (******************************************************************************)

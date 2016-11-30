@@ -2,6 +2,7 @@ open Unix
 open Print
 open Common
 open Crypto
+open Tree
 
 type commit = {
   tree: string;
@@ -155,20 +156,8 @@ let get_flags_from_arg arg =
   else
     Str.replace_first r_single_dash "" arg |> Str.split (Str.regexp "")
 
-(************************* File Compression & Hashing *************************)
+(************************ Object Creation & Parsing  **************************)
 (******************************************************************************)
-
-(* [copy filename destination] creates exact copy of filename at destination *)
-let copy (file_name : string) (dest_path : string) : unit =
-  let rec loop ic oc =
-    try Printf.fprintf oc ("%s\n") (input_line ic); loop ic oc
-    with End_of_file -> close_in ic; close_out oc
-  in try
-    let ic = open_in file_name in
-    let oc = open_out dest_path in
-    loop ic oc
-  with
-    Sys_error _ -> raise (Fatal "utils.copy, file not found")
 
 (* creates a blob object for the given file. Returns the hash. *)
 let create_blob (file_name: string) : string =
@@ -522,6 +511,17 @@ let switch_branch (branch : string) (isdetached : bool) : unit =
   else
     let ch = open_out ".cml/HEAD" in
     output_string ch ("heads/"^branch); close_out ch
+
+(* switches state of repo to state of given commit_hash *)
+let switch_version (commit_hash : string) : unit =
+  let ohead = parse_commit (get_head ()) in
+  let oindex = Tree.read_tree "" ohead.tree |> Tree.tree_to_index in
+  let nhead = parse_commit commit_hash in
+  let ntree = Tree.read_tree "" nhead.tree in
+  let nindex = Tree.tree_to_index ntree in
+  List.iter (fun (fn, hn) -> Sys.remove fn ) oindex;
+  Tree.recreate_tree "" ntree;
+  set_index nindex
 
 (******************************** User Info ***********************************)
 (******************************************************************************)

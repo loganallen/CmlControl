@@ -75,3 +75,15 @@ let decompress_contents file_name =
     file_lines
   end with
   | _ -> raise (Fatal ("Failure decompressing file '"^file_name^"'"))
+
+(* [copy filename destination] creates exact copy of filename at destination *)
+let copy (file_name : string) (dest_path : string) : unit =
+  let rec loop ic oc =
+    try Printf.fprintf oc ("%s\n") (input_line ic); loop ic oc
+    with End_of_file -> close_in ic; close_out oc
+  in try
+    let ic = open_in file_name in
+    let oc = open_out dest_path in
+    loop ic oc
+  with
+    Sys_error _ -> raise (Fatal "utils.copy, file not found")
