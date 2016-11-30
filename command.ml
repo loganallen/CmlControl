@@ -92,20 +92,36 @@ let branch (args: string list) : unit =
 
 (* switches state of repo to state of given commit_hash *)
 let switch_version (commit_hash : string) : unit =
-  let commit = parse_commit commit_hash in
-  let tree = Tree.read_tree "" commit.tree in
-  Tree.recreate_tree "" tree;
-  set_index (Tree.tree_to_index tree)
+  let ohead = parse_commit (get_head ()) in
+  let oindex = Tree.read_tree "" ohead.tree |> Tree.tree_to_index in
+  let nhead = parse_commit commit_hash in
+  let ntree = Tree.read_tree "" nhead.tree in
+  let nindex = Tree.tree_to_index ntree in
+  List.iter (fun (fn, hn) -> Sys.remove fn ) oindex;
+  Tree.recreate_tree "" ntree;
+  set_index nindex
 
 (* switch branches or restore working tree files *)
 let checkout (args: string list) : unit =
   chdir_to_cml ();
+  let cwd = get_all_files ["./"] [] in
+  let idx = get_index () in
+  let st = get_staged_help idx in
+  let ch = get_changed cwd idx in
   let isdetached = detached_head () in
   match args with
   | []    -> raise (Fatal "branch name or HEAD version required")
   | [arg] ->
     begin
-        if (get_branches () |> List.mem arg) then
+        if st <> [] || ch <> [] then
+          let _ = print_error ("Could not checkout " ^ arg) in
+          let _ = print "Your changes to the following files would be overwritten" in
+          let rec loop = function
+            | [] -> ()
+            | h::t -> print_indent h "y" 1; loop t
+          in loop (st @ ch);
+          print "Please commit or stash your changes before checking out"
+        else if (get_branches () |> List.mem arg) then
           let _ = switch_version (get_branch_ptr arg) in
           let _ = switch_branch arg isdetached in
           print ("Switched to branch '"^arg^"'")
