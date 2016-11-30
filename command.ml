@@ -207,6 +207,7 @@ let checkout (args: string list) : unit =
  * stores the current contents of the index in a new commit
  * along with commit metadata. *)
 let commit (args: string list) : unit =
+  let cwd = Sys.getcwd () in
   chdir_to_cml ();
   let user = get_user_info () in
   let isdetached = detached_head () in
@@ -237,7 +238,9 @@ let commit (args: string list) : unit =
           if untracked_files = [] then
             raise (Fatal "nothing added to commit")
           else begin
+            Sys.chdir cwd;
             print_untracked (untracked_files |> List.map get_rel_path);
+            chdir_to_cml ();
             raise (Fatal "nothing added to commit but untracked files are present")
           end
         end else begin
