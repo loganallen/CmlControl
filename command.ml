@@ -279,15 +279,20 @@ let stash (args: string list) : unit =
   match args with
   | [] ->    begin
                try
-                let cwd = Sys.getcwd () in
                 chdir_to_cml ();
-                let add_files = get_all_files ["./"] [] in
-                Sys.chdir cwd;
-                let _ = List.map (fun file -> create_blob file) add_files in
+                let cwd = get_all_files ["./"] [] in
+                let idx = get_index () in
+                let ch = get_changed cwd idx in
+                let idx_new = List.map (fun file -> (file,create_blob file)) ch in
+                let final_idx = idx @ idx_new in
+                let tree = Tree.index_to_tree final_idx |> Tree.write_tree in
+                let user = get_user_info () in
+                let tm = time () |> localtime |> Time.get_time in
+                create_commit tree user tm "Stash" "cml v1 only supports one stash";
                 let head = get_head () in
                 switch_version head;
-                let oc = open_out ".cml/heads/stash" in
-                output_string oc "this will be great";
+                let oc = open_out ".cml/stash" in
+                output_string oc tree;
                 close_out oc;
                 with
                 | Fatal f -> print_endline "not a valid command - cannot stash."
