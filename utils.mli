@@ -40,9 +40,6 @@ val cml_initialized: string -> bool
  * otherwise returns false *)
 val cml_initialized_r : string -> bool
 
-(* ($) is an infix operator for appending a char to a string *)
-val ($): string -> char -> string
-
 (* sets the cwd (current working directory) to the nearest .cml directory.
  * Raises Fatal exception if directory is not a Cml repository
  * (or any of the parent directories) *)
@@ -77,21 +74,8 @@ val get_flags_from_arg : string -> string list
 (************************* File Compression & Hashing *************************)
 (******************************************************************************)
 
-(* hash returns a SHA-1 hash of a given input *)
-val hash : string -> string
-
 (* copy creates copy of a file in a new destination *)
 val copy: string -> string -> unit
-
-(* compress compresses a file/directory
- * takes initial path and final path as arguments.
- *)
-val compress: string -> string -> unit
-
-(* decompress decompresses a file/directory
- * takes initial and final path as arguments.
- *)
-val decompress: string -> string -> unit
 
 (* creates a blob object for the given file. Returns the hash. *)
 val create_blob: string -> string

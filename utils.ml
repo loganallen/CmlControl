@@ -1,7 +1,7 @@
 open Unix
-open Cryptokit
 open Print
 open Common
+open Crypto
 
 type commit = {
   tree: string;
@@ -70,9 +70,6 @@ let chdir_to_cml () =
   match cml_path ((Sys.getcwd ())^"/") with
   | Some path -> Sys.chdir path
   | None -> raise (Fatal "Not a Cml repository (or any of the parent directories)")
-
-(* ($) is an infix operator for appending a char to a string *)
-let ($) (str : string) (c : char) : string =  str ^ Char.escaped c
 
 (* returns the path of an object with file name hash
  * precondition: hash is a valid  40 char string *)
@@ -161,16 +158,6 @@ let get_flags_from_arg arg =
 (************************* File Compression & Hashing *************************)
 (******************************************************************************)
 
-(* hash returns a SHA-1 hash of a given input *)
-let hash (file_name : string) : string =
-	try
-		let fd = openfile file_name [O_RDONLY] 0o777 in
-		let channel = in_channel_of_descr fd in
-		let hash = hash_channel (Hash.sha1 ()) channel in
-		close_in channel; transform_string (Hexa.encode ()) hash
-	with
-		Unix_error (Unix.ENOENT,_,_) -> raise (Fatal ("Could not find file: "^file_name))
-
 (* [copy filename destination] creates exact copy of filename at destination *)
 let copy (file_name : string) (dest_path : string) : unit =
   let rec loop ic oc =
@@ -182,34 +169,6 @@ let copy (file_name : string) (dest_path : string) : unit =
     loop ic oc
   with
     Sys_error _ -> raise (Fatal "utils.copy, file not found")
-
-(* compress compresses a file/directory
- * takes initial path and final path as arguments.
- *)
-let compress (file_name : string) (dest_path : string) : unit =
-  let oc = Gzip.open_out dest_path in
-  let ic = open_in file_name in
-  let rec loop ic oc =
-    try
-      Gzip.output_char oc (input_char ic); loop ic oc
-    with
-      | Sys_error _ -> raise (Fatal (file_name^" not found"))
-      | End_of_file -> close_in ic; Gzip.close_out oc
-  in loop ic oc
-
-(* decompress decompresses a file/directory
- * takes initial and final path as arguments.
- *)
-let decompress (file_name : string) (dest_path : string) : unit =
-  let rec loop ic acc =
-    try loop ic (acc $ (Gzip.input_char ic)) with End_of_file -> Gzip.close_in ic; acc
-  in try
-    let ic = Gzip.open_in file_name in
-    let oc = open_out dest_path in
-    Printf.fprintf oc "%s" (loop ic ""); close_out oc
-  with
-    | Sys_error _ -> failwith (file_name ^ " not found")
-    | _ -> raise (Fatal "Gzip error - file empty or not Gzip")
 
 (* creates a blob object for the given file. Returns the hash. *)
 let create_blob (file_name: string) : string =

@@ -118,7 +118,7 @@ module Tree = struct
           let temp_name = ".cml/temp_"^n in
           let ch = open_out temp_name in
           let _ = tree_data [] lst |> write_lines ch in
-          let hsh = Utils.hash temp_name in
+          let hsh = Crypto.hash temp_name in
           let (d1,path) = split_hash hsh in
           if not (Sys.file_exists (".cml/objects/"^d1)) then
           mkdir (".cml/objects/"^d1) 0o777;
