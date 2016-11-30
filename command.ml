@@ -47,6 +47,20 @@ let rec print_list = function
   | [] -> ()
   | h::t -> print_endline h; print_list t
 
+let files_in_index idx =
+  List.map (fun (file,_) -> file) idx
+
+(* returns a list of files that were deleted since last commit *)
+let get_deleted cwd_files idx =
+  let idx_files = files_in_index idx in
+  try
+    let cmt = get_head () |> parse_commit in
+    let cmt_files = Tree.read_tree "" cmt.tree |> Tree.tree_to_index |> files_in_index in
+    List.filter (fun file -> (not (List.mem file idx_files)) || (not (List.mem file cwd_files))) cmt_files |> List.sort Pervasives.compare
+  with
+  | Fatal _ -> []
+
+
 (* returns a list of the file names in [rel_path] to cwd, (the returned
  * filenames are relative to cml repo) *)
 let get_files_from_rel_path rel_path =
@@ -162,8 +176,10 @@ let commit (args: string list) : unit =
               raise (Fatal "nothing added to commit but untracked files are present")
             | files -> add files
           end;
+        let deleted_files = get_deleted (get_all_files ["./"] []) (get_index ()) in
+        rm_files_from_idx deleted_files;
         let idx = get_index () in
-        if idx = [] then raise (Fatal "nothing added to commit")
+        if idx = [] && deleted_files = [] then raise (Fatal "nothing added to commit")
         else begin
           let tree = Tree.index_to_tree idx |> Tree.write_tree in
           let msg = List.rev lst |> List.fold_left (fun acc s -> s^" "^acc) ""
@@ -280,15 +296,18 @@ let status () : unit =
   let st = get_staged_help idx in
   let ch = get_changed cwd_files idx in
   let ut = get_untracked cwd_files idx in
+  let deleted_files = get_deleted cwd_files idx in
   Sys.chdir cwd;
   let st' = st |> List.map get_rel_path in
   let ch' = ch |> List.map get_rel_path in
   let ut' = ut |> List.map get_rel_path in
-  match (st', ch', ut') with
-    | [],[],[] -> print "no changes to be committed, working tree clean"
+  let deleted_files' = deleted_files |> List.map get_rel_path in
+  match (st', ch', ut', deleted_files') with
+    | [],[],[],[] -> print "no changes to be committed, working tree clean"
     | _ -> begin
-      let _ = print_staged st' in
-      let _ = print_changed ch' in print_untracked ut'
+      print_staged st' deleted_files';
+      print_changed ch';
+      print_untracked ut'
     end
 
 (* set the user info to [username] *)
