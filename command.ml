@@ -390,7 +390,7 @@ let stash (args: string list) : unit =
                 let tree = Tree.index_to_tree final_idx |> Tree.write_tree in
                 let user = get_user_info () in
                 let tm = time () |> localtime |> Time.get_time in
-                create_commit tree user tm "Stash" "cml v1 only supports one stash";
+                let _ = create_commit tree user tm "Stash" "cml v1 only supports one stash"
                 let head = get_head () in
                 switch_version head;
                 let oc = open_out ".cml/stash" in
