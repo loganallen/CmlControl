@@ -60,6 +60,24 @@ let get_deleted cwd_files idx =
   with
   | Fatal _ -> []
 
+(* add print message of 'new file:' or 'modified:' to the files
+ * precondition: cwd is the .cml repo (chdir_to_cml ()) *)
+let add_print_msg files =
+  let cmt_idx = try begin
+    let cmt = get_head () |> parse_commit in
+    Tree.read_tree "" cmt.tree |> Tree.tree_to_index |> files_in_index
+  end with
+  | Fatal _ -> []
+  in
+  let add_msg file =
+    if List.mem file cmt_idx then "modified:   "^file
+    else "new file:   "^file
+  in
+  List.map add_msg files
+
+(* add print message of 'deleted:' to the files *)
+let add_delete_print_msg files =
+  List.map (fun file -> "deleted:    "^file) files
 
 (* returns a list of the file names in [rel_path] to cwd, (the returned
  * filenames are relative to cml repo) *)
@@ -209,13 +227,14 @@ let commit (args: string list) : unit =
       else
         if flag = "-am" then
           begin
-            let idx = get_index () in
+            (* let idx = get_index () in
             let cwd = get_all_files ["./"] [] in
             if (get_changed cwd idx) = [] then
             match get_changed cwd idx with
             | []  -> if (get_staged_help idx) = [] then
               raise (Fatal "nothing added to commit but untracked files are present")
-            | files -> add files
+            | files -> add files *)
+            add ["-A"]
           end;
         let deleted_files = get_deleted (get_all_files ["./"] []) (get_index ()) in
         rm_files_from_idx deleted_files;
@@ -358,8 +377,8 @@ let status () : unit =
   match (st', ch', ut', deleted_files') with
     | [],[],[],[] -> print "no changes to be committed, working tree clean"
     | _ -> begin
-      print_staged st' deleted_files';
-      print_changed ch';
+      print_staged (st' |> add_print_msg) (deleted_files' |> add_delete_print_msg);
+      print_changed (ch' |> add_print_msg);
       print_untracked ut'
     end
 
