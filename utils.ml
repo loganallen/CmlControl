@@ -16,8 +16,6 @@ type blob = string
 
 type index = (string * string) list
 
-exception Fatal of string
-
 let perm = 0o777
 
 (***************************** Generic Helpers ********************************)

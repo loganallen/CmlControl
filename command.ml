@@ -1,7 +1,9 @@
+open Common
 open Utils
 open Print
 open Unix
 open Tree
+
 
 type command =
 | Add | Branch | Checkout | Commit | Diff | Help | Init | Log

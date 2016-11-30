@@ -19,9 +19,6 @@ type blob = string
  * referred to as the index in git *)
 type index = (string * string) list
 
-(* Fatal exception for internal cml execution errors *)
-exception Fatal of string
-
 (***************************** Generic Helpers ********************************)
 (******************************************************************************)
 

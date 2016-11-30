@@ -1,3 +1,4 @@
+(* Fatal exception for internal cml execution errors *)
 exception Fatal of string
 
 (* returns a pairs (d1,path) where [d1] is the first 2 chars of the hash
