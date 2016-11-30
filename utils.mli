@@ -93,6 +93,14 @@ val compress: string -> string -> unit
  *)
 val decompress: string -> string -> unit
 
+(* returns the string list of lines in the file_name
+ * precondition: file_name exists from the cwd *)
+val parse_lines : string -> string list
+
+(* returns the string list of lines in the decompressed file given the
+ * file_name of a compressed file *)
+val decompress_contents : string -> string list
+
 (* creates a blob object for the given file. Returns the hash. *)
 val create_blob: string -> string
 
