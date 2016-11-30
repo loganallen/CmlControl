@@ -88,10 +88,16 @@ val copy: string -> string -> unit
  *)
 val compress: string -> string -> unit
 
+(* returns the compressed [in_string] *)
+val compress_string : string -> string
+
 (* decompress decompresses a file/directory
  * takes initial and final path as arguments.
  *)
 val decompress: string -> string -> unit
+
+(* returns the decompressed [in_string] *)
+val decompress_string : string -> string
 
 (* returns the string list of lines in the file_name
  * precondition: file_name exists from the cwd *)

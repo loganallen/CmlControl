@@ -197,6 +197,10 @@ let compress (file_name : string) (dest_path : string) : unit =
   end with
     | _ -> raise (Fatal ("Failure compressing '"^file_name^"'"))
 
+(* returns the compressed [in_string] *)
+let compress_string in_string =
+    Cryptokit.transform_string (Cryptokit.Zlib.compress ()) in_string
+
 (* decompress decompresses a file/directory
  * takes initial and final path as arguments.
  *)
@@ -210,6 +214,10 @@ let decompress (file_name : string) (dest_path : string) : unit =
     close_out oc
   end with
     | _ -> raise (Fatal ("Failure uncompressing '"^file_name^"'"))
+
+(* returns the decompressed [in_string] *)
+let decompress_string in_string =
+    Cryptokit.transform_string (Cryptokit.Zlib.uncompress ()) in_string
 
 (* returns the string list of lines in the file_name
  * precondition: file_name exists from the cwd *)
