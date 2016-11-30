@@ -1,0 +1,6 @@
+0000000000000000000000000000000000000000 c4b7adacbe27128c11e5d336fb1bf525aa03444c M <mcg79@cornell.edu> 1480300361 -0500	branch: Created from master
+c4b7adacbe27128c11e5d336fb1bf525aa03444c 8653753e674edab9a443fef308b7ca932dddf04c M <mcg79@cornell.edu> 1480304730 -0500	commit: updating compress
+8653753e674edab9a443fef308b7ca932dddf04c fbc1cd61a631febb42ecf2217fa91bf41e3622ee M <mcg79@cornell.edu> 1480363788 -0500	commit: wow I think compression might work now
+fbc1cd61a631febb42ecf2217fa91bf41e3622ee cd7d4f66e188f0507fafc8b15722330840b83398 M <mcg79@cornell.edu> 1480363989 -0500	commit: removing files
+cd7d4f66e188f0507fafc8b15722330840b83398 e3b695af2d62439d5e55238c9ae0e601442362b1 M <mcg79@cornell.edu> 1480364289 -0500	commit: removing more files
+e3b695af2d62439d5e55238c9ae0e601442362b1 c96d943b276ebb6b6c8bcb203bced87a960d255d M <mcg79@cornell.edu> 1480364295 -0500	pull: Merge made by the 'recursive' strategy.

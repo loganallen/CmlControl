@@ -1,0 +1,5 @@
+0000000000000000000000000000000000000000 a2fdbc17dcda3585d9bffa4cb6e0133b9e8c02d9 M <mcg79@cornell.edu> 1480378522 -0500	branch: Created from master
+a2fdbc17dcda3585d9bffa4cb6e0133b9e8c02d9 072ad7b0df82c3bc2f6d72078c9ec6fb1403c78c M <mcg79@cornell.edu> 1480454773 -0500	commit: slight changes to stash
+072ad7b0df82c3bc2f6d72078c9ec6fb1403c78c a47f7b5bd81808da9cb2dd91d817e8758ed71acd M <mcg79@cornell.edu> 1480459170 -0500	commit: more changes to stash
+a47f7b5bd81808da9cb2dd91d817e8758ed71acd 9a19e9b2505641ec565c5e0d96825622b32082a6 M <mcg79@cornell.edu> 1480459206 -0500	merge amg/checkout: Merge made by the 'recursive' strategy.
+9a19e9b2505641ec565c5e0d96825622b32082a6 6f363fa7385307014ad37f4d927a46511dad5d57 M <mcg79@cornell.edu> 1480531443 -0500	commit: updates to stash - adds all files in cwd as a blog, and changes wd to reflect head.

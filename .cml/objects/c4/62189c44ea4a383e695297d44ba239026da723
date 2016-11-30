@@ -1,0 +1,4 @@
+0000000000000000000000000000000000000000 98510e3c8f1e61c5a9b8c43156f4276651eb98f0 M <mcg79@cornell.edu> 1477422189 -0400	WIP on master: 6de1524 updating stuff
+98510e3c8f1e61c5a9b8c43156f4276651eb98f0 e916a8543c7cbe70fc8003224dc8d38cffae7293 M <mcg79@cornell.edu> 1479180574 -0500	WIP on master: 2891099 added color - connect in main
+e916a8543c7cbe70fc8003224dc8d38cffae7293 bbadfb122f5414953c8c610fb940c7cda32781eb M <mcg79@cornell.edu> 1480378481 -0500	WIP on master: c4b7ada Merge pull request #5 from loganallen/add
+bbadfb122f5414953c8c610fb940c7cda32781eb 330678b25883cddd4e039c961a0a700a1921927d M <mcg79@cornell.edu> 1480437527 -0500	WIP on master: a2fdbc1 moved branch_print to print module

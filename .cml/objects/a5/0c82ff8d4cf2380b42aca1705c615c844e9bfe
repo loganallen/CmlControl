@@ -1,0 +1,62 @@
+## CS 3110: Milestone 1
+
+> Logan Allen (lga24) <br>
+> Andrew Grossfeld (amg445) <br>
+> Michael Gingras (mcg79) <br>
+> Brandon Walker (bcw58) <br>
+
+###System Description
+
+Please modify. This is very preliminary.
+
+####Commands
+`help`  Display help information about CmlControl.
+> 1. Calls help() which has pre-defined print statements for cml commands
+
+`init`  Create an empty CmlControl repository.
+> 1. Initialize '.cml/' folder in current directory
+> 2. Initialize overhead for master branch
+
+`status`  Show the working tree status. Display paths that have differences between the index file and the current HEAD commit.
+> 1. Hash contents of each file in working directory
+> 2. Compare hashcode with current index (most recent commit) hashcodes
+> 3. Keep track of un-matching hashcode filenames
+> 4. Display list of changed filenames
+
+`add`  Add file contents to the index. Stage files for the next commit.
+
+`rm`  Remove files from working tree and from the index.
+
+`commit`  Record changes to the repository. Stores the current contents of the index in a new commit along with a log message from the user describing the changes.
+> 1. Creates commit object with tree (of file hashes) and commit hash
+> 2. Adds commit object to linked list of commits in .cml/commits
+
+`branch`  Describe/perform actions on branches according to flags.
+> 1. No flags: Print the current branch
+> 2. -D <branch_name>: deletes the branch from the HEAD file (removes the pointer)
+
+`checkout`  Switch branches or restore working tree files.
+> 1. Switch 'current_branch' field in HEAD if necessary (changed branch)
+> 2. Update hashcode reference for head of cur_branch
+
+`merge`  Join two or more development histories together.
+
+`stash`  Stash the changes in a dirty working directory away.
+
+`diff`  Show changes between commits, commit and working tree, etc.
+
+
+###Architecture
+
+
+###Module Design
+
+
+###Data
+
+
+###External Dependencies
+>cryptokit: SHA-1 hash
+
+###Testing Plan
+
