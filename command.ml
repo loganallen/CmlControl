@@ -278,10 +278,21 @@ let rm (args: string list) : unit =
 let stash (args: string list) : unit =
   match args with
   | [] ->    begin
-              let oc = open_out ".cml/heads/stash" in
-              output_string oc "this";
+               try
+                let cwd = Sys.getcwd () in
+                chdir_to_cml ();
+                let add_files = get_all_files ["./"] [] in
+                Sys.chdir cwd;
+                let _ = List.map (fun file -> create_blob file) add_files in
+                let head = get_head () in
+                switch_version head;
+                let oc = open_out ".cml/heads/stash" in
+                output_string oc "this will be great";
+                close_out oc;
+                with
+                | Fatal f -> print_endline "not a valid command - cannot stash."
              end
-  | h::[] -> begin
+  | h::t -> begin
                 if h = "pop" then raise (Fatal ("this is not actaully an error"))
                 else raise (Fatal ("not a valid argument to the stash command"))
              end
