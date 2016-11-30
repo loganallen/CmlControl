@@ -207,6 +207,7 @@ let checkout (args: string list) : unit =
  * stores the current contents of the index in a new commit
  * along with commit metadata. *)
 let commit (args: string list) : unit =
+  let cwd = Sys.getcwd () in
   chdir_to_cml ();
   let user = get_user_info () in
   let isdetached = detached_head () in
@@ -222,25 +223,27 @@ let commit (args: string list) : unit =
       in raise (Fatal err)
     end
     | flag::lst -> begin
-      if flag <> "-am" && flag <> "-m" then
+      if flag <> "-am" && flag <> "-ma" && flag <> "-m" then
         raise (Fatal "unrecognized flags, see [--help]")
       else
-        if flag = "-am" then
-          begin
-            (* let idx = get_index () in
-            let cwd = get_all_files ["./"] [] in
-            if (get_changed cwd idx) = [] then
-            match get_changed cwd idx with
-            | []  -> if (get_staged_help idx) = [] then
-              raise (Fatal "nothing added to commit but untracked files are present")
-            | files -> add files *)
-            add ["-A"]
-          end;
+        let cwd_files = get_all_files ["./"] [] in
+        let changed_files = get_changed cwd_files (get_index ()) in
+        begin if (flag = "-am" || flag = "-ma") && changed_files <> [] then add changed_files else () end;
         let deleted_files = get_deleted (get_all_files ["./"] []) (get_index ()) in
         rm_files_from_idx deleted_files;
         let idx = get_index () in
-        if idx = [] && deleted_files = [] then raise (Fatal "nothing added to commit")
-        else begin
+        let staged_files = get_staged_help idx in
+        if staged_files = [] && deleted_files = [] then begin
+          let untracked_files = get_untracked cwd_files (get_index ()) in
+          if untracked_files = [] then
+            raise (Fatal "nothing added to commit")
+          else begin
+            Sys.chdir cwd;
+            print_untracked (untracked_files |> List.map get_rel_path);
+            chdir_to_cml ();
+            raise (Fatal "nothing added to commit but untracked files are present")
+          end
+        end else begin
           let tree = Tree.index_to_tree idx |> Tree.write_tree in
           let msg = List.rev lst |> List.fold_left (fun acc s -> s^" "^acc) ""
                     |> String.trim in
@@ -319,7 +322,34 @@ let merge (args: string list) : unit =
 
 (* reset the current HEAD to a specified state *)
 let reset (args: string list) : unit =
-  failwith "Unimplemented"
+  let {flags; args; } = parse_args args in
+  let allowed_flags = ["soft"; "hard"; "mixed"] in
+  verify_allowed_flags allowed_flags flags;
+  begin if List.length flags > 1 then
+    raise (Fatal "usage: git reset [--soft | --mixed | --hard] [<commit>]")
+  else () end;
+  chdir_to_cml ();
+  let head_hash = match args with
+    | [] -> get_head ()
+    | h::[] -> h
+    | _ -> raise (Fatal "usage: git reset [--soft | --mixed | --hard] [<commit>]")
+  in
+  let commit = parse_commit head_hash in   (* parse_commit does validation *)
+  set_head head_hash;
+  if List.mem "soft" flags then ()
+  else begin
+    print_endline "before: ";
+    print_list (get_index () |> files_in_index);
+    let tree = Tree.read_tree "" commit.tree in
+    let index = Tree.tree_to_index tree in
+    print_endline "after: ";
+    print_list (index |> files_in_index);
+    set_index index;
+    if List.mem "hard" flags then
+      Tree.recreate_tree "" tree
+    else
+      ()
+  end
 
 (* remove files from working tree and index *)
 let rm (args: string list) : unit =
