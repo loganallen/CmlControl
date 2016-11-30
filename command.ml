@@ -127,41 +127,81 @@ let add (args: string list) : unit =
 (* list, create, or delete branches *)
 let branch (args: string list) : unit =
   chdir_to_cml ();
+  let isdetached = detached_head () in
   match args with
   | [] -> begin
-    let cur = get_current_branch () in
+    let cur = if isdetached then "" else get_current_branch () in
     get_branches () |> List.iter (branch_print cur)
   end
   | b::[] -> begin
     if b = "-d" || b = "-D" then raise (Fatal "branch name required")
-    else get_head () |> create_branch b
+    else
+      let ptr = if isdetached then get_detached_head () else get_head () in
+      create_branch b ptr
   end
   | flag::b::_ -> begin
     if flag = "-d" || flag = "-D" then delete_branch b
     else raise (Fatal "invalid flags, see [--help]")
   end
 
+(* switches state of repo to state of given commit_hash *)
+let switch_version (commit_hash : string) : unit =
+  let ohead = parse_commit (get_head ()) in
+  let oindex = Tree.read_tree "" ohead.tree |> Tree.tree_to_index in
+  let nhead = parse_commit commit_hash in
+  let ntree = Tree.read_tree "" nhead.tree in
+  let nindex = Tree.tree_to_index ntree in
+  List.iter (fun (fn, hn) -> Sys.remove fn ) oindex;
+  Tree.recreate_tree "" ntree;
+  set_index nindex
+
 (* switch branches or restore working tree files *)
 let checkout (args: string list) : unit =
   chdir_to_cml ();
+  let cwd = get_all_files ["./"] [] in
+  let idx = get_index () in
+  let st = get_staged_help idx in
+  let ch = get_changed cwd idx in
+  let isdetached = detached_head () in
   match args with
   | []    -> raise (Fatal "branch name or HEAD version required")
-  | h::[] -> begin
-    if h = "-b" || h = "-B" then
-      raise (Fatal "branch name required")
-    else
-      begin
-        if (get_branches () |> List.mem h) then switch_branch h
-        else if (get_versions () |> List.mem h) then switch_version h
-        else raise (Fatal ("pathspec '"^h^"' does not match an file(s)"))
-      end
-  end
-  | flag::b::_ -> begin
-    if flag = "-b" || flag = "-B" then
-      let _ = get_head () |> create_branch b in switch_branch b
-    else
-      raise (Fatal ("invalid flags, see [--help]"))
-  end
+  | [arg] ->
+    begin
+        if st <> [] || ch <> [] then
+          let _ = print_error ("Could not checkout " ^ arg) in
+          let _ = print "Your changes to the following files would be overwritten" in
+          let rec loop = function
+            | [] -> ()
+            | h::t -> print_indent h "y" 1; loop t
+          in loop (st @ ch);
+          print "Please commit or stash your changes before checking out"
+        else if (get_branches () |> List.mem arg) then
+          let _ = switch_version (get_branch_ptr arg) in
+          let _ = switch_branch arg isdetached in
+          print ("Switched to branch '"^arg^"'")
+        else if ((get_all_files ["./"] []) |> List.mem arg) then
+          get_index () |> checkout_file arg
+        else
+          try
+            if isdetached && arg = get_detached_head () then
+              print ("Already detached HEAD at " ^ arg)
+            else
+              let commit = parse_commit arg in
+              let tree = Tree.read_tree "" commit.tree in
+              Tree.recreate_tree "" tree;
+              set_index (Tree.tree_to_index tree);
+              set_detached_head arg;
+              print_detached_warning arg
+          with
+            | Fatal _ -> raise (Fatal ("pathspec '"^arg^"' does not match an file(s)/branch/commit"))
+    end
+  | flag::b::_ ->
+    begin
+      if flag = "-b" || flag = "-B" then
+        let _ = get_head () |> create_branch b in switch_branch b isdetached
+      else
+        raise (Fatal ("invalid flags, see [--help]"))
+    end
 
 (* record changes to the repository:
  * stores the current contents of the index in a new commit
@@ -169,6 +209,7 @@ let checkout (args: string list) : unit =
 let commit (args: string list) : unit =
   chdir_to_cml ();
   let user = get_user_info () in
+  let isdetached = detached_head () in
   let new_head =
     match args with
     | [] -> raise (Fatal "no commit arguments found, see [--help]")
@@ -204,12 +245,17 @@ let commit (args: string list) : unit =
           let msg = List.rev lst |> List.fold_left (fun acc s -> s^" "^acc) ""
                     |> String.trim in
           let tm = time () |> localtime |> Time.get_time in
-          let last_commit = try get_head () with Fatal n -> "None" in
-            create_commit tree user tm msg last_commit
+          let last_commit =
+            try if isdetached then get_detached_head () else get_head ()
+            with Fatal n -> "None" in
+          create_commit tree user tm msg last_commit
         end
     end
   in
-  set_head new_head
+  if isdetached then
+    let _ = set_detached_head new_head in
+    print_detached_warning new_head
+  else set_head new_head
 
 (* diff map helper function *)
 let diff_map_help (file, hash) = (file, get_object_path hash)
@@ -300,10 +346,17 @@ let rm (args: string list) : unit =
     List.iter remove_from_idx args
   end
 
-
 (* stashes changes made to the current working tree *)
 let stash (args: string list) : unit =
   failwith "Unimplemented"
+
+(* helper for printing status message *)
+let status_message () =
+  if detached_head () then
+    let head = get_detached_head () in
+    print_color ("HEAD detached at " ^ head) "r"
+  else
+    print ("On branch "^(get_current_branch ())^"\n")
 
 (* show the working tree status *)
 let status () : unit =
