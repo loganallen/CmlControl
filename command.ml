@@ -338,12 +338,8 @@ let reset (args: string list) : unit =
   set_head head_hash;
   if List.mem "soft" flags then ()
   else begin
-    print_endline "before: ";
-    print_list (get_index () |> files_in_index);
     let tree = Tree.read_tree "" commit.tree in
     let index = Tree.tree_to_index tree in
-    print_endline "after: ";
-    print_list (index |> files_in_index);
     set_index index;
     if List.mem "hard" flags then
       Tree.recreate_tree "" tree
