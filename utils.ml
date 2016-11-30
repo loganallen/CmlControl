@@ -272,7 +272,7 @@ let create_commit (ptr : string) (user : string) (date : string) (msg: string) (
 (* returns a commit record for the given commit ptr *)
 let parse_commit (ptr : string) : commit =
   try
-    let (d1,path) = split_hash ptr in
+    let (_,path) = split_hash ptr in
     let ch = open_in path in
     let tree = input_line ch in
     let user = input_line ch in
