@@ -222,25 +222,25 @@ let commit (args: string list) : unit =
       in raise (Fatal err)
     end
     | flag::lst -> begin
-      if flag <> "-am" && flag <> "-m" then
+      if flag <> "-am" && flag <> "-ma" && flag <> "-m" then
         raise (Fatal "unrecognized flags, see [--help]")
       else
-        if flag = "-am" then
-          begin
-            (* let idx = get_index () in
-            let cwd = get_all_files ["./"] [] in
-            if (get_changed cwd idx) = [] then
-            match get_changed cwd idx with
-            | []  -> if (get_staged_help idx) = [] then
-              raise (Fatal "nothing added to commit but untracked files are present")
-            | files -> add files *)
-            add ["-A"]
-          end;
+        let cwd_files = get_all_files ["./"] [] in
+        let changed_files = get_changed cwd_files (get_index ()) in
+        begin if (flag = "-am" || flag = "-ma") && changed_files <> [] then add changed_files else () end;
         let deleted_files = get_deleted (get_all_files ["./"] []) (get_index ()) in
         rm_files_from_idx deleted_files;
         let idx = get_index () in
-        if idx = [] && deleted_files = [] then raise (Fatal "nothing added to commit")
-        else begin
+        let staged_files = get_staged_help idx in
+        if staged_files = [] && deleted_files = [] then begin
+          let untracked_files = get_untracked cwd_files (get_index ()) in
+          if untracked_files = [] then
+            raise (Fatal "nothing added to commit")
+          else begin
+            print_untracked (untracked_files |> List.map get_rel_path);
+            raise (Fatal "nothing added to commit but untracked files are present")
+          end
+        end else begin
           let tree = Tree.index_to_tree idx |> Tree.write_tree in
           let msg = List.rev lst |> List.fold_left (fun acc s -> s^" "^acc) ""
                     |> String.trim in
