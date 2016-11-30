@@ -322,7 +322,35 @@ let merge (args: string list) : unit =
 
 (* reset the current HEAD to a specified state *)
 let reset (args: string list) : unit =
-  failwith "Unimplemented"
+  let {flags; args; } = parse_args args in
+  let allowed_flags = ["soft"; "hard"; "mixed"] in
+  verify_allowed_flags allowed_flags flags;
+  begin if List.length flags > 1 then
+    raise (Fatal "usage: git reset [--soft | --mixed | --hard] [<commit>]")
+  else () end;
+  (* let cwd = Sys.getcwd () in *)
+  chdir_to_cml ();
+  let head_hash = match args with
+    | [] -> get_head ()
+    | h::[] -> h
+    | _ -> raise (Fatal "usage: git reset [--soft | --mixed | --hard] [<commit>]")
+  in
+  let commit = parse_commit head_hash in   (* parse_commit does validation *)
+  set_head head_hash;
+  if List.mem "soft" flags then ()
+  else begin
+    print_endline "before: ";
+    print_list (get_index () |> files_in_index);
+    let tree = Tree.read_tree "" commit.tree in
+    let index = Tree.tree_to_index tree in
+    print_endline "after: ";
+    print_list (index |> files_in_index);
+    set_index index;
+    if List.mem "hard" flags then
+      Tree.recreate_tree "" tree
+    else
+      ()
+  end
 
 (* remove files from working tree and index *)
 let rm (args: string list) : unit =
