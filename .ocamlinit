@@ -1,6 +1,5 @@
 #directory "_build";;
 #require "ANSITerminal";;
-#require "camlzip";;
 #require "cryptokit";;
 #require "diff";;
 #require "str";;

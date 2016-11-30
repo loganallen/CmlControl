@@ -8,7 +8,6 @@ Cml has the following dependencies: <br>
 
 	~ cryptokit
 	~ ANSITerminal
-	~ camlzip
 	~ str
 	~ unix
 	~ ocamldiff
