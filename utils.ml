@@ -112,6 +112,51 @@ let abs_path_from_cml rel_path =
   else
     (final_path^"/"^rel_path_filename)
 
+(* returns the relative path from the cwd to the given path relative to the
+ * cml repo (essentially the input is the path in idx) *)
+let get_rel_path idx_path =
+  let rec add_back_string acc dir_path file_path =
+    let path_regexp = Str.regexp ("^"^dir_path) in
+    if Str.string_match path_regexp file_path 0 then
+      (acc^(Str.replace_first path_regexp "" file_path))
+    else begin
+      try begin
+        let i = Str.search_backward (Str.regexp "/.*/$") dir_path (String.length dir_path) in
+        let dir_path' = Str.string_before dir_path (i+1) in
+        add_back_string ("../"^acc) dir_path' file_path
+      end with
+        | Not_found -> ("../"^acc^file_path)
+    end
+  in
+  let path_to_cml = match cml_path "" with
+    | None -> raise (Fatal "Not a Cml repository (or any of the parent directories)")
+    | Some s -> s
+  in
+  if path_to_cml = "" then
+    idx_path
+  else begin
+    let dir_path_from_cml = (abs_path_from_cml "./")^"/"
+      |> Str.replace_first (Str.regexp "^/") "" in
+    idx_path |> add_back_string "" dir_path_from_cml
+  end
+
+(* returns whether the given argument is a flag (if arg is of the form
+ * dash [-] followed by any number of characters > 0) *)
+let arg_is_flag arg =
+  let r = Str.regexp "^-.*" in
+  Str.string_match r arg 0
+
+(* precondition: [arg] is a flag.
+ * postcondition: returns the list of flags from the argument.
+ * example: [get_flags_from_arg "-hi" ~ ["h"; "i"]]
+ * example: [get_flags_from_arg "--hi" ~ ["hi"]] *)
+let get_flags_from_arg arg =
+  let r_double_dash = Str.regexp "^--" in
+  let r_single_dash = Str.regexp "^-" in
+  if Str.string_match r_double_dash arg 0 then
+    [Str.replace_first r_double_dash "" arg]
+  else
+    Str.replace_first r_single_dash "" arg |> Str.split (Str.regexp "")
 
 (************************* File Compression & Hashing *************************)
 (******************************************************************************)
@@ -142,29 +187,63 @@ let copy (file_name : string) (dest_path : string) : unit =
  * takes initial path and final path as arguments.
  *)
 let compress (file_name : string) (dest_path : string) : unit =
-  let oc = Gzip.open_out dest_path in
-  let ic = open_in file_name in
-  let rec loop ic oc =
-    try
-      Gzip.output_char oc (input_char ic); loop ic oc
-    with
-      | Sys_error _ -> raise (Fatal (file_name^" not found"))
-      | End_of_file -> close_in ic; Gzip.close_out oc
-  in loop ic oc
+  try begin
+    let ic = open_in file_name in
+    let oc = open_out dest_path in
+    let compress = Cryptokit.Zlib.compress () in
+    Cryptokit.transform_channel compress ic oc;
+    close_in ic;
+    close_out oc
+  end with
+    | _ -> raise (Fatal ("Failure compressing '"^file_name^"'"))
+
+(* returns the compressed [in_string] *)
+let compress_string in_string =
+    Cryptokit.transform_string (Cryptokit.Zlib.compress ()) in_string
 
 (* decompress decompresses a file/directory
  * takes initial and final path as arguments.
  *)
 let decompress (file_name : string) (dest_path : string) : unit =
-  let rec loop ic acc =
-    try loop ic (acc $ (Gzip.input_char ic)) with End_of_file -> Gzip.close_in ic; acc
-  in try
-    let ic = Gzip.open_in file_name in
+  try begin
+    let ic = open_in file_name in
     let oc = open_out dest_path in
-    Printf.fprintf oc "%s" (loop ic ""); close_out oc
-  with
-    | Sys_error _ -> failwith (file_name ^ " not found")
-    | _ -> raise (Fatal "Gzip error - file empty or not Gzip")
+    let uncompress = Cryptokit.Zlib.uncompress () in
+    Cryptokit.transform_channel uncompress ic oc;
+    close_in ic;
+    close_out oc
+  end with
+    | _ -> raise (Fatal ("Failure uncompressing '"^file_name^"'"))
+
+(* returns the decompressed [in_string] *)
+let decompress_string in_string =
+    Cryptokit.transform_string (Cryptokit.Zlib.uncompress ()) in_string
+
+(* returns the string list of lines in the file_name
+ * precondition: file_name exists from the cwd *)
+let parse_lines file_name =
+  let rec acc_lines acc ic =
+    try begin
+      let line = input_line ic in
+      acc_lines (acc@[line]) ic
+    end with
+    | End_of_file -> close_in ic; acc
+    | _ -> raise (Fatal ("Failure reading file '"^file_name^"'"))
+  in
+  try acc_lines [] (open_in file_name) with
+  | _ -> raise (Fatal ("Failure reading file '"^file_name^"'"))
+
+(* returns the string list of lines in the decompressed file given the
+ * file_name of a compressed file *)
+let decompress_contents file_name =
+  try begin
+    let decomp_name = file_name^"uncmlpressed" in
+    decompress file_name decomp_name;
+    let file_lines = parse_lines decomp_name in
+    Sys.remove decomp_name;
+    file_lines
+  end with
+  | _ -> raise (Fatal ("Failure decompressing file '"^file_name^"'"))
 
 (* creates a blob object for the given file. Returns the hash. *)
 let create_blob (file_name: string) : string =
@@ -317,13 +396,20 @@ let set_index (idx : index) : unit =
   write_index (open_out ".cml/index") idx
 
 (* removes [rm_files] list from the index *)
-let rm_files_from_idx rm_files removable_files =
+let rm_files_from_idx rm_files =
   let cwd = Sys.getcwd () in
   chdir_to_cml ();
   let idx = get_index () in
-  let idx' = List.filter (fun (s,_) ->
-  not ((List.mem s rm_files) && (List.mem s removable_files))) idx in
+  let idx' = List.filter (fun (s,_) -> not (List.mem s rm_files)) idx in
   set_index idx';
+  Sys.chdir cwd
+
+(* removes [rm_files] list from the repository (deletes physical files).
+ * the files given must be the path from .cml repo *)
+let rm_files_from_repo rm_files =
+  let cwd = Sys.getcwd () in
+  chdir_to_cml ();
+  List.iter Sys.remove rm_files;
   Sys.chdir cwd
 
 (* adds [add_files] list from the index *)
@@ -420,7 +506,7 @@ let get_untracked (cwd : string list) (idx : index) : string list =
     try
       let _ = List.assoc fn idx in acc
     with
-    | Not_found -> if fn.[0] = '.' then acc else fn::acc
+    | Not_found -> fn::acc
   in
   List.fold_left find_untracked [] cwd |> List.sort (Pervasives.compare)
 

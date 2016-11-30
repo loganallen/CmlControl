@@ -8,10 +8,32 @@ type command =
 | Merge | Reset | Rm | Stash | Status | User
 
 type input = { cmd: command; args: string list }
+type args_input = { flags: string list; args: string list }
 
 exception Parsing of string
 
 let perm = 0o777
+
+(* parses string of args into flags and actual arguments *)
+let parse_args (args : string list) : args_input =
+  let acc_flags = fun acc arg ->
+    if arg_is_flag arg then (get_flags_from_arg arg) @ acc else acc
+  in
+  let acc_args = fun acc arg ->
+    if arg_is_flag arg then acc else arg::acc
+  in
+  {
+    flags = List.fold_left acc_flags [] args;
+    args = List.fold_left acc_args [] args;
+  }
+
+let rec verify_allowed_flags allowed_flags flags =
+  match flags with
+  | [] -> ()
+  | h::t -> begin
+    if List.mem h allowed_flags then verify_allowed_flags allowed_flags t
+    else raise (Fatal ("invalid flag '"^h^"'"))
+  end
 
 (* helper function that returns a list of files staged for commit *)
 let get_staged_help (idx : index) : string list =
@@ -24,6 +46,38 @@ let get_staged_help (idx : index) : string list =
 let rec print_list = function
   | [] -> ()
   | h::t -> print_endline h; print_list t
+
+let files_in_index idx =
+  List.map (fun (file,_) -> file) idx
+
+(* returns a list of files that were deleted since last commit *)
+let get_deleted cwd_files idx =
+  let idx_files = files_in_index idx in
+  try
+    let cmt = get_head () |> parse_commit in
+    let cmt_files = Tree.read_tree "" cmt.tree |> Tree.tree_to_index |> files_in_index in
+    List.filter (fun file -> (not (List.mem file idx_files)) || (not (List.mem file cwd_files))) cmt_files |> List.sort Pervasives.compare
+  with
+  | Fatal _ -> []
+
+(* add print message of 'new file:' or 'modified:' to the files
+ * precondition: cwd is the .cml repo (chdir_to_cml ()) *)
+let add_print_msg files =
+  let cmt_idx = try begin
+    let cmt = get_head () |> parse_commit in
+    Tree.read_tree "" cmt.tree |> Tree.tree_to_index |> files_in_index
+  end with
+  | Fatal _ -> []
+  in
+  let add_msg file =
+    if List.mem file cmt_idx then "modified:   "^file
+    else "new file:   "^file
+  in
+  List.map add_msg files
+
+(* add print message of 'deleted:' to the files *)
+let add_delete_print_msg files =
+  List.map (fun file -> "deleted:    "^file) files
 
 (* returns a list of the file names in [rel_path] to cwd, (the returned
  * filenames are relative to cml repo) *)
@@ -92,21 +146,37 @@ let branch (args: string list) : unit =
 
 (* switches state of repo to state of given commit_hash *)
 let switch_version (commit_hash : string) : unit =
-  let commit = parse_commit commit_hash in
-  let tree = Tree.read_tree "" commit.tree in
-  Tree.recreate_tree "" tree;
-  set_index (Tree.tree_to_index tree)
+  let ohead = parse_commit (get_head ()) in
+  let oindex = Tree.read_tree "" ohead.tree |> Tree.tree_to_index in
+  let nhead = parse_commit commit_hash in
+  let ntree = Tree.read_tree "" nhead.tree in
+  let nindex = Tree.tree_to_index ntree in
+  List.iter (fun (fn, hn) -> Sys.remove fn ) oindex;
+  Tree.recreate_tree "" ntree;
+  set_index nindex
 
 (* switch branches or restore working tree files *)
 let checkout (args: string list) : unit =
   chdir_to_cml ();
+  let cwd = get_all_files ["./"] [] in
+  let idx = get_index () in
+  let st = get_staged_help idx in
+  let ch = get_changed cwd idx in
   let isdetached = detached_head () in
   match args with
   | []    -> raise (Fatal "branch name or HEAD version required")
   | [arg] ->
     begin
-        if (get_branches () |> List.mem arg) then
-          let _  = switch_version (get_branch_ptr arg) in
+        if st <> [] || ch <> [] then
+          let _ = print_error ("Could not checkout " ^ arg) in
+          let _ = print "Your changes to the following files would be overwritten" in
+          let rec loop = function
+            | [] -> ()
+            | h::t -> print_indent h "y" 1; loop t
+          in loop (st @ ch);
+          print "Please commit or stash your changes before checking out"
+        else if (get_branches () |> List.mem arg) then
+          let _ = switch_version (get_branch_ptr arg) in
           let _ = switch_branch arg isdetached in
           print ("Switched to branch '"^arg^"'")
         else if ((get_all_files ["./"] []) |> List.mem arg) then
@@ -137,6 +207,7 @@ let checkout (args: string list) : unit =
  * stores the current contents of the index in a new commit
  * along with commit metadata. *)
 let commit (args: string list) : unit =
+  let cwd = Sys.getcwd () in
   chdir_to_cml ();
   let user = get_user_info () in
   let isdetached = detached_head () in
@@ -152,22 +223,27 @@ let commit (args: string list) : unit =
       in raise (Fatal err)
     end
     | flag::lst -> begin
-      if flag <> "-am" && flag <> "-m" then
+      if flag <> "-am" && flag <> "-ma" && flag <> "-m" then
         raise (Fatal "unrecognized flags, see [--help]")
       else
-        if flag = "-am" then
-          begin
-            let idx = get_index () in
-            let cwd = get_all_files ["./"] [] in
-            if (get_changed cwd idx) = [] then
-            match get_changed cwd idx with
-            | []  -> if (get_staged_help idx) = [] then
-              raise (Fatal "nothing added to commit but untracked files are present")
-            | files -> add files
-          end;
+        let cwd_files = get_all_files ["./"] [] in
+        let changed_files = get_changed cwd_files (get_index ()) in
+        begin if (flag = "-am" || flag = "-ma") && changed_files <> [] then add changed_files else () end;
+        let deleted_files = get_deleted (get_all_files ["./"] []) (get_index ()) in
+        rm_files_from_idx deleted_files;
         let idx = get_index () in
-        if idx = [] then raise (Fatal "nothing added to commit")
-        else begin
+        let staged_files = get_staged_help idx in
+        if staged_files = [] && deleted_files = [] then begin
+          let untracked_files = get_untracked cwd_files (get_index ()) in
+          if untracked_files = [] then
+            raise (Fatal "nothing added to commit")
+          else begin
+            Sys.chdir cwd;
+            print_untracked (untracked_files |> List.map get_rel_path);
+            chdir_to_cml ();
+            raise (Fatal "nothing added to commit but untracked files are present")
+          end
+        end else begin
           let tree = Tree.index_to_tree idx |> Tree.write_tree in
           let msg = List.rev lst |> List.fold_left (fun acc s -> s^" "^acc) ""
                     |> String.trim in
@@ -250,24 +326,23 @@ let reset (args: string list) : unit =
 
 (* remove files from working tree and index *)
 let rm (args: string list) : unit =
+  let { flags; args; } = parse_args args in
+  let allowed_flags = ["f"] in
+  verify_allowed_flags allowed_flags flags;
   if args = [] then
     raise (Fatal "no files specified")
   else begin
-    let cwd = Sys.getcwd () in
-    chdir_to_cml ();
-    let idx = get_index () in
-    let removable_files = get_staged_help idx in
-    Sys.chdir cwd;
     let remove_from_idx rel_path =
       if Sys.file_exists rel_path then begin
         let rm_files = get_files_from_rel_path rel_path in
-        rm_files_from_idx rm_files removable_files
-      end else if rel_path = "-A" then begin
-        let cwd = Sys.getcwd () in
-        chdir_to_cml ();
-        let rm_files = get_all_files ["./"] [] in
-        Sys.chdir cwd;
-        rm_files_from_idx rm_files removable_files
+        rm_files_from_idx rm_files;
+        if List.mem "f" flags then begin
+          if Sys.is_directory rel_path then begin
+            rm_files_from_repo rm_files;
+            Unix.rmdir rel_path
+          end else
+            rm_files_from_repo rm_files
+        end else ()
       end else
         raise (Fatal ("pathspec '"^rel_path^"' does not match an file(s)"))
     in
@@ -315,17 +390,27 @@ let status_message () =
 
 (* show the working tree status *)
 let status () : unit =
+  let cwd = Sys.getcwd () in
   chdir_to_cml ();
-  status_message ();
-  let cwd = get_all_files ["./"] [] in
+  print ("On branch "^(get_current_branch ())^"\n");
+  let cwd_files = get_all_files ["./"] [] in
   let idx = get_index () in
   let st = get_staged_help idx in
-  let ch = get_changed cwd idx in
-  let ut = get_untracked cwd idx in
-    match (st,ch,ut) with
-    | [],[],[] -> print "no changes to be committed, working tree clean"
-    | _ -> let _ = print_staged st in
-           let _ = print_changed ch in print_untracked ut
+  let ch = get_changed cwd_files idx in
+  let ut = get_untracked cwd_files idx in
+  let deleted_files = get_deleted cwd_files idx in
+  Sys.chdir cwd;
+  let st' = st |> List.map get_rel_path in
+  let ch' = ch |> List.map get_rel_path in
+  let ut' = ut |> List.map get_rel_path in
+  let deleted_files' = deleted_files |> List.map get_rel_path in
+  match (st', ch', ut', deleted_files') with
+    | [],[],[],[] -> print "no changes to be committed, working tree clean"
+    | _ -> begin
+      print_staged (st' |> add_print_msg) (deleted_files' |> add_delete_print_msg);
+      print_changed (ch' |> add_print_msg);
+      print_untracked ut'
+    end
 
 (* set the user info to [username] *)
 let user (args: string list) : unit =

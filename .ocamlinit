@@ -1,8 +1,9 @@
 #directory "_build";;
 #require "ANSITerminal";;
-#require "camlzip";;
 #require "cryptokit";;
 #require "diff";;
+#require "str";;
+#load "time.cmo";;
 #load "common.cmo";;
 #load "print.cmo";;
 #load "diff.cmo";;
@@ -19,3 +20,4 @@ open Print;;
 open Tree;;
 open Common;;
 open Diff;;
+open Time;;

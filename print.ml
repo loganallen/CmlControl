@@ -35,13 +35,14 @@ let branch_print (cur : string) (branch : string) : unit =
   else print ("  "^branch)
 
 (* prints the files staged for a commit *)
-let print_staged (files : string list) : unit =
-  match files with
-  | [] -> ()
+let print_staged (staged_files : string list) (deleted_files : string list): unit =
+  match (staged_files, deleted_files) with
+  | [],[] -> ()
   | _  -> begin
     print "Changes to be committed:";
-    print_indent "(use \"cml rm --cached? <file>...\" to unstage)\n" "" 1;
-    List.iter (fun s -> print_indent s "green" 3) files; print_newline ()
+    print_indent "(use \"cml rm <filename>...\" to unstage)\n" "" 1;
+    List.iter (fun s -> print_indent s "green" 3) ((staged_files @ deleted_files) |> List.sort Pervasives.compare);
+    print_newline ()
   end
 
 (* prints the files not staged for commit *)
@@ -50,7 +51,7 @@ let print_changed (files : string list) : unit =
   | [] -> ()
   | _  -> begin
     print ("Changes not staged for commit:");
-    print_indent "(use \"cml add <file>\" to stage for commit)\n" "" 1;
+    print_indent "(use \"cml add <filename>...\" to stage for commit)\n" "" 1;
     List.iter (fun s -> print_indent s "red" 3) files; print_newline ()
   end
 
@@ -60,7 +61,7 @@ let print_untracked (files : string list) : unit =
   | [] -> ()
   | _  -> begin
     print ("Untracked files:");
-    print_indent "(use \"cml add <file>\" to include in commit)\n" "" 1;
+    print_indent "(use \"cml add <filename>\" to include in commit)\n" "" 1;
     List.iter (fun s -> print_indent s "red" 3) files; print_newline ()
   end
 
@@ -82,7 +83,7 @@ let print_help_reset () : unit =
 
 (* print help info for rm *)
 let print_help_rm () : unit =
-  print_indent "rm\t\tRemove files from the working tree and index" "b" 1;
+  print_indent "rm\t\tRemove files from the index" "b" 1;
   print_indent "usage:  . | <filename>" "y" 8
 
 (* print help info for stash *)

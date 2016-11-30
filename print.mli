@@ -23,7 +23,7 @@ val print_camel: unit -> unit
 val branch_print: string -> string -> unit
 
 (* prints the files staged for a commit *)
-val print_staged: string list -> unit
+val print_staged: string list -> string list -> unit
 
 (* prints the files not staged for commit *)
 val print_changed: string list -> unit

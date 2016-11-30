@@ -52,6 +52,10 @@ val chdir_to_cml : unit -> unit
  * from the cwd *)
 val abs_path_from_cml : string -> string
 
+(* returns the relative path from the cwd to the given path relative to the
+ * cml repo (essentially the input is the path in idx) *)
+val get_rel_path : string -> string
+
 (* returns [str] without [sub] *)
 val remove_from_string : string -> string -> string
 
@@ -59,6 +63,16 @@ val remove_from_string : string -> string -> string
  * precondition: hash is a valid  40 char string
  * postcondition: get_object_path raise Fatal if hash doens't exist *)
  val get_object_path : string -> string
+
+(* returns whether the given argument is a flag (if arg is of the form
+ * dash [-] followed by any number of characters > 0) *)
+val arg_is_flag : string -> bool
+
+(* precondition: [arg] is a flag.
+ * postcondition: returns the list of flags from the argument.
+ * example: [get_flags_from_arg "-hi" ~ ["h"; "i"]]
+ * example: [get_flags_from_arg "--hi" ~ ["hi"]] *)
+val get_flags_from_arg : string -> string list
 
 (************************* File Compression & Hashing *************************)
 (******************************************************************************)
@@ -74,10 +88,24 @@ val copy: string -> string -> unit
  *)
 val compress: string -> string -> unit
 
+(* returns the compressed [in_string] *)
+val compress_string : string -> string
+
 (* decompress decompresses a file/directory
  * takes initial and final path as arguments.
  *)
 val decompress: string -> string -> unit
+
+(* returns the decompressed [in_string] *)
+val decompress_string : string -> string
+
+(* returns the string list of lines in the file_name
+ * precondition: file_name exists from the cwd *)
+val parse_lines : string -> string list
+
+(* returns the string list of lines in the decompressed file given the
+ * file_name of a compressed file *)
+val decompress_contents : string -> string list
 
 (* creates a blob object for the given file. Returns the hash. *)
 val create_blob: string -> string
@@ -130,7 +158,11 @@ val update_index: string * string -> index -> index
 val set_index: index -> unit
 
 (* removes [rm_files] list from the index *)
-val rm_files_from_idx : string list -> string list -> unit
+val rm_files_from_idx : string list -> unit
+
+(* removes [rm_files] list from the repository (deletes physical files).
+ * the files given must be the path from .cml repo *)
+val rm_files_from_repo : string list -> unit
 
 (* adds [add_files] list from the index *)
 val add_files_to_idx : string list -> unit
