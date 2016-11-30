@@ -111,18 +111,24 @@ val get_head: unit -> string
 (* sets the HEAD of the cml repository *)
 val set_head: string -> unit
 
+(* sets the HEAD of the cml repository to a commit hash *)
+val set_detached_head: string -> unit
+
+(* returns the commit hash the head was detached at *)
+val get_detached_head: unit -> string
+
+(* returns true if repo currently is in detached head mode, else false *)
+val detached_head: unit -> bool
+
 (* returns the HASH of a head of the given branch *)
 val get_branch_ptr: string -> string
 
 (* initializes a given commit to a given branch name *)
 val set_branch_ptr: string -> string -> unit
 
-(* returns a list of all versions of HEAD *)
-val get_versions: unit -> string list
-
-(* go to an old version of HEAD *)
-(* precondition: [version] of HEAD exists *)
-val switch_version: string -> unit
+(* overwrites file with version added to supplied index
+ * if the file is not in the index, do nothing *)
+val checkout_file: string -> index -> unit
 
 (***************************** Index Manipulation *****************************)
 (******************************************************************************)
@@ -188,7 +194,7 @@ val delete_branch: string -> unit
 
 (* switch current working branch *)
 (* precondition: [branch] exists *)
-val switch_branch: string -> unit
+val switch_branch: string -> bool -> unit
 
 (******************************** User Info ***********************************)
 (******************************************************************************)
