@@ -134,6 +134,9 @@ val get_detached_head: unit -> string
 (* returns true if repo currently is in detached head mode, else false *)
 val detached_head: unit -> bool
 
+(* returns correct head depending on detached_head mode *)
+val get_head_safe : unit -> string
+
 (* returns the HASH of a head of the given branch *)
 val get_branch_ptr: string -> string
 

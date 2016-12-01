@@ -38,7 +38,7 @@ let rec verify_allowed_flags allowed_flags flags =
 (* helper function that returns a list of files staged for commit *)
 let get_staged_help (idx : index) : string list =
   try
-    let cmt = get_head () |> parse_commit in
+    let cmt = get_head_safe () |> parse_commit in
     Tree.read_tree "" cmt.tree |> Tree.tree_to_index |> get_staged idx
   with
   | Fatal _ -> get_staged idx []
@@ -54,7 +54,7 @@ let files_in_index idx =
 let get_deleted cwd_files idx =
   let idx_files = files_in_index idx in
   try
-    let cmt = get_head () |> parse_commit in
+    let cmt = get_head_safe () |> parse_commit in
     let cmt_files = Tree.read_tree "" cmt.tree |> Tree.tree_to_index |> files_in_index in
     List.filter (fun file -> (not (List.mem file idx_files)) || (not (List.mem file cwd_files))) cmt_files |> List.sort Pervasives.compare
   with
@@ -64,7 +64,7 @@ let get_deleted cwd_files idx =
  * precondition: cwd is the .cml repo (chdir_to_cml ()) *)
 let add_print_msg files =
   let cmt_idx = try begin
-    let cmt = get_head () |> parse_commit in
+    let cmt = get_head_safe () |> parse_commit in
     Tree.read_tree "" cmt.tree |> Tree.tree_to_index |> files_in_index
   end with
   | Fatal _ -> []
@@ -198,7 +198,7 @@ let checkout (args: string list) : unit =
   | flag::b::_ ->
     begin
       if flag = "-b" || flag = "-B" then
-        let _ = get_head () |> create_branch b in switch_branch b isdetached
+        let _ = get_head_safe () |> create_branch b in switch_branch b isdetached
       else
         raise (Fatal ("invalid flags, see [--help]"))
     end
@@ -307,7 +307,8 @@ let log () : unit =
     if cmt.parent = "None" then ()
     else cmt.parent |> parse_commit |> log_loop cmt.parent
   in try
-    let head = get_head () in parse_commit head |> log_loop head
+    let head = get_head_safe () in
+    parse_commit head |> log_loop head
   with
   | Fatal m -> begin
     if m = "HEAD not initialized" then
@@ -330,7 +331,7 @@ let reset (args: string list) : unit =
   else () end;
   chdir_to_cml ();
   let head_hash = match args with
-    | [] -> get_head ()
+    | [] -> get_head_safe ()
     | h::[] -> h
     | _ -> raise (Fatal "usage: git reset [--soft | --mixed | --hard] [<commit>]")
   in
@@ -338,12 +339,8 @@ let reset (args: string list) : unit =
   set_head head_hash;
   if List.mem "soft" flags then ()
   else begin
-    print_endline "before: ";
-    print_list (get_index () |> files_in_index);
     let tree = Tree.read_tree "" commit.tree in
     let index = Tree.tree_to_index tree in
-    print_endline "after: ";
-    print_list (index |> files_in_index);
     set_index index;
     if List.mem "hard" flags then
       Tree.recreate_tree "" tree
@@ -392,7 +389,12 @@ let status_message () =
 let status () : unit =
   let cwd = Sys.getcwd () in
   chdir_to_cml ();
-  print ("On branch "^(get_current_branch ())^"\n");
+  begin
+    if detached_head () then
+      print_color ("HEAD detached at "^(get_detached_head ())) "red"
+    else
+      print ("On branch "^(get_current_branch ())^"\n")
+  end;
   let cwd_files = get_all_files ["./"] [] in
   let idx = get_index () in
   let st = get_staged_help idx in
