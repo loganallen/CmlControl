@@ -144,6 +144,25 @@ let get_flags_from_arg arg =
   else
     Str.replace_first r_single_dash "" arg |> Str.split (Str.regexp "")
 
+(* recursively delete the empty directories in the [path] *)
+let rec remove_empty_dirs path =
+  let check_remove_empty files =
+    match files with
+    | [||] -> Unix.rmdir path
+    | [|".DS_Store"|] -> Sys.remove (path^"/"^".DS_Store"); Unix.rmdir path
+    | _ -> ()
+  in
+  let remove_empty_dirs_helper file =
+    let file_path = path^"/"^file in
+    if try Sys.is_directory file_path with _ -> false then
+      remove_empty_dirs file_path
+    else ()
+  in
+  let files = Sys.readdir path in
+  Array.iter remove_empty_dirs_helper files;
+  let files' = Sys.readdir path in
+  check_remove_empty files'
+
 (************************ Object Creation & Parsing  **************************)
 (******************************************************************************)
 
@@ -355,16 +374,24 @@ let is_bad_dir name =
     | "." | ".." | ".cml" -> true
     | _ -> false
 
+(* returns true if the file is an ignored file *)
+let is_ignored_file ignored_files file =
+  List.mem file ignored_files
+
 (* returns a list of all files in working repo by absolute path *)
 let rec get_all_files (dirs : string list) (acc : string list) : string list =
-  let rec loop dir_h path files directories =
+  let rec loop ignored dir_h path files directories =
     try
       let temp = readdir dir_h in
-      let fn = (if path = "" || path = "./" then temp else (path^"/"^temp)) in
-      if Sys.is_directory fn then
-        loop dir_h path files (fn::directories)
-      else
-        loop dir_h path (fn::files) directories
+      if is_ignored_file ignored temp then
+        loop ignored dir_h path files directories
+      else begin
+        let fn = (if path = "" || path = "./" then temp else (path^"/"^temp)) in
+        if Sys.is_directory fn then
+          loop ignored dir_h path files (fn::directories)
+        else
+          loop ignored dir_h path (fn::files) directories
+      end
     with
       End_of_file -> closedir dir_h; (files, directories)
   in match dirs with
@@ -375,7 +402,7 @@ let rec get_all_files (dirs : string list) (acc : string list) : string list =
           get_all_files t acc
         else
           let dir_h = opendir dir_name in
-          let (files, directories) = loop dir_h dir_name acc [] in
+          let (files, directories) = loop [".DS_Store"] dir_h dir_name acc [] in
           get_all_files (t@directories) files
       end
 
@@ -519,6 +546,7 @@ let switch_version (commit_hash : string) : unit =
   let nindex = Tree.tree_to_index ntree in
   List.iter (fun (fn, hn) -> Sys.remove fn ) oindex;
   Tree.recreate_tree "" ntree;
+  remove_empty_dirs "./";
   set_index nindex
 
 (******************************** User Info ***********************************)
