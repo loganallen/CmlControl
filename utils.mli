@@ -80,6 +80,9 @@ val create_commit: string -> string -> string -> string -> string -> string
 (* returns a commit record for the given commit ptr *)
 val parse_commit: string -> commit
 
+(* takes a commit hash and returns  the index of the commit *)
+val get_commit_index: string -> index
+
 (**************************** HEAD Ptr Manipulation ***************************)
 (******************************************************************************)
 

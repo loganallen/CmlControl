@@ -256,14 +256,24 @@ let diff_map_help (file, hash) = ((file, false), (get_object_path hash, true))
 
 (* show changes between working tree and previous commits *)
 let diff (args: string list) : unit =
-  let ch_idx = get_index () |> get_changed_as_index (get_all_files ["./"] []) in
+  let idx = get_index () in
+  let ch_idx = idx |> get_changed_as_index (get_all_files ["./"] []) in
   try match args with
     | [] -> List.map diff_map_help ch_idx |> Diff.diff_mult
     | hd::[] -> begin
       if hd = "." || hd = "-a" then
         List.map diff_map_help ch_idx |> Diff.diff_mult
-      else
+      else if List.mem_assoc hd ch_idx then
         (get_object_path (List.assoc hd ch_idx), true) |> Diff.diff (hd, false)
+      else
+        let oidx = get_commit_index hd in
+        let folder acc (fn, hn) =
+          try
+            let obj = List.assoc fn oidx in
+            ((fn, false),(get_object_path obj, true))::acc
+          with
+            | Not_found -> acc
+        in List.fold_left folder [] idx |> Diff.diff_mult
     end
     | hd::t -> begin
       if hd = "." || hd = "-a" then
@@ -274,6 +284,7 @@ let diff (args: string list) : unit =
     end
   with
   | Not_found -> ()
+  | Fatal _ -> ()
 
 (* display help information about CmlControl. *)
 let help () : unit =

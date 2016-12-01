@@ -195,6 +195,13 @@ let parse_commit (ptr : string) : commit =
     | Invalid_argument _ -> raise (Fatal ("commit - "^ptr^": not valid"))
     | End_of_file -> raise (Fatal ("commit - "^ptr^": corrupted"))
 
+(* takes a commit hash and returns  the index of the commit *)
+let get_commit_index (ptr : string) : index =
+  try
+    let commit = parse_commit ptr in
+    Tree.read_tree "" commit.tree |> Tree.tree_to_index
+  with
+    | Tree_ex _ -> raise (Fatal ("commit - " ^ ptr ^ " is corrupted"))
 
 (**************************** HEAD Ptr Manipulation ***************************)
 (******************************************************************************)

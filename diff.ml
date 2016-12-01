@@ -32,7 +32,7 @@ let diff_blobs (blob1 : string) (blob2 : string) : unit =
  * two files that can be compressed or decompressed *)
 let diff (file1, c1) (file2, c2) : unit =
   match (c1, c2) with
-    | (false, false) -> diff_blobs file1 file2
+    | (false, false) -> diff_file file1 file2
     | (false, true) -> diff_vs_blob file1 file2
     | (true, false) -> diff_vs_blob file2 file1
     | (true, true) -> diff_blobs file1 file2
