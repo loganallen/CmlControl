@@ -311,12 +311,7 @@ let log () : unit =
   chdir_to_cml ();
   let oc = open_out ".cml/log" in
   let rec log_loop oc ptr cmt =
-    (*let _ = print_commit ptr cmt.author cmt.date cmt.message in*)
-    (* ANSITerminal_win_2.print oc [ANSITerminal_win_2.red] "\"hello, world\""; *)
-    let _ = Printf.fprintf oc "[33mcommit %s\n" ptr in
-    let _ = Printf.fprintf oc "Author: %s\n" cmt.author in
-    let _ = Printf.fprintf oc "Date: %s\n\n" cmt.date in
-    let _ = Printf.fprintf oc "    %s\n\n" cmt.message in
+    let _ = print_commit oc ptr cmt.author cmt.date cmt.message in
     if cmt.parent = "None" then close_out oc
     else cmt.parent |> parse_commit |> log_loop oc cmt.parent
   in try
