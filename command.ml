@@ -278,13 +278,30 @@ let diff (args: string list) : unit =
     | hd::t -> begin
       if hd = "." || hd = "-a" then
         raise (Fatal "invalid arguments, see [--help]")
+      else if List.length t = 1 then
+        let td = List.hd t in
+        try
+          let idx1 = get_commit_index hd in
+          let idx2 = get_commit_index td in
+          let folder acc (fn, hn) =
+            try
+              let obj = List.assoc fn idx2 in
+              ((get_object_path hn, true),(get_object_path obj, true))::acc
+            with
+              | Not_found -> acc
+          in List.fold_left folder [] idx1 |> Diff.diff_mult
+        with
+          | _ -> begin
+            let h = ((hd, false), (get_object_path (List.assoc hd ch_idx), true)) in
+            let t = ((td, false), (get_object_path (List.assoc td ch_idx), true)) in
+            Diff.diff_mult [h;t]
+          end
       else
         List.map (fun f -> ((f, false), (get_object_path (List.assoc f ch_idx), true))) args
         |> Diff.diff_mult
     end
   with
-  | Not_found -> ()
-  | Fatal _ -> ()
+  | Not_found | Fatal _ -> raise (Fatal ("diff error - could not make diff"))
 
 (* display help information about CmlControl. *)
 let help () : unit =
