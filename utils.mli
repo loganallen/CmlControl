@@ -9,7 +9,7 @@ type commit = {
   author: string;
   date: string;
   message: string;
-  parent: string;
+  parents: string listm;
 }
 
 (* type blob represents a compressed file object *)
@@ -73,7 +73,7 @@ val remove_empty_dirs : string -> unit
 val create_blob: string -> string
 
 (* creates a commit object for the given commit. Returns the hash. *)
-val create_commit: string -> string -> string -> string -> string -> string
+val create_commit: string -> string -> string -> string -> string list -> string
 
 (* returns a commit record for the given commit ptr *)
 val parse_commit: string -> commit
