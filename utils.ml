@@ -162,7 +162,7 @@ let create_blob (file_name: string) : string =
   let hsh = hash file_name in
   let (d1,path) = split_hash hsh in
   let _ =  if Sys.file_exists (".cml/objects/"^d1) then () else mkdir (".cml/objects/"^d1) perm in
-  open_out path |> close_out; copy file_name path; hsh
+  open_out path |> close_out; compress file_name path; hsh
 
 (* creates a commit object for the given commit. Returns the hash. *)
 let create_commit (ptr : string) (user : string) (date : string) (msg: string) (parent : string) : string =
@@ -269,7 +269,7 @@ let set_branch_ptr (branch_name : string) (commit_hash : string) : unit =
 let checkout_file (file_name : string) (idx : index) : unit =
   try
     let obj_path = get_object_path (List.assoc file_name idx) in
-    copy obj_path file_name
+    decompress obj_path file_name
   with
     | Not_found -> ()
 

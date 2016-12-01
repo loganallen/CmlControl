@@ -129,7 +129,7 @@ module Tree = struct
 
   let rec recreate_tree (path : string) (tree : t) : unit =
     match tree with
-      | Blob (fn, hsh) -> Crypto.copy (get_object_path hsh)
+      | Blob (fn, hsh) -> Crypto.decompress (get_object_path hsh)
                                     (if path = "" then fn else path ^ "/" ^ fn)
       | Tree (dn, lst) ->
         begin
