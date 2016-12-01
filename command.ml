@@ -252,7 +252,7 @@ let commit (args: string list) : unit =
   else set_head new_head
 
 (* diff map helper function *)
-let diff_map_help (file, hash) = (file, get_object_path hash)
+let diff_map_help (file, hash) = ((file, false), (get_object_path hash, true))
 
 (* show changes between working tree and previous commits *)
 let diff (args: string list) : unit =
@@ -263,13 +263,13 @@ let diff (args: string list) : unit =
       if hd = "." || hd = "-a" then
         List.map diff_map_help ch_idx |> Diff.diff_mult
       else
-        get_object_path (List.assoc hd ch_idx) |> Diff.diff_file hd
+        (get_object_path (List.assoc hd ch_idx), true) |> Diff.diff (hd, false)
     end
     | hd::t -> begin
       if hd = "." || hd = "-a" then
         raise (Fatal "invalid arguments, see [--help]")
       else
-        List.map (fun f -> (f, get_object_path (List.assoc f ch_idx))) args
+        List.map (fun f -> ((f, false), (get_object_path (List.assoc f ch_idx), true))) args
         |> Diff.diff_mult
     end
   with
