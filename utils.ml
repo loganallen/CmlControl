@@ -70,16 +70,6 @@ let chdir_to_cml () =
   | Some path -> Sys.chdir path
   | None -> raise (Fatal "Not a Cml repository (or any of the parent directories)")
 
-(* returns the path of an object with file name hash
- * precondition: hash is a valid  40 char string *)
-let get_object_path (hash : string) =
-  let root = ".cml/objects/" in
-  let subdir = String.sub hash 0 2 in
-  let fn = String.sub hash 2 (String.length hash - 2) in
-  let path = root ^ subdir ^ "/" ^ fn in
-  if Sys.file_exists path then path
-  else raise (Fatal ("tree - "^hash^": doesn't exist"))
-
 (* returns [str] without [sub] *)
 let remove_from_string str sub =
   Str.replace_first (Str.regexp sub) "" str
@@ -153,6 +143,25 @@ let get_flags_from_arg arg =
     [Str.replace_first r_double_dash "" arg]
   else
     Str.replace_first r_single_dash "" arg |> Str.split (Str.regexp "")
+
+(* recursively delete the empty directories in the [path] *)
+let rec remove_empty_dirs path =
+  let check_remove_empty files =
+    match files with
+    | [||] -> Unix.rmdir path
+    | [|".DS_Store"|] -> Sys.remove (path^"/"^".DS_Store"); Unix.rmdir path
+    | _ -> ()
+  in
+  let remove_empty_dirs_helper file =
+    let file_path = path^"/"^file in
+    if try Sys.is_directory file_path with _ -> false then
+      remove_empty_dirs file_path
+    else ()
+  in
+  let files = Sys.readdir path in
+  Array.iter remove_empty_dirs_helper files;
+  let files' = Sys.readdir path in
+  check_remove_empty files'
 
 (************************ Object Creation & Parsing  **************************)
 (******************************************************************************)
@@ -365,16 +374,24 @@ let is_bad_dir name =
     | "." | ".." | ".cml" -> true
     | _ -> false
 
+(* returns true if the file is an ignored file *)
+let is_ignored_file ignored_files file =
+  List.mem file ignored_files
+
 (* returns a list of all files in working repo by absolute path *)
 let rec get_all_files (dirs : string list) (acc : string list) : string list =
-  let rec loop dir_h path files directories =
+  let rec loop ignored dir_h path files directories =
     try
       let temp = readdir dir_h in
-      let fn = (if path = "" || path = "./" then temp else (path^"/"^temp)) in
-      if Sys.is_directory fn then
-        loop dir_h path files (fn::directories)
-      else
-        loop dir_h path (fn::files) directories
+      if is_ignored_file ignored temp then
+        loop ignored dir_h path files directories
+      else begin
+        let fn = (if path = "" || path = "./" then temp else (path^"/"^temp)) in
+        if Sys.is_directory fn then
+          loop ignored dir_h path files (fn::directories)
+        else
+          loop ignored dir_h path (fn::files) directories
+      end
     with
       End_of_file -> closedir dir_h; (files, directories)
   in match dirs with
@@ -385,7 +402,7 @@ let rec get_all_files (dirs : string list) (acc : string list) : string list =
           get_all_files t acc
         else
           let dir_h = opendir dir_name in
-          let (files, directories) = loop dir_h dir_name acc [] in
+          let (files, directories) = loop [".DS_Store"] dir_h dir_name acc [] in
           get_all_files (t@directories) files
       end
 
@@ -518,7 +535,8 @@ let switch_branch (branch : string) (isdetached : bool) : unit =
     print ("Already on branch '"^branch^"'")
   else
     let ch = open_out ".cml/HEAD" in
-    output_string ch ("heads/"^branch); close_out ch
+    output_string ch ("heads/"^branch); close_out ch;
+    print ("Switched to branch '"^branch^"'")
 
 (* switches state of repo to state of given commit_hash *)
 let switch_version (commit_hash : string) : unit =
@@ -529,6 +547,7 @@ let switch_version (commit_hash : string) : unit =
   let nindex = Tree.tree_to_index ntree in
   List.iter (fun (fn, hn) -> Sys.remove fn ) oindex;
   Tree.recreate_tree "" ntree;
+  remove_empty_dirs "./";
   set_index nindex
 
 (******************************** User Info ***********************************)

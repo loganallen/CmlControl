@@ -53,11 +53,6 @@ val get_rel_path : string -> string
 (* returns [str] without [sub] *)
 val remove_from_string : string -> string -> string
 
-(* returns the path of an object represented by hash
- * precondition: hash is a valid  40 char string
- * postcondition: get_object_path raise Fatal if hash doens't exist *)
- val get_object_path : string -> string
-
 (* returns whether the given argument is a flag (if arg is of the form
  * dash [-] followed by any number of characters > 0) *)
 val arg_is_flag : string -> bool
@@ -67,6 +62,9 @@ val arg_is_flag : string -> bool
  * example: [get_flags_from_arg "-hi" ~ ["h"; "i"]]
  * example: [get_flags_from_arg "--hi" ~ ["hi"]] *)
 val get_flags_from_arg : string -> string list
+
+(* recursively delete the empty directories in the cwd *)
+val remove_empty_dirs : string -> unit
 
 (************************ Object Creation & Parsing  **************************)
 (******************************************************************************)
@@ -142,6 +140,9 @@ val add_files_to_idx : string list -> unit
 
 (* returns true if dir is known link, or if is .cml *)
 val is_bad_dir: string -> bool
+
+(* returns true if the file is an ignored file *)
+val is_ignored_file : string list -> string -> bool
 
 (* returns a list of all files in working repo by absolute path *)
 val get_all_files: string list -> string list -> string list
