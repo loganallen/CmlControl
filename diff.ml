@@ -1,12 +1,13 @@
 open Common
 
+(* prints a single diff line with color *)
 let print_diff (diff : Odiff.diff) : unit =
   match diff with
   | Odiff.Add _ -> Print.print_color (Odiff.string_of_diff diff) "g"
   | Odiff.Delete _ -> Print.print_color (Odiff.string_of_diff diff) "r"
   | Odiff.Change _ -> Print.print_color (Odiff.string_of_diff diff) "y"
 
-(* prints a diff between two files to console *)
+(* prints the diffs made from two files *)
 let diff_file (new_file : string) (old_file : string) : unit =
   let diffs = Odiff.files_diffs old_file new_file in
   if diffs = [] then () else
@@ -37,13 +38,14 @@ let diff (file1, c1) (file2, c2) : unit =
     | (true, false) -> diff_vs_blob file2 file1
     | (true, true) -> diff_blobs file1 file2
 
-(* prints diffs all pairs of files in a list *)
+(* prints diffs for all pairs of files in a list [lst] *)
 let rec diff_mult (lst : ((string * bool) * (string * bool)) list) : unit =
   match lst with
     | [] -> ()
-    | (old_file,new_file)::[] -> diff old_file new_file
-    | (old_file,new_file)::t  -> begin
+    | (new_file,old_file)::[] -> diff new_file old_file
+    | (new_file,old_file)::t  -> begin
         diff new_file old_file;
         Print.print_newline (); Print.print "--------------------";
         Print.print_newline (); diff_mult t
       end
+
