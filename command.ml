@@ -146,6 +146,14 @@ let branch (args: string list) : unit =
     else raise (Fatal "invalid flags, see [--help]")
   end
 
+let invalid_cml_state (st : string list) (ch : string list) : unit =
+  let _ = print "Your changes to the following files would be overwritten:\n" in
+  let rec loop = function
+    | [] -> ()
+    | h::t -> print_indent h "y" 3; loop t
+  in loop (st @ ch);
+  print "\nPlease commit or stash your changes beforehand."
+
 (* switch branches or restore working tree files *)
 let checkout (args: string list) : unit =
   chdir_to_cml ();
@@ -161,13 +169,7 @@ let checkout (args: string list) : unit =
       if ((get_all_files ["./"] []) |> List.mem arg) then
         get_index () |> checkout_file arg
       else if st <> [] || ch <> [] then
-        let _ = print_error ("Could not checkout " ^ arg) in
-        let _ = print "Your changes to the following files would be overwritten:" in
-        let rec loop = function
-          | [] -> ()
-          | h::t -> print_indent h "y" 3; loop t
-        in loop (st @ ch);
-        print "\nPlease commit or stash your changes before checking out"
+        invalid_cml_state st ch
       else if (get_branches () |> List.mem arg) then
         let _ = switch_version (get_branch_ptr arg) in
         switch_branch arg isdetached
@@ -188,7 +190,10 @@ let checkout (args: string list) : unit =
   | flag::b::_ ->
     begin
       if flag = "-b" || flag = "-B" then
-        let _ = get_head_safe () |> create_branch b in switch_branch b isdetached
+        if st <> [] || ch <> [] then
+          invalid_cml_state st ch
+        else
+          let _ = get_head_safe () |> create_branch b in switch_branch b isdetached
       else
         raise (Fatal ("invalid flags, see [--help]"))
     end
@@ -318,9 +323,48 @@ let log () : unit =
     else raise (Fatal m)
   end
 
+(* perform fast-forward merge by updating the head to the branch head *)
+let merge_fast_forward (branch : string) (ptr : string) : unit =
+  print ("Updating branch '" ^ branch ^ "' with fast-forward merge...");
+  set_head ptr; switch_version ptr;
+  print "\nMerge successful."
+
 (* join two or more development histories together *)
 let merge (args: string list) : unit =
-  failwith "Unimplemented"
+  match args with
+  | []     -> raise (Fatal "no branch specified, see [--help]")
+  | br::[] -> begin
+    let cwd = get_all_files ["./"] [] in
+    let idx = get_index () in
+    let st = get_staged_help idx in
+    let ch = get_changed cwd idx in
+    if st <> [] || ch <> [] then invalid_cml_state st ch
+    else begin
+      let cur_hd = get_head () in
+      let branch_hd = get_branch_ptr br in
+      (* check for up-to-date merge *)
+      let rec soft_loop_check ptr =
+        if ptr = "None" then true
+        else if ptr = branch_hd then
+          let _ = print "Already up-to-date." in false
+        else
+          let cmt = parse_commit ptr in soft_loop_check cmt.parent
+      in
+      if soft_loop_check cur_hd then
+        (* fast-forward loop check *)
+        let rec ff_loop_check ptr =
+          if ptr = "None" then true
+          else if ptr = cur_hd then
+            let _ = merge_fast_forward (get_current_branch ()) branch_hd in false
+          else
+            let cmt = parse_commit ptr in ff_loop_check cmt.parent
+        in
+        if ff_loop_check branch_hd then
+          print_color "TODO: Actual merging :(" "r"
+    end
+  end
+  | _ -> raise (Fatal "too many arguments, see [--help]")
+
 
 (* reset the current HEAD to a specified state *)
 let reset (args: string list) : unit =
