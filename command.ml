@@ -158,33 +158,38 @@ let checkout (args: string list) : unit =
   | []    -> raise (Fatal "branch name or HEAD version required")
   | [arg] ->
     begin
-      if ((get_all_files ["./"] []) |> List.mem arg) then
-        get_index () |> checkout_file arg
-      else if st <> [] || ch <> [] then
-        let _ = print_error ("Could not checkout " ^ arg) in
-        let _ = print "Your changes to the following files would be overwritten" in
-        let rec loop = function
-          | [] -> ()
-          | h::t -> print_indent h "y" 1; loop t
-        in loop (st @ ch);
-        print "Please commit or stash your changes before checking out"
-      else if (get_branches () |> List.mem arg) then
-        let _ = switch_version (get_branch_ptr arg) in
-        let _ = switch_branch arg isdetached in
-        print ("Switched to branch '"^arg^"'")
-      else
-        try
-          if isdetached && arg = get_detached_head () then
-            print ("Already detached HEAD at " ^ arg)
-          else
-            let commit = parse_commit arg in
-            let tree = Tree.read_tree "" commit.tree in
-            Tree.recreate_tree "" tree;
-            set_index (Tree.tree_to_index tree);
-            set_detached_head arg;
-            print_detached_warning arg
-        with
-          | Fatal _ -> raise (Fatal ("pathspec '"^arg^"' does not match an file(s)/branch/commit"))
+      let cur = if isdetached then "" else get_current_branch () in
+      if cur = arg then
+        print ("Already on branch '"^arg^"'")
+      else begin
+        if ((get_all_files ["./"] []) |> List.mem arg) then
+          get_index () |> checkout_file arg
+        else if st <> [] || ch <> [] then
+          let _ = print_error ("Could not checkout " ^ arg) in
+          let _ = print "Your changes to the following files would be overwritten" in
+          let rec loop = function
+            | [] -> ()
+            | h::t -> print_indent h "y" 1; loop t
+          in loop (st @ ch);
+          print "Please commit or stash your changes before checking out"
+        else if (get_branches () |> List.mem arg) then
+          let _ = switch_version (get_branch_ptr arg) in
+          let _ = switch_branch arg isdetached in
+          print ("Switched to branch '"^arg^"'")
+        else
+          try
+            if isdetached && arg = get_detached_head () then
+              print ("Already detached HEAD at " ^ arg)
+            else
+              let commit = parse_commit arg in
+              let tree = Tree.read_tree "" commit.tree in
+              Tree.recreate_tree "" tree;
+              set_index (Tree.tree_to_index tree);
+              set_detached_head arg;
+              print_detached_warning arg
+          with
+            | Fatal _ -> raise (Fatal ("pathspec '"^arg^"' does not match an file(s)/branch/commit"))
+      end
     end
   | flag::b::_ ->
     begin

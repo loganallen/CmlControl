@@ -68,6 +68,9 @@ val arg_is_flag : string -> bool
  * example: [get_flags_from_arg "--hi" ~ ["hi"]] *)
 val get_flags_from_arg : string -> string list
 
+(* recursively delete the empty directories in the cwd *)
+val remove_empty_dirs : string -> unit
+
 (************************ Object Creation & Parsing  **************************)
 (******************************************************************************)
 
@@ -157,9 +160,6 @@ val get_changed: string list -> index -> string list
 
 (* returns a list of untracked files *)
 val get_untracked: string list -> index -> string list
-
-(* recursively delete the empty directories in the cwd *)
-val delete_empty_dirs : string -> unit
 
 (******************************** Branching ***********************************)
 (******************************************************************************)

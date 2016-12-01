@@ -154,6 +154,25 @@ let get_flags_from_arg arg =
   else
     Str.replace_first r_single_dash "" arg |> Str.split (Str.regexp "")
 
+(* recursively delete the empty directories in the [path] *)
+let rec remove_empty_dirs path =
+  let check_remove_empty files =
+    match files with
+    | [||] -> Unix.rmdir path
+    | [|".DS_Store"|] -> Sys.remove (path^"/"^".DS_Store"); Unix.rmdir path
+    | _ -> ()
+  in
+  let remove_empty_dirs_helper file =
+    let file_path = path^"/"^file in
+    if try Sys.is_directory file_path with _ -> false then
+      remove_empty_dirs file_path
+    else ()
+  in
+  let files = Sys.readdir path in
+  Array.iter remove_empty_dirs_helper files;
+  let files' = Sys.readdir path in
+  check_remove_empty files'
+
 (************************ Object Creation & Parsing  **************************)
 (******************************************************************************)
 
@@ -432,22 +451,6 @@ let get_untracked (cwd : string list) (idx : index) : string list =
   in
   List.fold_left find_untracked [] cwd |> List.sort (Pervasives.compare)
 
-(* recursively delete the empty directories in the [path] *)
-let rec delete_empty_dirs path =
-  let files = Sys.readdir path in
-  if files = [||] then begin
-    try Unix.rmdir path with
-    | _ -> ()
-  end else begin
-    let delete_empty_dirs_helper file =
-      let file_path = path^"/"^file in
-      if try Sys.is_directory file_path with _ -> false then
-        delete_empty_dirs file_path
-      else ()
-    in
-    Array.iter delete_empty_dirs_helper files
-  end
-
 (******************************** Branching ***********************************)
 (******************************************************************************)
 
@@ -545,6 +548,7 @@ let switch_version (commit_hash : string) : unit =
   let nindex = Tree.tree_to_index ntree in
   List.iter (fun (fn, hn) -> Sys.remove fn ) oindex;
   Tree.recreate_tree "" ntree;
+  remove_empty_dirs "./";
   set_index nindex
 
 (******************************** User Info ***********************************)
