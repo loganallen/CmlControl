@@ -71,7 +71,7 @@ let print_commit (ptr : string) (author : string) (time : string) (msg : string)
   print ("Date:   "^time); print_newline ();
   print_indent msg "" 2; print_newline ()
 
-(* print help info for add *)
+(* print help info for add (long version) *)
 let print_help_add_long () : unit =
   print_indent "usage: cml add [-A] <pathspec>..." "b" 1;
   print_newline ();
@@ -136,7 +136,7 @@ let print_help_reset () : unit =
   print_indent "reset\t\tReset the current HEAD to a specified state" "b" 1;
   print_indent "usage: cml reset [--soft | --mixed | --hard] [<commit>]" "y" 8
 
-(* print help info for rm *)
+(* print help info for rm (long version) *)
 let print_help_rm_long () : unit =
   print_indent "cml rm [-f] <pathspec>..." "b" 1;
   print_newline ();
