@@ -161,9 +161,8 @@ let get_flags_from_arg arg =
 let create_blob (file_name: string) : string =
   let hsh = hash file_name in
   let (d1,path) = split_hash hsh in
-  if not (Sys.file_exists (".cml/objects/"^d1)) then
-    mkdir (".cml/objects/"^d1) perm;
-    open_out path |> close_out; copy file_name path; hsh
+  let _ =  if Sys.file_exists (".cml/objects/"^d1) then () else mkdir (".cml/objects/"^d1) perm in
+  open_out path |> close_out; copy file_name path; hsh
 
 (* creates a commit object for the given commit. Returns the hash. *)
 let create_commit (ptr : string) (user : string) (date : string) (msg: string) (parent : string) : string =
@@ -177,9 +176,8 @@ let create_commit (ptr : string) (user : string) (date : string) (msg: string) (
   let _ = write_commit oc lines in
   let hsh = hash temp_name in
   let (d1,path) = split_hash hsh in
-    if not (Sys.file_exists (".cml/objects/"^d1)) then
-      mkdir (".cml/objects/"^d1) perm;
-    Sys.rename temp_name path; hsh
+  let _ = if Sys.file_exists (".cml/objects/"^d1) then () else mkdir (".cml/objects/"^d1) perm in
+  Sys.rename temp_name path; hsh
 
 (* returns a commit record for the given commit ptr *)
 let parse_commit (ptr : string) : commit =
