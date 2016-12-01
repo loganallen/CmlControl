@@ -1,11 +1,11 @@
 open Common
 
 (* prints a single diff line with color *)
-let print_diff (diff : Odiff.diff) : unit =
-  match diff with
-  | Odiff.Add _ -> Print.print_color (Odiff.string_of_diff diff) "g"
-  | Odiff.Delete _ -> Print.print_color (Odiff.string_of_diff diff) "r"
-  | Odiff.Change _ -> Print.print_color (Odiff.string_of_diff diff) "y"
+let print_diff (dif : Odiff.diff) : unit =
+  match dif with
+  | Odiff.Add _ -> Print.print_color (Odiff.string_of_diff dif) "g"
+  | Odiff.Delete _ -> Print.print_color (Odiff.string_of_diff dif) "r"
+  | Odiff.Change _ -> Print.print_color (Odiff.string_of_diff dif) "y"
 
 (* prints the diffs made from two files *)
 let diff_file (new_file : string) (old_file : string) : unit =
