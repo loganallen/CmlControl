@@ -53,11 +53,6 @@ val get_rel_path : string -> string
 (* returns [str] without [sub] *)
 val remove_from_string : string -> string -> string
 
-(* returns the path of an object represented by hash
- * precondition: hash is a valid  40 char string
- * postcondition: get_object_path raise Fatal if hash doens't exist *)
- val get_object_path : string -> string
-
 (* returns whether the given argument is a flag (if arg is of the form
  * dash [-] followed by any number of characters > 0) *)
 val arg_is_flag : string -> bool
