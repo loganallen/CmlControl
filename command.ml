@@ -162,16 +162,15 @@ let checkout (args: string list) : unit =
         get_index () |> checkout_file arg
       else if st <> [] || ch <> [] then
         let _ = print_error ("Could not checkout " ^ arg) in
-        let _ = print "Your changes to the following files would be overwritten" in
+        let _ = print "Your changes to the following files would be overwritten:" in
         let rec loop = function
           | [] -> ()
-          | h::t -> print_indent h "y" 1; loop t
+          | h::t -> print_indent h "y" 3; loop t
         in loop (st @ ch);
-        print "Please commit or stash your changes before checking out"
+        print "\nPlease commit or stash your changes before checking out"
       else if (get_branches () |> List.mem arg) then
         let _ = switch_version (get_branch_ptr arg) in
-        let _ = switch_branch arg isdetached in
-        print ("Switched to branch '"^arg^"'")
+        switch_branch arg isdetached
       else
         try
           if isdetached && arg = get_detached_head () then

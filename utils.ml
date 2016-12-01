@@ -535,7 +535,8 @@ let switch_branch (branch : string) (isdetached : bool) : unit =
     print ("Already on branch '"^branch^"'")
   else
     let ch = open_out ".cml/HEAD" in
-    output_string ch ("heads/"^branch); close_out ch
+    output_string ch ("heads/"^branch); close_out ch;
+    print ("Switched to branch '"^branch^"'")
 
 (* switches state of repo to state of given commit_hash *)
 let switch_version (commit_hash : string) : unit =
