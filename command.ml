@@ -1,7 +1,9 @@
+open Common
 open Utils
 open Print
 open Unix
 open Tree
+
 
 type command =
 | Add | Branch | Checkout | Commit | Diff | Help | Init | Log
@@ -144,17 +146,6 @@ let branch (args: string list) : unit =
     else raise (Fatal "invalid flags, see [--help]")
   end
 
-(* switches state of repo to state of given commit_hash *)
-let switch_version (commit_hash : string) : unit =
-  let ohead = parse_commit (get_head ()) in
-  let oindex = Tree.read_tree "" ohead.tree |> Tree.tree_to_index in
-  let nhead = parse_commit commit_hash in
-  let ntree = Tree.read_tree "" nhead.tree in
-  let nindex = Tree.tree_to_index ntree in
-  List.iter (fun (fn, hn) -> Sys.remove fn ) oindex;
-  Tree.recreate_tree "" ntree;
-  set_index nindex
-
 (* switch branches or restore working tree files *)
 let checkout (args: string list) : unit =
   chdir_to_cml ();
@@ -167,33 +158,33 @@ let checkout (args: string list) : unit =
   | []    -> raise (Fatal "branch name or HEAD version required")
   | [arg] ->
     begin
-        if st <> [] || ch <> [] then
-          let _ = print_error ("Could not checkout " ^ arg) in
-          let _ = print "Your changes to the following files would be overwritten" in
-          let rec loop = function
-            | [] -> ()
-            | h::t -> print_indent h "y" 1; loop t
-          in loop (st @ ch);
-          print "Please commit or stash your changes before checking out"
-        else if (get_branches () |> List.mem arg) then
-          let _ = switch_version (get_branch_ptr arg) in
-          let _ = switch_branch arg isdetached in
-          print ("Switched to branch '"^arg^"'")
-        else if ((get_all_files ["./"] []) |> List.mem arg) then
-          get_index () |> checkout_file arg
-        else
-          try
-            if isdetached && arg = get_detached_head () then
-              print ("Already detached HEAD at " ^ arg)
-            else
-              let commit = parse_commit arg in
-              let tree = Tree.read_tree "" commit.tree in
-              Tree.recreate_tree "" tree;
-              set_index (Tree.tree_to_index tree);
-              set_detached_head arg;
-              print_detached_warning arg
-          with
-            | Fatal _ -> raise (Fatal ("pathspec '"^arg^"' does not match an file(s)/branch/commit"))
+      if ((get_all_files ["./"] []) |> List.mem arg) then
+        get_index () |> checkout_file arg
+      else if st <> [] || ch <> [] then
+        let _ = print_error ("Could not checkout " ^ arg) in
+        let _ = print "Your changes to the following files would be overwritten" in
+        let rec loop = function
+          | [] -> ()
+          | h::t -> print_indent h "y" 1; loop t
+        in loop (st @ ch);
+        print "Please commit or stash your changes before checking out"
+      else if (get_branches () |> List.mem arg) then
+        let _ = switch_version (get_branch_ptr arg) in
+        let _ = switch_branch arg isdetached in
+        print ("Switched to branch '"^arg^"'")
+      else
+        try
+          if isdetached && arg = get_detached_head () then
+            print ("Already detached HEAD at " ^ arg)
+          else
+            let commit = parse_commit arg in
+            let tree = Tree.read_tree "" commit.tree in
+            Tree.recreate_tree "" tree;
+            set_index (Tree.tree_to_index tree);
+            set_detached_head arg;
+            print_detached_warning arg
+        with
+          | Fatal _ -> raise (Fatal ("pathspec '"^arg^"' does not match an file(s)/branch/commit"))
     end
   | flag::b::_ ->
     begin
@@ -261,28 +252,39 @@ let commit (args: string list) : unit =
   else set_head new_head
 
 (* diff map helper function *)
-let diff_map_help (file, hash) = (file, get_object_path hash)
+let diff_map_help (file, hash) = ((file, false), (get_object_path hash, true))
 
 (* show changes between working tree and previous commits *)
 let diff (args: string list) : unit =
-  let ch_idx = get_index () |> get_changed_as_index (get_all_files ["./"] []) in
+  let idx = get_index () in
+  let ch_idx = idx |> get_changed_as_index (get_all_files ["./"] []) in
   try match args with
     | [] -> List.map diff_map_help ch_idx |> Diff.diff_mult
     | hd::[] -> begin
       if hd = "." || hd = "-a" then
         List.map diff_map_help ch_idx |> Diff.diff_mult
+      else if List.mem_assoc hd ch_idx then
+        (get_object_path (List.assoc hd ch_idx), true) |> Diff.diff (hd, false)
       else
-        get_object_path (List.assoc hd ch_idx) |> Diff.diff_file hd
+        let oidx = get_commit_index hd in
+        let folder acc (fn, hn) =
+          try
+            let obj = List.assoc fn oidx in
+            ((fn, false),(get_object_path obj, true))::acc
+          with
+            | Not_found -> acc
+        in List.fold_left folder [] idx |> Diff.diff_mult
     end
     | hd::t -> begin
       if hd = "." || hd = "-a" then
         raise (Fatal "invalid arguments, see [--help]")
       else
-        List.map (fun f -> (f, get_object_path (List.assoc f ch_idx))) args
+        List.map (fun f -> ((f, false), (get_object_path (List.assoc f ch_idx), true))) args
         |> Diff.diff_mult
     end
   with
   | Not_found -> ()
+  | Fatal _ -> ()
 
 (* display help information about CmlControl. *)
 let help () : unit =

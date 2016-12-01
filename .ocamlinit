@@ -5,10 +5,11 @@
 #require "str";;
 #load "time.cmo";;
 #load "common.cmo";;
+#load "crypto.cmo";;
 #load "print.cmo";;
 #load "diff.cmo";;
-#load "utils.cmo";;
 #load "tree.cmo";;
+#load "utils.cmo";;
 #load "command.cmo";;
 #load "cml.cmo";;
 
@@ -20,3 +21,4 @@ open Tree;;
 open Common;;
 open Diff;;
 open Time;;
+open Crypto;;
