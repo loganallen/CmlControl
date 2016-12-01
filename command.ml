@@ -396,8 +396,13 @@ let log () : unit =
     else raise (Fatal m)
   end
 
+(* perform a true merge if there are no merge conflicts by creating
+ * a new commit that combines the states of the two branches *)
+let true_merge (cur_hd : string) (branch_hd : string) : unit =
+  failwith "Unimplemented"
+
 (* perform fast-forward merge by updating the head to the branch head *)
-let merge_fast_forward (branch : string) (ptr : string) : unit =
+let fast_forward_merge (branch : string) (ptr : string) : unit =
   print ("Updating branch '" ^ branch ^ "' with fast-forward merge...");
   set_head ptr; switch_version ptr;
   print "\nMerge successful."
@@ -416,28 +421,27 @@ let merge (args: string list) : unit =
       let cur_hd = get_head () in
       let branch_hd = get_branch_ptr br in
       (* check for up-to-date merge *)
-      let rec soft_loop_check ptr =
+      let rec soft_merge_loop ptr =
         if ptr = "None" then true
         else if ptr = branch_hd then
           let _ = print "Already up-to-date." in false
         else
-          let cmt = parse_commit ptr in soft_loop_check cmt.parent
+          let cmt = parse_commit ptr in soft_merge_loop cmt.parent
       in
-      if soft_loop_check cur_hd then
+      if soft_merge_loop cur_hd then
         (* fast-forward loop check *)
-        let rec ff_loop_check ptr =
+        let rec ff_merge_loop ptr =
           if ptr = "None" then true
           else if ptr = cur_hd then
-            let _ = merge_fast_forward (get_current_branch ()) branch_hd in false
+            let _ = fast_forward_merge (get_current_branch ()) branch_hd in false
           else
-            let cmt = parse_commit ptr in ff_loop_check cmt.parent
+            let cmt = parse_commit ptr in ff_merge_loop cmt.parent
         in
-        if ff_loop_check branch_hd then
-          print_color "TODO: Actual merging :(" "r"
+        if ff_merge_loop branch_hd then
+          true_merge cur_hd branch_hd
     end
   end
-  | _ -> raise (Fatal "too many arguments, see [--help]")
-
+  | _ -> raise (Fatal "cml only supports merging two branches, see [--help]")
 
 (* reset the current HEAD to a specified state *)
 let reset (args: string list) : unit =
