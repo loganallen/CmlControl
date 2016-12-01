@@ -386,15 +386,14 @@ let stash (args: string list) : unit =
                 let idx = get_index () in
                 let ch = get_changed cwd idx in
                 let idx_new = List.map (fun file -> (file,create_blob file)) ch in
-                let final_idx = idx @ idx_new in
-                let tree = Tree.index_to_tree final_idx |> Tree.write_tree in
+                let new_tree = Tree.index_to_tree idx_new |> Tree.write_tree in
                 let user = get_user_info () in
                 let tm = time () |> localtime |> Time.get_time in
-                let _ = create_commit tree user tm "Stash" "cml v1 only supports one stash" in
+                let commit = create_commit new_tree user tm "Stash" "cml v1 only supports one stash" in
                 let head = get_head () in
                 switch_version head;
                 let oc = open_out ".cml/stash" in
-                output_string oc tree;
+                output_string oc commit;
                 close_out oc;
                 with
                 | Fatal f -> print_endline "not a valid command - cannot stash."
