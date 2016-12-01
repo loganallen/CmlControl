@@ -76,10 +76,37 @@ let print_help_add () : unit =
   print_indent "add\t\tAdd file contents to the index" "b" 1;
   print_indent "usage:  -A | . | <filename> " "y" 8
 
+(* print help info for reset (long version) *)
+let print_help_reset_long () : unit =
+  print_indent "git reset [<mode>] [<commit>]" "b" 1;
+  print_newline ();
+  print_indent "Resets the current branch head to <commit> and possibly" "black" 1;
+  print_indent "updates the index (resetting it to the tree of <commit>) and the" "black" 1;
+  print_indent "working tree depending on <mode>. If <mode> is omitted, defaults to" "black" 1;
+  print_indent "\"--mixed\". The <mode> must be one of the following:" "black" 1;
+  print_newline ();
+
+  print_indent "--soft" "black" 1;
+  print_indent "Does not touch the index file or the working tree at all (but" "black" 3;
+  print_indent "resets the head to <commit>, just like all modes do). This" "black" 3;
+  print_indent "leaves all your changed files \"Changes to be committed\", as git" "black" 3;
+  print_indent "status would put it." "black" 3;
+  print_newline ();
+
+  print_indent "--mixed" "black" 1;
+  print_indent "Resets the index but not the working tree (i.e., the changed" "black" 3;
+  print_indent "files are preserved but not marked for commit) and reports what" "black" 3;
+  print_indent "has not been updated. This is the default action." "black" 3;
+  print_newline ();
+
+  print_indent "--hard" "black" 1;
+  print_indent "Resets the index and working tree. Any changes to tracked files" "black" 3;
+  print_indent "in the working tree since <commit> are discarded." "black" 3
+
 (* print help info for reset *)
 let print_help_reset () : unit =
   print_indent "reset\t\tReset the current HEAD to a specified state" "b" 1;
-  print_indent "usage:  <commit>" "y" 8
+  print_indent "usage:  cml reset [--soft | --mixed | --hard] [<commit>]" "y" 8
 
 (* print help info for rm *)
 let print_help_rm () : unit =
