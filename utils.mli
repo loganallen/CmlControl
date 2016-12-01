@@ -179,7 +179,7 @@ val delete_branch: string -> unit
 
 (* switch current working branch *)
 (* precondition: [branch] exists *)
-val switch_branch: string -> bool -> unit
+val switch_branch: string -> bool -> bool
 
 (* switches state of repo to state of given commit_hash *)
 val switch_version: string -> unit
