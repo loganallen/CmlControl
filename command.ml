@@ -321,7 +321,7 @@ let log () : unit =
   in try
     let head = get_head_safe () in
     parse_commit head |> log_loop oc head;
-    let _ = Sys.command "less .cml/log" in ()
+    let _ = Sys.command "less -XF .cml/log" in ()
   with
   | Fatal m -> begin
     if m = "HEAD not initialized" then
