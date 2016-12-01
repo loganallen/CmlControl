@@ -336,6 +336,11 @@ let detached_head () : bool =
   let raw = get_detached_head () in
   String.sub raw 0 4 <> "head"
 
+(* returns correct head depending on detached_head mode *)
+let get_head_safe () =
+  if detached_head () then get_detached_head ()
+  else get_head ()
+
 (* returns the HASH of a head of the given branch *)
 let get_branch_ptr (branch_name : string) : string =
 	try
