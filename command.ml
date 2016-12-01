@@ -473,7 +473,7 @@ let user (args: string list) : unit =
 (* parses bash string input and returns a Cml input type *)
 let parse_input (args : string array) : input =
   match (Array.to_list args) with
-  | [] -> raise (Fatal "no command given, see [--help]")
+  | [] -> {cmd = Help; args = []}
   | h::t -> begin
     match h with
     | "add"      -> {cmd = Add; args = t}
