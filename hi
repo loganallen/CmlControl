@@ -1,0 +1,1470 @@
+commit 074b4ef986cd207066529d5d7e8539817ddc997f
+Author: ncskier <bcw58@cornell.edu>
+Date:   Thu Dec 1 16:19:16 2016 -0500
+
+    less message now prints to terminal and doesn't open seperately if short
+
+commit 05ab642826ceee6e0beae9c7dfb0d9d3087e8b52
+Merge: 6db06d7 5af6f4b
+Author: ncskier <bcw58@cornell.edu>
+Date:   Thu Dec 1 16:16:27 2016 -0500
+
+    Merge branch 'master' into amg/less
+
+commit 6db06d7c00798ea2e033a7ee776577a06f27b375
+Author: Andrew Grossfeld <amg445@cornell.edu>
+Date:   Thu Dec 1 15:02:31 2016 -0500
+
+    updated log using less
+
+commit 5af6f4b5d6387f1351ab373e15242ed7614865ae
+Author: Logan Allen <lga24@cornell.edu>
+Date:   Thu Dec 1 11:26:48 2016 -0500
+
+    Minimized bash script
+
+commit b724abd77b4560334b229dac9eadfe37b25ebe99
+Author: Logan Allen <lga24@cornell.edu>
+Date:   Thu Dec 1 11:07:44 2016 -0500
+
+    Small fix for branch switch efficiency
+
+commit b5f813c6ef92ad2c58f74db5de2fd879ef6bb295
+Author: Logan Allen <lga24@cornell.edu>
+Date:   Thu Dec 1 01:28:05 2016 -0500
+
+    fast-forward and soft-merging implemented
+
+commit 7c719bccab46dd2a440780c36e4fdfc32d13024c
+Author: Logan Allen <lga24@cornell.edu>
+Date:   Wed Nov 30 23:55:52 2016 -0500
+
+    Changed where switch branch print logic resides
+
+commit 7d704512c9b2c94488e41218fc277bb7e1f18d41
+Author: Logan Allen <lga24@cornell.edu>
+Date:   Wed Nov 30 23:11:20 2016 -0500
+
+    Fixed diff conflicts
+    
+    More merge conflicts with diff
+    
+    Edited diff.mli file and renamed variable
+
+commit 8f0d43f34793259324eb161303d3602a4a0edb0b
+Author: Logan Allen <lga24@cornell.edu>
+Date:   Wed Nov 30 23:11:20 2016 -0500
+
+    # This is a combination of 2 commits.
+    # The first commit's message is:
+    
+    Fixed diff conflicts
+    
+    # This is the 2nd commit message:
+    
+    More merge conflicts with diff
+
+commit 63b6b7e464a00f6b1593db49de6ee6a299995162
+Merge: 5e1fdae 0a1f4dc
+Author: ncskier <bcw58@cornell.edu>
+Date:   Thu Dec 1 10:48:41 2016 -0500
+
+    Merge pull request #42 from loganallen/brandon/checkout_fix
+    
+    Brandon/checkout fix
+
+commit 0a1f4dc9d8c399b395c7c5553738a1795e79523e
+Author: ncskier <bcw58@cornell.edu>
+Date:   Thu Dec 1 10:44:57 2016 -0500
+
+    removed current branch check
+
+commit 758130e63f0f5953713c00cdbc8c404c0bff352d
+Author: ncskier <bcw58@cornell.edu>
+Date:   Thu Dec 1 09:52:03 2016 -0500
+
+    ignore .DS_Store
+
+commit 0ec65356a026a39a5fb0bc1a669b7c799f284bbd
+Merge: 86fae9a 5e1fdae
+Author: ncskier <bcw58@cornell.edu>
+Date:   Thu Dec 1 09:05:56 2016 -0500
+
+    Merge branch 'master' into brandon/checkout_fix
+
+commit 5e1fdae43a294e5db0236ff0a5124da111fa1ef9
+Author: Andrew Grossfeld <amg445@cornell.edu>
+Date:   Thu Dec 1 02:48:16 2016 -0500
+
+    quick fix: removed duplicate def of get_object path, no only in common.ml
+
+commit 86fae9a44c29e45836c2bcf9eb85befe9698cd89
+Author: ncskier <bcw58@cornell.edu>
+Date:   Thu Dec 1 00:13:09 2016 -0500
+
+    checkout now deletes empty dirs
+
+commit 13e36688a02b4f6780e51f8aa2c589a675879f25
+Merge: b031413 d7c21f9
+Author: ncskier <bcw58@cornell.edu>
+Date:   Wed Nov 30 23:17:36 2016 -0500
+
+    Merge branch 'master' into brandon/checkout_fix
+
+commit b0314133e7f385c0b0cbf8897e42e71046ffe870
+Author: ncskier <bcw58@cornell.edu>
+Date:   Wed Nov 30 23:15:42 2016 -0500
+
+    created helper function to recursively remove empty directories
+
+commit d7c21f9d5aa187b3c8d47360bea67311e9ed9331
+Merge: c6f2db6 9064db5
+Author: Andrew Grossfeld <amg445@cornell.edu>
+Date:   Wed Nov 30 23:07:39 2016 -0500
+
+    Merge pull request #38 from loganallen/amg/crypto
+    
+    amg/crypto
+
+commit c6f2db64b1dfe3da3c413f262e0af96296c7c480
+Merge: 6e328b7 6a40e51
+Author: ncskier <bcw58@cornell.edu>
+Date:   Wed Nov 30 22:34:59 2016 -0500
+
+    Merge pull request #40 from loganallen/brandon/detached_head_fixes
+    
+    fixed issue where almost no commands were working in detached head mode
+
+commit 9064db5816f230bcd56c5cba558995f74e2f82e5
+Author: Andrew Grossfeld <amg445@cornell.edu>
+Date:   Wed Nov 30 22:23:34 2016 -0500
+
+    init implementation of diffing commits
+
+commit 6a40e513dfe4b14e87ba5c4408111fbc77e32bf6
+Author: ncskier <bcw58@cornell.edu>
+Date:   Wed Nov 30 21:59:53 2016 -0500
+
+    fixed issue where almost no commands were working in detached head mode
+
+commit efabe2758331625e6cd68e9aacbcb5096039f8cf
+Author: Andrew Grossfeld <amg445@cornell.edu>
+Date:   Wed Nov 30 21:35:05 2016 -0500
+
+    fixed up diff for temporary decompression
+
+commit b3f269122af286a2f8a56bdbe7af6830ebe2f1a0
+Author: Andrew Grossfeld <amg445@cornell.edu>
+Date:   Wed Nov 30 19:14:04 2016 -0500
+
+    reorganization of checkout, implemented compress/decompress everywhere but diff
+
+commit 5ca99ed9c1c86fb9625b662eff53000fa0907726
+Author: Andrew Grossfeld <amg445@cornell.edu>
+Date:   Wed Nov 30 19:03:02 2016 -0500
+
+    fixed some weird tings
+
+commit 4157421af4c82c25e3531974d15307bcb24c398d
+Author: Andrew Grossfeld <amg445@cornell.edu>
+Date:   Wed Nov 30 18:53:30 2016 -0500
+
+    updated ocamlinit
+
+commit bb5171cb69bc888490c7b3a64966cbe852f69ff0
+Author: Andrew Grossfeld <amg445@cornell.edu>
+Date:   Wed Nov 30 18:49:32 2016 -0500
+
+    added Fatal exception to global common
+
+commit dd2f656abac68282e5458364b01f9714333dfeda
+Author: Andrew Grossfeld <amg445@cornell.edu>
+Date:   Wed Nov 30 18:42:38 2016 -0500
+
+    refactor, no longer cirular dependency between tree and utils
+
+commit dd7fe14689fca790be11627fd6d1afd9dcac3dcd
+Merge: 625d9c2 6e328b7
+Author: Andrew Grossfeld <amg445@cornell.edu>
+Date:   Wed Nov 30 18:28:16 2016 -0500
+
+    resolve merge conflicts
+
+commit 625d9c26d17c03fb44cdc5672b28eec16f8a3ddb
+Author: Andrew Grossfeld <amg445@cornell.edu>
+Date:   Wed Nov 30 18:25:54 2016 -0500
+
+    added crypto module
+
+commit 6e328b7dd95678065850c26d6276b523e698e128
+Merge: 21a6216 57de387
+Author: ncskier <bcw58@cornell.edu>
+Date:   Wed Nov 30 18:22:14 2016 -0500
+
+    Merge pull request #36 from loganallen/brandon/reset
+    
+    initial reset functionality working
+
+commit 57de387dbe68d57b72600ea59777557f7a2ff5bd
+Author: ncskier <bcw58@cornell.edu>
+Date:   Wed Nov 30 18:08:07 2016 -0500
+
+    cleanup
+
+commit 6136134190a38409b2278135a63246ef54cb624b
+Author: ncskier <bcw58@cornell.edu>
+Date:   Wed Nov 30 17:33:07 2016 -0500
+
+    initial reset functionality working
+
+commit 21a6216d0cc36000f6b89c36cca8e2f4e2c531bc
+Author: ncskier <bcw58@cornell.edu>
+Date:   Wed Nov 30 14:37:09 2016 -0500
+
+    in commit, printed untracked files in relation to cwd instead of .cml repo
+
+commit 2c8b257c670c452fce0f73621e5413c332bab04e
+Merge: a54175a dc89e37
+Author: ncskier <bcw58@cornell.edu>
+Date:   Wed Nov 30 14:32:53 2016 -0500
+
+    Merge pull request #34 from loganallen/brandon/fix_commit
+    
+    fixed my commit mistake
+
+commit dc89e37d6c29884846f8075efbd7761d26fddc93
+Author: ncskier <bcw58@cornell.edu>
+Date:   Wed Nov 30 14:16:36 2016 -0500
+
+    fixed my commit mistake
+
+commit a54175a9cdfa82dc1d45df717b2092079e95e7b0
+Merge: 6a939c0 5473036
+Author: ncskier <bcw58@cornell.edu>
+Date:   Wed Nov 30 11:28:18 2016 -0500
+
+    Merge pull request #32 from loganallen/brandon/compression
+    
+    Brandon/compression
+
+commit 5473036955fb3910b331fcb2f2ad05ad53646cee
+Author: Andrew Grossfeld <amg445@cornell.edu>
+Date:   Wed Nov 30 11:24:40 2016 -0500
+
+    remove ocamlzip from dependencies
+
+commit dbcda51e537ec5b2f968def6434664cdc40d3593
+Author: ncskier <bcw58@cornell.edu>
+Date:   Wed Nov 30 11:00:00 2016 -0500
+
+    new helpers for compression/uncompressing strings
+
+commit f6d1fc7ce28b91039ea1e79217d88544236c1f6f
+Author: ncskier <bcw58@cornell.edu>
+Date:   Wed Nov 30 10:38:03 2016 -0500
+
+    fixed decompress and compress; added helper function for reading compressed files
+
+commit 6a939c0274bd37629e86110391d331729cb65c0e
+Merge: a738365 4cd8966
+Author: ncskier <bcw58@cornell.edu>
+Date:   Tue Nov 29 23:40:51 2016 -0500
+
+    Merge pull request #31 from loganallen/brandon/verbose_status
+    
+    made status more verbose and changed commit -am
+
+commit 4cd896660ed0f249637f7cc238b6f769719021ab
+Merge: 74a52d1 a738365
+Author: ncskier <bcw58@cornell.edu>
+Date:   Tue Nov 29 23:39:27 2016 -0500
+
+    Merge branch 'master' into brandon/verbose_status
+
+commit a73836565a2a27c361961072d3950fd870beeaed
+Merge: 287dd36 3368ba9
+Author: Andrew Grossfeld <amg445@cornell.edu>
+Date:   Tue Nov 29 23:09:42 2016 -0500
+
+    Merge pull request #29 from loganallen/amg/checkout
+    
+    amg/checkout
+
+commit 3368ba9ec21c6a16d3f0534f479336b845850ff1
+Merge: 456222b 287dd36
+Author: Andrew Grossfeld <amg445@cornell.edu>
+Date:   Tue Nov 29 22:03:16 2016 -0500
+
+    fix merge conflicts
+
+commit 74a52d140c70a025d8321c5c56eca120af9cb448
+Author: ncskier <bcw58@cornell.edu>
+Date:   Tue Nov 29 21:54:01 2016 -0500
+
+    made status more verbose and changed commit -am
+
+commit 287dd367c11b4f94433401ac7ff99a13d7c4536f
+Merge: 11aee89 fa491f8
+Author: ncskier <bcw58@cornell.edu>
+Date:   Tue Nov 29 20:39:46 2016 -0500
+
+    Merge pull request #30 from loganallen/brandon/rm_deletes_files
+    
+    Brandon/rm deletes files
+
+commit 456222b41e95afa06eeb921baf66720660bf7367
+Author: Andrew Grossfeld <amg445@cornell.edu>
+Date:   Tue Nov 29 20:15:09 2016 -0500
+
+    added removal of certain files when checking out
+
+commit fa491f8c910353fb1c482089d2b47119e354110b
+Author: ncskier <bcw58@cornell.edu>
+Date:   Tue Nov 29 19:58:29 2016 -0500
+
+    shows deleted files now
+
+commit e5c69abbc4968b6905a1d3a91daadefd8597271f
+Author: Andrew Grossfeld <amg445@cornell.edu>
+Date:   Tue Nov 29 17:50:33 2016 -0500
+
+    small fix
+
+commit cadf240d53bffefecdfce4984babafb3c0d40a4b
+Author: ncskier <bcw58@cornell.edu>
+Date:   Tue Nov 29 16:51:29 2016 -0500
+
+    status prints everything correctly relative to cwd
+
+commit 02906790f13e6fc35ac82a3a5051685910f266dc
+Author: ncskier <bcw58@cornell.edu>
+Date:   Tue Nov 29 14:41:15 2016 -0500
+
+    rm now removes from repo with -f flag
+
+commit 11aee8931d652fdf2b8811f5f38d5e42034acb82
+Author: Logan Allen <lga24@cornell.edu>
+Date:   Tue Nov 29 11:35:32 2016 -0500
+
+    small print changes
+
+commit 18481d4ede6b95a62e4be1206848a3a7667ffc71
+Author: ncskier <bcw58@cornell.edu>
+Date:   Tue Nov 29 11:16:55 2016 -0500
+
+    can now rm unstaged files
+
+commit b0b66d6d1105f6b9168ac8b4dffa85f66d11fee1
+Author: Andrew Grossfeld <amg445@cornell.edu>
+Date:   Tue Nov 29 10:56:59 2016 -0500
+
+    updated ocamlinit with new modules/depencies
+
+commit 648861c7fc408c8382d2e6e01885315d8e86bff8
+Author: Andrew Grossfeld <amg445@cornell.edu>
+Date:   Tue Nov 29 10:49:41 2016 -0500
+
+    cleanup, actually checkout branches now
+
+commit 97f0d83ebf11bb152fb03ae1947b8c3df5a49eef
+Merge: cc34af2 fca921f
+Author: Andrew Grossfeld <amg445@cornell.edu>
+Date:   Tue Nov 29 10:24:48 2016 -0500
+
+    fixed merge conflicts
+
+commit cc34af2a9499b1f4c1bc621c45cfcaca79eb50fc
+Author: Andrew Grossfeld <amg445@cornell.edu>
+Date:   Tue Nov 29 10:23:02 2016 -0500
+
+    added checkout of branch from detached head
+
+commit fca921f7c56a8f9033862310134c7fe8556c97ac
+Author: Logan Allen <lga24@cornell.edu>
+Date:   Tue Nov 29 00:44:14 2016 -0500
+
+    Colored printing for diff
+    
+    Small diff print changes
+
+commit 703c2dd19504d0cd575f2206fb589f3432a70bff
+Merge: 3c4d068 d59b479
+Author: ncskier <bcw58@cornell.edu>
+Date:   Tue Nov 29 10:15:05 2016 -0500
+
+    Merge pull request #28 from loganallen/brandon/subdir_support
+    
+    Brandon/subdir support
+
+commit d59b4793c7b57095744431a52d9f97ec044dce3f
+Author: ncskier <bcw58@cornell.edu>
+Date:   Tue Nov 29 10:13:13 2016 -0500
+
+    added small rm fix
+
+commit d4361d9a14d6c53b841a4d292910163d7221dd6a
+Author: Andrew Grossfeld <amg445@cornell.edu>
+Date:   Mon Nov 28 22:19:35 2016 -0500
+
+    updated print, added some checks for detached head
+
+commit 1b52991cb31d0326b72c14d96cc8c33d15199628
+Author: ncskier <bcw58@cornell.edu>
+Date:   Mon Nov 28 22:04:41 2016 -0500
+
+    make clean
+
+commit 8362001a5c95b9494d1bf5bbf16a7e6a1e28bdcd
+Author: ncskier <bcw58@cornell.edu>
+Date:   Mon Nov 28 22:04:30 2016 -0500
+
+    added chdir_to_cml to branch, checkout, commit, log, status, user
+
+commit 843c096c679cfc5a6575b76ff491a208ec730954
+Merge: 7c4d469 3c4d068
+Author: Andrew Grossfeld <amg445@cornell.edu>
+Date:   Mon Nov 28 21:55:21 2016 -0500
+
+    Merge branch 'master' into amg/checkout
+
+commit 3c4d068338ff8b4c0ff71b7aac0cfe382c8613dd
+Merge: c76a2be 2cfe658
+Author: ncskier <bcw58@cornell.edu>
+Date:   Mon Nov 28 21:54:50 2016 -0500
+
+    Merge pull request #27 from loganallen/brandon/add_fixes
+    
+    Brandon/add fixes
+
+commit 2cfe65825a654e9e9b98b5a05d95a81f74307cd9
+Author: ncskier <bcw58@cornell.edu>
+Date:   Mon Nov 28 21:51:24 2016 -0500
+
+    make clean
+
+commit 44f151664b3889584519e346e9af94b703c91f41
+Author: ncskier <bcw58@cornell.edu>
+Date:   Mon Nov 28 21:51:13 2016 -0500
+
+    fixed
+
+commit 7c4d469d3b75576d91ba6fb223ea4deacc8d83a1
+Author: Andrew Grossfeld <amg445@cornell.edu>
+Date:   Mon Nov 28 21:43:40 2016 -0500
+
+    stylist changes, code style guidelines
+
+commit 76b266f3f27a5f5988706bb34c453d0023f2755a
+Merge: 5f02a02 c76a2be
+Author: ncskier <bcw58@cornell.edu>
+Date:   Mon Nov 28 21:03:41 2016 -0500
+
+    Merge branch 'master' into brandon/add_fixes
+
+commit 5f02a0277f7bb93077504aea7b5f5998e842ac25
+Author: ncskier <bcw58@cornell.edu>
+Date:   Mon Nov 28 21:03:02 2016 -0500
+
+    done with helper functions
+
+commit 2f8e000e8b54834544554404ec5c5ed29e29d86f
+Author: ncskier <bcw58@cornell.edu>
+Date:   Mon Nov 28 20:34:51 2016 -0500
+
+    make clean
+
+commit 316e6aab096b9b03188f1e687855b66fe76c4fc9
+Author: ncskier <bcw58@cornell.edu>
+Date:   Mon Nov 28 20:34:35 2016 -0500
+
+    creating helper function to simplify add and rm
+
+commit 9cd11512ef7ce8aa9ad20d192c7cf5efd22b7682
+Author: Andrew Grossfeld <amg445@cornell.edu>
+Date:   Mon Nov 28 20:30:54 2016 -0500
+
+    small fixes, started detached head checks
+
+commit c76a2be95581d11abc9b555f2a020d0269c9605c
+Author: Logan Allen <lga24@cornell.edu>
+Date:   Mon Nov 28 20:26:34 2016 -0500
+
+    Removed debug print lines and better substring line
+
+commit b224315af365e825b4dc80a6847aa314319f1c82
+Author: Andrew Grossfeld <amg445@cornell.edu>
+Date:   Mon Nov 28 20:22:50 2016 -0500
+
+    fixed unintended deleted lines
+
+commit dea5d7658f86f8e79d764eb9489f42a2a10adf1d
+Merge: 6d54e72 a2fdbc1
+Author: Andrew Grossfeld <amg445@cornell.edu>
+Date:   Mon Nov 28 20:12:59 2016 -0500
+
+    Merge branch 'master' into amg/checkout
+
+commit 6d54e72d177a531b57baf708c178f9c8cf9c0062
+Author: Andrew Grossfeld <amg445@cornell.edu>
+Date:   Mon Nov 28 20:11:29 2016 -0500
+
+    implemented checkout out files and commits, more work to be done for detached head mode
+
+commit d10303068ad393ecd51ef7249b2867242aac3623
+Author: Logan Allen <lga24@cornell.edu>
+Date:   Mon Nov 28 20:05:13 2016 -0500
+
+    made diff helper
+
+commit 891618b490975c9fb190885e2d05fbae95235690
+Author: ncskier <bcw58@cornell.edu>
+Date:   Mon Nov 28 20:04:24 2016 -0500
+
+    add should now work, but no -a flag right now
+
+commit d9d97f8d08b4e829ff8e5098ab17402d7a74ce88
+Author: Logan Allen <lga24@cornell.edu>
+Date:   Mon Nov 28 19:55:48 2016 -0500
+
+    Changes made to diff function
+
+commit a2fdbc17dcda3585d9bffa4cb6e0133b9e8c02d9
+Author: Logan Allen <lga24@cornell.edu>
+Date:   Mon Nov 28 15:53:07 2016 -0500
+
+    moved branch_print to print module
+
+commit 31252e40e65402e17bf9f87797bee112438ec6af
+Author: Logan Allen <lga24@cornell.edu>
+Date:   Mon Nov 28 15:37:19 2016 -0500
+
+    Removed helper specs from .mli, updated branching
+
+commit 1b8092a2c8f8bd1058ca5b9df25b169585140784
+Merge: 63b1239 f2aa1b2
+Author: ncskier <bcw58@cornell.edu>
+Date:   Mon Nov 28 13:45:19 2016 -0500
+
+    Merge pull request #16 from loganallen/brandon/rm
+    
+    Brandon/rm
+
+commit f2aa1b275010b00bc1ca5d6da964604d8c1cc7fe
+Author: ncskier <bcw58@cornell.edu>
+Date:   Mon Nov 28 13:43:10 2016 -0500
+
+    hopefully now done
+
+commit 4e110f636c08fc33dca5d6689b3d9a1e19b3584c
+Merge: f301fc6 63b1239
+Author: ncskier <bcw58@cornell.edu>
+Date:   Mon Nov 28 13:32:17 2016 -0500
+
+    Merge branch 'master' into brandon/rm
+
+commit f301fc6af6ea748daf848cb82b118ea516f20109
+Author: ncskier <bcw58@cornell.edu>
+Date:   Mon Nov 28 13:31:54 2016 -0500
+
+    make clean
+
+commit c01702d6a83d0b16768a726615b5c705c2eb29fc
+Author: ncskier <bcw58@cornell.edu>
+Date:   Mon Nov 28 13:31:43 2016 -0500
+
+    fixed other problem
+
+commit 63b1239f5cf82786297dd05b2ab9efc32d1d6c1e
+Merge: 74b37a2 18eb961
+Author: ncskier <bcw58@cornell.edu>
+Date:   Mon Nov 28 12:49:23 2016 -0500
+
+    Merge pull request #14 from loganallen/brandon/rm
+    
+    Brandon/rm
+
+commit 18eb961082c44221dc889878284b7faa3e0743df
+Author: ncskier <bcw58@cornell.edu>
+Date:   Mon Nov 28 12:46:17 2016 -0500
+
+    make clean
+
+commit 6038ec0bc6ec11a96acffa0efb98fc23d3ac2d9a
+Merge: 063f76b 74b37a2
+Author: ncskier <bcw58@cornell.edu>
+Date:   Mon Nov 28 12:35:23 2016 -0500
+
+    Merge branch 'master' into brandon/rm
+
+commit 063f76bf59c5db88021240a06929b1d5975f0e5c
+Author: ncskier <bcw58@cornell.edu>
+Date:   Mon Nov 28 12:33:07 2016 -0500
+
+    fixed the problem
+
+commit 74b37a2cdedc56c57af8b6693fce99908fe2055d
+Author: Logan Allen <lga24@cornell.edu>
+Date:   Mon Nov 28 12:31:52 2016 -0500
+
+    Updating printing module, specifically <help>
+
+commit 287749f5e9e9c571a09b7b6b307d43120b3b1848
+Author: Logan Allen <lga24@cornell.edu>
+Date:   Mon Nov 28 11:48:00 2016 -0500
+
+    Allows multiple string username, trims whitespace, cleaner matching
+
+commit 51f426bc43dc8c98ffc8300748d1be7d53818aae
+Author: Logan Allen <lga24@cornell.edu>
+Date:   Mon Nov 28 11:51:27 2016 -0500
+
+    Rebased, fixed conflicts
+    
+    fixed up staged_help
+
+commit 8a5cb59bdd06fdca7d997a7b428290cee897380d
+Author: Logan Allen <lga24@cornell.edu>
+Date:   Sun Nov 27 23:55:23 2016 -0500
+
+    Added time module for cml log
+
+commit e839fffa3302ea01c08eec5a76fd2fccc4f11441
+Merge: d9c418e cfa9777
+Author: Andrew Grossfeld <amg445@cornell.edu>
+Date:   Mon Nov 28 11:42:37 2016 -0500
+
+    Merge pull request #13 from loganallen/amg/diff
+    
+    amg/diff
+
+commit cfa9777f78f9a7bbda5dada2e76ba3dcf7f7e81a
+Merge: 7644ea6 9e23f59
+Author: Andrew Grossfeld <amg445@cornell.edu>
+Date:   Mon Nov 28 11:41:38 2016 -0500
+
+    Merge branch 'amg/diff' of https://github.com/loganallen/CmlControl into amg/diff
+
+commit 7644ea619424140651c1e6a860c2fdac4780996e
+Author: Andrew Grossfeld <amg445@cornell.edu>
+Date:   Mon Nov 28 11:41:30 2016 -0500
+
+    random cleanup
+
+commit 99998e5f6e545e5d8b516465d971672346e3013a
+Merge: f3fba41 d9c418e
+Author: ncskier <bcw58@cornell.edu>
+Date:   Mon Nov 28 10:39:06 2016 -0500
+
+    fix merge conflict
+
+commit f3fba41846e20909f83526bdcd8bc75e8d11156e
+Author: ncskier <bcw58@cornell.edu>
+Date:   Mon Nov 28 10:36:32 2016 -0500
+
+    think it works, but cannot remove files like ../filename
+
+commit 9e23f599137cc8464b7ca3f7ee04465c8f1e5f6a
+Author: Andrew Grossfeld <amg445@cornell.edu>
+Date:   Mon Nov 28 01:11:50 2016 -0500
+
+    Update README.md
+
+commit a5348d4fe80d61e5b1301eff9ff51f7e0a28b092
+Author: Andrew Grossfeld <amg445@cornell.edu>
+Date:   Mon Nov 28 01:10:56 2016 -0500
+
+    added diff module
+
+commit cec005f538d1271dd1e819cbd51526ad2bc58c8f
+Author: ncskier <bcw58@cornell.edu>
+Date:   Sun Nov 27 23:37:19 2016 -0500
+
+    made clean
+
+commit f8a535ead95ec7b94c71ff8295e7701bbe8f8a68
+Author: ncskier <bcw58@cornell.edu>
+Date:   Sun Nov 27 23:27:30 2016 -0500
+
+    I think it all works now
+
+commit d9c418e17f5cd89e12a8c72d2973bbfad49f097f
+Merge: 8fd3df1 4976853
+Author: Logan Allen <lga24@cornell.edu>
+Date:   Sun Nov 27 21:46:39 2016 -0500
+
+    Merge pull request #12 from loganallen/amg/recreate_tree
+    
+    added recreate_tree
+
+commit 8fd3df10de07ee21367e4aa46bef49ce4ffb6d97
+Author: Logan Allen <lga24@cornell.edu>
+Date:   Sun Nov 27 21:37:24 2016 -0500
+
+    fixed read_tree stuff and cml status
+
+commit 4976853f5040485297b862520c7f6e4f2b5b574f
+Author: Andrew Grossfeld <amg445@cornell.edu>
+Date:   Sun Nov 27 21:06:29 2016 -0500
+
+    update .ocamlinit for common
+
+commit ef4129d013ef684514ac4d857d5db6c44673bc02
+Author: Andrew Grossfeld <amg445@cornell.edu>
+Date:   Sun Nov 27 20:58:38 2016 -0500
+
+    added recreate_tree
+
+commit 7be9ccf65128bcba5d2e70167f41be1be76b8d02
+Author: Andrew Grossfeld <amg445@cornell.edu>
+Date:   Sun Nov 27 20:43:27 2016 -0500
+
+    Update README.md
+
+commit d99cfd824407e91e5cbc8fc8c69ecc4e73a22be0
+Author: Andrew Grossfeld <amg445@cornell.edu>
+Date:   Sun Nov 27 20:38:53 2016 -0500
+
+    clean up for tree index type
+
+commit 8225989ef30dbc4251f3639f8143aa6c4d015422
+Merge: 2324b43 c98f844
+Author: Andrew Grossfeld <amg445@cornell.edu>
+Date:   Sun Nov 27 20:28:54 2016 -0500
+
+    Merge pull request #9 from loganallen/amg/trees
+    
+    amg/trees
+
+commit c98f844e0f1eb21f36c5316bb1ab58744e356176
+Author: Andrew Grossfeld <amg445@cornell.edu>
+Date:   Sun Nov 27 20:20:59 2016 -0500
+
+    clean up on aisle tree
+
+commit 114a1ed2c5bcc2294b155fe030c88ae15b8fd204
+Author: Andrew Grossfeld <amg445@cornell.edu>
+Date:   Sun Nov 27 17:57:47 2016 -0500
+
+    random updates for compilation
+
+commit 971b6056db94b48c5f639d10aff158a6c9c902c4
+Merge: b12ed33 80c839d
+Author: Andrew Grossfeld <amg445@cornell.edu>
+Date:   Sun Nov 27 17:51:55 2016 -0500
+
+    Merge pull request #11 from loganallen/logan/updates
+    
+    merge Logan/updates into amg/trees
+
+commit 80c839d69d372e01b173573db2691fe98862e09b
+Merge: 7c802cc b12ed33
+Author: Andrew Grossfeld <amg445@cornell.edu>
+Date:   Sun Nov 27 17:51:18 2016 -0500
+
+    fixed merge conflicts
+
+commit 7c802cc406f94c781db722a37e74fca31572fe96
+Author: Andrew Grossfeld <amg445@cornell.edu>
+Date:   Sun Nov 27 17:42:10 2016 -0500
+
+    created helper for fold in read_tree
+
+commit c1ef4fca1e8c71e97142c6053089380af7cbe12f
+Author: Andrew Grossfeld <amg445@cornell.edu>
+Date:   Sun Nov 27 17:32:58 2016 -0500
+
+    added helper to parse treee line
+
+commit 287107aeae063a498dd235115af01cdad9b714fe
+Author: Andrew Grossfeld <amg445@cornell.edu>
+Date:   Sun Nov 27 17:25:56 2016 -0500
+
+    added alternate implementation of read_tree
+
+commit ca0b4c21637c45a0c4254f86d788bf10144d847a
+Author: ncskier <bcw58@cornell.edu>
+Date:   Sun Nov 27 16:56:26 2016 -0500
+
+    remove based on filepath
+
+commit b12ed337bea4fff04f111970ea92f03b85959c85
+Author: Andrew Grossfeld <amg445@cornell.edu>
+Date:   Sun Nov 27 16:29:06 2016 -0500
+
+    added helper get_object_path
+
+commit d59fadbfe88279ee2043db1dcf89541aab48d707
+Author: ncskier <bcw58@cornell.edu>
+Date:   Sun Nov 27 16:11:23 2016 -0500
+
+    works, but need to ask group about spec
+
+commit 8a18bdf2341da53cc5a102f05a5989683caa045d
+Author: Logan Allen <lga24@cornell.edu>
+Date:   Sun Nov 27 16:10:56 2016 -0500
+
+    Almost finished implementing read_tree
+
+commit b5e50b524289f2f51ea97fb1b2825ee66439fa91
+Author: Logan Allen <lga24@cornell.edu>
+Date:   Sun Nov 27 16:10:34 2016 -0500
+
+    Added common file for reusable functions
+
+commit 44aee88161a543c6a89d22d276c00aa11d73ea44
+Author: ncskier <bcw58@cornell.edu>
+Date:   Sun Nov 27 16:02:56 2016 -0500
+
+    done with basic rm functionality
+
+commit 2324b437c448018d10688bb8d4ab110b16140b08
+Author: Andrew Grossfeld <amg445@cornell.edu>
+Date:   Sun Nov 27 15:32:51 2016 -0500
+
+    added Str as dependency
+
+commit 1ee553b19014b21a0db7e12201f4320b3071cceb
+Merge: f455175 c78a342
+Author: Andrew Grossfeld <amg445@cornell.edu>
+Date:   Sun Nov 27 14:40:32 2016 -0500
+
+    Merge branch 'master' into amg/trees
+
+commit c78a34261dc1f31ff76972a97969732a7d374795
+Merge: 9215c8b a7e5c2b
+Author: ncskier <bcw58@cornell.edu>
+Date:   Sun Nov 27 14:39:50 2016 -0500
+
+    Merge pull request #10 from loganallen/brandon/parentDirSupport
+    
+    Added helper functions for accessing parent directories with the .cml…
+
+commit a9ef0e206eb61b8fb0299af0f5f156c5196f9d6d
+Author: Logan Allen <lga24@cornell.edu>
+Date:   Sun Nov 27 11:23:25 2016 -0500
+
+    Added split_hash function for reusability and implemented cml log
+
+commit a7e5c2b59ee7fd2e7d4a4123946713a3cd706619
+Author: ncskier <bcw58@cornell.edu>
+Date:   Sun Nov 27 10:28:48 2016 -0500
+
+    Added helper functions for accessing parent directories with the .cml repository
+
+commit f455175bc14791acd6414544ecfedf5d00005dc1
+Author: Andrew Grossfeld <amg445@cornell.edu>
+Date:   Sun Nov 27 02:41:33 2016 -0500
+
+    implemented tree_to_index, updated .ocamlinit
+
+commit 7d4f734f030f91b0480a1a657e07301f6e53ef82
+Author: Andrew Grossfeld <amg445@cornell.edu>
+Date:   Sun Nov 27 02:29:06 2016 -0500
+
+    added read_tree
+
+commit f3024876b5239626ab883fee829be9255cfb28e7
+Author: Andrew Grossfeld <amg445@cornell.edu>
+Date:   Sun Nov 27 02:26:46 2016 -0500
+
+    added commit parsing, not tested yet
+
+commit 0b869cda43f5adc2dae515cfd2a68a83f087b8f8
+Author: Andrew Grossfeld <amg445@cornell.edu>
+Date:   Sun Nov 27 02:12:20 2016 -0500
+
+    major refactor
+
+commit 3c0b6d28e6bda3ce94fd6013809aeb69fc31b916
+Author: Andrew Grossfeld <amg445@cornell.edu>
+Date:   Sat Nov 26 00:27:37 2016 -0500
+
+    updated tree file formatting
+
+commit 24921760d5ebbcea9040b8cf82258b39c4555e4a
+Author: Andrew Grossfeld <amg445@cornell.edu>
+Date:   Fri Nov 25 23:58:21 2016 -0500
+
+    added user info to commit
+
+commit c0b2ee99161f3e584406b077fd61d221405b7be8
+Author: Andrew Grossfeld <amg445@cornell.edu>
+Date:   Fri Nov 25 23:46:26 2016 -0500
+
+    bug fix for returning wrong tree and commit name
+
+commit 7e430ebf97a1354191a54cd4ef91d28e80179fa1
+Author: Andrew Grossfeld <amg445@cornell.edu>
+Date:   Fri Nov 25 23:37:34 2016 -0500
+
+    implemented commit without arg parsing
+
+commit 804013dd7592256034d80d72c9f0543a633c9424
+Merge: 5eefa1c 9215c8b
+Author: Andrew Grossfeld <amg445@cornell.edu>
+Date:   Fri Nov 25 23:11:50 2016 -0500
+
+    Merge branch 'master' into amg/trees
+
+commit 5eefa1c821b838104a13744909b917c1eea41815
+Author: Andrew Grossfeld <amg445@cornell.edu>
+Date:   Fri Nov 25 23:00:57 2016 -0500
+
+    temp location updated to be in .cml
+
+commit 3943c9d9c4e827c4bb8888762d64f8e31dc2dd91
+Author: Andrew Grossfeld <amg445@cornell.edu>
+Date:   Fri Nov 25 22:58:32 2016 -0500
+
+    implementation of create_tree/write_tree
+
+commit 9215c8b9151772d07a37d3f46be0ae7ba862e2b6
+Author: Logan Allen <lga24@cornell.edu>
+Date:   Fri Nov 25 19:51:56 2016 -0500
+
+    Optimized add func to set index after updating all files
+
+commit 5136d3be55da2fe7cec3c2c112687df498babb41
+Author: Logan Allen <lga24@cornell.edu>
+Date:   Fri Nov 25 19:17:33 2016 -0500
+
+    Changed update_index back to passing in [idx] as an argument
+
+commit 9700d6f25cb5b77d73d7420ad8a68bbd9bab204e
+Author: Logan Allen <lga24@cornell.edu>
+Date:   Fri Nov 25 01:17:38 2016 -0500
+
+    Fixed up add, finished status, and changed some printing
+
+commit fbb1df3b801184a44304207ddbe90539318175ca
+Author: Andrew Grossfeld <amg445@cornell.edu>
+Date:   Fri Nov 25 01:11:46 2016 -0500
+
+    initial implementation of tree creation
+
+commit c4b7adacbe27128c11e5d336fb1bf525aa03444c
+Merge: e6785c7 5b99bd1
+Author: Michael Gingras <mcg79@cornell.edu>
+Date:   Thu Nov 24 20:07:44 2016 -0500
+
+    Merge pull request #5 from loganallen/add
+    
+    Add
+
+commit 5b99bd142cf1d3b4159588e6d70aae1caa680552
+Author: M <mcg79@cornell.edu>
+Date:   Thu Nov 24 18:03:54 2016 -0500
+
+    fixing merge conflicts
+
+commit e5272c5e83676957738184693bd501bb36910528
+Merge: 33e2bbd 5a98c0e
+Author: M <mcg79@cornell.edu>
+Date:   Thu Nov 24 18:01:50 2016 -0500
+
+    merging branches
+
+commit 5a98c0e6e777a8fc32e2aa5c9248f1e7a4158960
+Merge: 40ed078 e6785c7
+Author: M <mcg79@cornell.edu>
+Date:   Thu Nov 24 17:59:34 2016 -0500
+
+    Merge branch 'master' of https://github.com/loganallen/CS3110FinalProject
+
+commit e6785c721fe537ea346e8f87b6476d9cbd2d9c76
+Merge: a67cea2 20b7cb2
+Author: Michael Gingras <mcg79@cornell.edu>
+Date:   Thu Nov 24 17:58:37 2016 -0500
+
+    Merge pull request #4 from loganallen/logan/checkout
+    
+    Reorganized function specs and implemented cml checkout
+
+commit 33e2bbd5b1f93cec0f3e216777cfed43eecb660d
+Author: M <mcg79@cornell.edu>
+Date:   Thu Nov 24 17:53:28 2016 -0500
+
+    update index during add
+
+commit 20b7cb2db2109cfe8a2eaa2ba4ceb85397a7d1d9
+Author: Logan Allen <lga24@cornell.edu>
+Date:   Thu Nov 24 16:11:13 2016 -0500
+
+    Reorganized specification and function logic, implemented initial phase of cml checkout
+
+commit a67cea28b74f7b8d7b0930d6dc2f081f973bdb02
+Author: Logan Allen <lga24@cornell.edu>
+Date:   Thu Nov 24 14:49:38 2016 -0500
+
+    Small style changes
+
+commit b9e8b9c41637bce9abdacbc0a8e0ea54300bb234
+Author: Logan Allen <lga24@cornell.edu>
+Date:   Thu Nov 24 14:40:53 2016 -0500
+
+    Fixed some branching errors
+
+commit 3789b25ec6a71ba3e3864cf8de137c59ecf7df69
+Author: Logan Allen <lga24@cornell.edu>
+Date:   Thu Nov 24 13:14:40 2016 -0500
+
+    Updated README with Git protocol
+    
+    Updated README
+    
+    Updated README
+
+commit 5c4a5f7c579262ca9fd2082952ead191919ac403
+Author: Logan Allen <lga24@cornell.edu>
+Date:   Thu Nov 24 01:05:21 2016 -0500
+
+    Branch delete now works
+    
+    Removed extra comments
+
+commit 92a55e26924dab9ec8e943b83c6d2de7dbaa3500
+Author: Logan Allen <lga24@cornell.edu>
+Date:   Thu Nov 24 00:58:25 2016 -0500
+
+    Branches with directories now works
+
+commit eb1d8d49e6aaf09a221a57bf0a8c0920051af4ea
+Author: Logan Allen <lga24@cornell.edu>
+Date:   Thu Nov 24 00:29:31 2016 -0500
+
+    Implemented branching
+
+commit 60edeb4e164b059248aec89e975e8521926b251d
+Author: Logan Allen <lga24@cornell.edu>
+Date:   Thu Nov 24 12:53:40 2016 -0500
+
+    Updated README
+
+commit aa16ce448ec7c151c7ec6ef159db5f204e9c3970
+Author: M <mcg79@cornell.edu>
+Date:   Wed Nov 23 23:10:33 2016 -0500
+
+    finishing up create_blob
+
+commit c2d7d9c976dcb760c2c06ec6d56779ca31fc6b1e
+Author: M <mcg79@cornell.edu>
+Date:   Wed Nov 23 22:43:42 2016 -0500
+
+    new branch ayyyyy
+
+commit 601deb11ff473179fad5e33bc2f2a42a07f4fcf1
+Merge: cc94b92 40ed078
+Author: M <mcg79@cornell.edu>
+Date:   Wed Nov 23 22:28:11 2016 -0500
+
+    Merge branch 'master' into add
+
+commit 40ed07846af1fca2b51a37a5bd55aa42ccdb5c89
+Merge: 04ff3c3 3ea612e
+Author: M <mcg79@cornell.edu>
+Date:   Wed Nov 23 22:28:00 2016 -0500
+
+    Merge branch 'master' of https://github.com/loganallen/CS3110FinalProject
+
+commit cc94b924d2f31d974011df0929f6a0f0a4fd1418
+Author: M <mcg79@cornell.edu>
+Date:   Wed Nov 23 22:26:11 2016 -0500
+
+    fixing add, removing object tpye, adding create funs to util
+
+commit 3ea612e2f0d8c80d22e7ec865e57d4e56bd53784
+Author: Logan Allen <lga24@cornell.edu>
+Date:   Wed Nov 23 22:15:13 2016 -0500
+
+    Branch implementation in progress
+
+commit 0d9965dc94f6ecd03c6de5f8d16c05344389a571
+Merge: 75358d2 c0bd54a
+Author: Andrew Grossfeld <amg445@cornell.edu>
+Date:   Wed Nov 23 22:04:02 2016 -0500
+
+    Merge branch 'master' of https://github.com/loganallen/CmlControl
+
+commit 75358d2a8f24b6e140311bd4ad20f66753c49e23
+Author: Andrew Grossfeld <amg445@cornell.edu>
+Date:   Wed Nov 23 21:59:32 2016 -0500
+
+    created .ocamlinit
+
+commit 04ff3c3ddf46154803e6fe368a79f787e0a2561a
+Merge: 85dc19b c0bd54a
+Author: M <mcg79@cornell.edu>
+Date:   Wed Nov 23 20:06:50 2016 -0500
+
+    merge conflicts and I accidently added all my shit without cleaning oops sorry not sorry
+
+commit 85dc19bcce2cda63425390091bf4712f06161cdb
+Author: M <mcg79@cornell.edu>
+Date:   Wed Nov 23 20:03:55 2016 -0500
+
+    changes to add
+
+commit c0bd54ae78a6d8d4db531c96901d8c8ac3dfcabb
+Author: Logan Allen <lga24@cornell.edu>
+Date:   Wed Nov 23 19:55:04 2016 -0500
+
+    Changed argument styling
+
+commit fe1842e9c88622c6ec1b3961e362bbb0bffe6e76
+Author: Logan Allen <lga24@cornell.edu>
+Date:   Wed Nov 23 16:19:45 2016 -0500
+
+    Changed help to --help, implemented getting and setting user info
+
+commit 946f4328e7de49e60fa2ece049804d3fe768a924
+Author: Logan Allen <lga24@cornell.edu>
+Date:   Wed Nov 23 00:11:34 2016 -0500
+
+    Cleaned up README and print statements
+    
+    Update README.md
+    
+    Cleaned up README
+    
+    Update README.md
+    
+    Update README.md
+
+commit 5ec18a6e865a4590d65c470a2d87774755bb3ccd
+Author: Logan Allen <lga24@cornell.edu>
+Date:   Wed Nov 23 00:11:34 2016 -0500
+
+    Small printing style changes
+
+commit 24079f8c223c329f7fa41f81043a1cb37c46c3f5
+Author: Logan Allen <lga24@cornell.edu>
+Date:   Tue Nov 22 17:48:21 2016 -0500
+
+    Changed around exception handling and command logic
+
+commit 72b8b1b580f89c9532a3778f0ddaa4a95658e1e2
+Author: Logan Allen <lga24@cornell.edu>
+Date:   Tue Nov 22 17:00:29 2016 -0500
+
+    Changed bash script to print Cml help and updated some print statements
+
+commit b66e8b692c426491234c4a0d537d91d9b8938fce
+Author: Logan Allen <lga24@cornell.edu>
+Date:   Tue Nov 22 16:34:17 2016 -0500
+
+    Updated command specs, command variant, and implemented [git help]
+
+commit 289e959380defefe91e67cd6ad4629ac61a65e86
+Author: Andrew Grossfeld <amg445@cornell.edu>
+Date:   Tue Nov 22 16:11:38 2016 -0500
+
+    implemented copy to use instead of compress/decompress until that is up and running
+
+commit eb65b5505a3abcef57a56f5002b82525f06775e2
+Author: Andrew Grossfeld <amg445@cornell.edu>
+Date:   Tue Nov 22 14:38:54 2016 -0500
+
+    implementation of compress/decompress.  will need to install camlzip with 'opam insall camlzip'.  issue: newline characters are not being printed
+
+commit 67dfbceb55fe4fec099620c4e1275b6df6df1d14
+Author: Andrew Grossfeld <amg445@cornell.edu>
+Date:   Tue Nov 22 00:42:05 2016 -0500
+
+    added retrieval of current branch for printing
+
+commit e0bacb5dff25b8981bd86cb638336e07358320b2
+Author: Logan Allen <lga24@cornell.edu>
+Date:   Mon Nov 21 20:22:48 2016 -0500
+
+    Initial cml status implemented
+
+commit 469b6fab533f504507b62804fd9da70293763ed4
+Author: Logan Allen <lga24@cornell.edu>
+Date:   Mon Nov 21 16:47:56 2016 -0500
+
+    Updated utils specs
+
+commit cf8bf9163b67d15ba78cf8b328c99c877a9e77c9
+Author: Logan Allen <lga24@cornell.edu>
+Date:   Mon Nov 21 16:03:30 2016 -0500
+
+    Updated print module
+
+commit 802f26286c41341a66bf53f42dff5598d65f7fd3
+Author: Andrew Grossfeld <amg445@cornell.edu>
+Date:   Mon Nov 21 16:32:39 2016 -0500
+
+    added function for retreiving all trackable file name in repo
+
+commit 20f19ad618400f1dee9f8acbce70b899d7a50fd8
+Author: Andrew Grossfeld <amg445@cornell.edu>
+Date:   Mon Nov 21 12:57:43 2016 -0500
+
+    implemented get_index, set_index, update_index
+
+commit dbfcf680cf526d4053d0f781ee4a9f1e0f1f477b
+Author: Andrew Grossfeld <amg445@cornell.edu>
+Date:   Wed Nov 16 12:50:43 2016 -0500
+
+    moved away from UNIX and ttowards Pervasives for I/O, implemented set/get head() and set/get branch_ptr()
+
+commit 89180f74dc8c8039e4aee780dfd1620117d4d184
+Author: Andrew Grossfeld <amg445@cornell.edu>
+Date:   Tue Nov 15 16:45:26 2016 -0500
+
+    init slight refactor
+
+commit 85ccd63be0703c027ce62277fbc8961928e51237
+Author: Andrew Grossfeld <amg445@cornell.edu>
+Date:   Tue Nov 15 16:05:09 2016 -0500
+
+    removed unneccessary line in cml, updated init()
+
+commit 31da7c9e1233d244fa6f9c4961567c055886290b
+Author: Andrew Grossfeld <amg445@cornell.edu>
+Date:   Tue Nov 15 15:57:37 2016 -0500
+
+    small changes, inital arg parsing
+
+commit d6d36907592d5e4c8efebc11312140aaf5f3043e
+Author: Andrew Grossfeld <amg445@cornell.edu>
+Date:   Tue Nov 15 14:53:14 2016 -0500
+
+    refactor hash to close in_channel (should also close associated file descriptor)
+
+commit 4f2132ff3c9632f43d325c1d4dc5ec0fed524615
+Author: Andrew Grossfeld <amg445@cornell.edu>
+Date:   Tue Nov 15 14:45:03 2016 -0500
+
+    changed hash type from md5 to sha1, updated readme
+
+commit 09fffd244d563ef50d411d7520f9561759fb4cd7
+Author: Andrew Grossfeld <amg445@cornell.edu>
+Date:   Tue Nov 15 14:41:26 2016 -0500
+
+    implemented hash in utils
+
+commit 0edd7bafd51c8aa54352a06b2e0d78d78d69e53b
+Author: Andrew Grossfeld <amg445@cornell.edu>
+Date:   Tue Nov 15 10:13:28 2016 -0500
+
+    update init to create interior directories/files
+
+commit 1e2034a34105c24b4a655c6160712013ac2fb3ec
+Author: Andrew Grossfeld <amg445@cornell.edu>
+Date:   Tue Nov 15 10:04:34 2016 -0500
+
+    rm unused cml_src --> keep repo clean @michael
+
+commit 9a4ecaa1f203c2470bd9387eda8ae43e38b82ac7
+Author: Andrew Grossfeld <amg445@cornell.edu>
+Date:   Mon Nov 14 22:52:23 2016 -0500
+
+    added uninstall option to makefile
+
+commit eda3ac28cd48bb6bac9bfdc5a78cd576be9985cc
+Author: Andrew Grossfeld <amg445@cornell.edu>
+Date:   Mon Nov 14 21:01:45 2016 -0500
+
+    changed parse_input to take Sys.argv rather than string
+
+commit 25e897f0713adeae156dd8e29ea4ab86554a219a
+Author: Andrew Grossfeld <amg445@cornell.edu>
+Date:   Mon Nov 14 20:47:04 2016 -0500
+
+    initial implementation of init
+
+commit 2891099188f0745c5bb5fd9b63027b66792530b6
+Author: Andrew Grossfeld <amg445@cornell.edu>
+Date:   Mon Nov 14 12:41:18 2016 -0500
+
+    added color - connect in main
+
+commit 832a1c857cc29887990e064ce7e77d7bd69c46b8
+Author: Andrew Grossfeld <amg445@cornell.edu>
+Date:   Mon Nov 14 12:29:18 2016 -0500
+
+    added ANSITerminal, started print module
+
+commit dc7bbe35fa0a0056b6d8dedb548ac14f884b8929
+Author: Andrew Grossfeld <amg445@cornell.edu>
+Date:   Mon Nov 14 10:02:57 2016 -0500
+
+    changed build config to include unix @michaelgingras
+
+commit 8297db263c10e98fb3f6c16808b1c8c903416dd9
+Author: M <mcg79@cornell.edu>
+Date:   Sat Nov 12 15:36:00 2016 -0500
+
+    options should be called flags - fixing ambiguity
+
+commit 565ce185569ffff5faca949cbb265d0f9b8072cc
+Author: Andrew Grossfeld <amg445@cornell.edu>
+Date:   Thu Nov 10 19:08:23 2016 -0500
+
+    update .mli files and create corresponding .ml files with unimplemented functions
+
+commit eac06749e8a017e68806831b0ae4d851cb3f687e
+Author: Andrew Grossfeld <amg445@cornell.edu>
+Date:   Thu Nov 10 18:36:07 2016 -0500
+
+    repo clean up, updated cml and cml.ml to pass and print args to main
+
+commit 0f63879fb44afe26b4cba2dd82bc558265eaaf03
+Author: ncskier <bcw58@cornell.edu>
+Date:   Wed Nov 9 23:15:50 2016 -0500
+
+    Added M1.pdf
+
+commit d6718e31a265fb13ee3ee5e37b1018c469debd83
+Merge: 66effe1 bd4c54a
+Author: M <mcg79@cornell.edu>
+Date:   Wed Nov 9 22:19:15 2016 -0500
+
+    MLI
+
+commit 66effe1921884bb0c5e71ff6c80210fa079025da
+Author: M <mcg79@cornell.edu>
+Date:   Wed Nov 9 22:17:59 2016 -0500
+
+    and add....
+
+commit 8bf9fa298bdfadce5f238eae469c20c7a553c2d6
+Author: M <mcg79@cornell.edu>
+Date:   Wed Nov 9 22:17:48 2016 -0500
+
+    adding MLI files
+
+commit bd4c54a4b5ed74de76db6888ce67a416c550acec
+Author: Logan Allen <lga24@cornell.edu>
+Date:   Tue Nov 8 21:51:25 2016 -0500
+
+    Updated m1.md
+
+commit 404ee4d54337fa299b1799bec28fc2cd5077c473
+Author: ncskier <bcw58@cornell.edu>
+Date:   Mon Nov 7 17:21:40 2016 -0500
+
+    created m1.ml filewith list of core functions
+
+commit f26d4cf30e81691cac4f47ef2c6c7367bd4859cb
+Author: ncskier <bcw58@cornell.edu>
+Date:   Wed Oct 26 14:15:08 2016 -0400
+
+    Updated Charter
+
+commit 8e584f8110026dd455d397e18fd63ed9459270cc
+Author: ncskier <bcw58@cornell.edu>
+Date:   Wed Oct 26 14:10:17 2016 -0400
+
+    Update charter.md
+
+commit 7f9daf59eae145a3b82d88bc390e655a35906919
+Merge: 2774280 a2edb8d
+Author: Andrew Grossfeld <grossfeld.andrew@gmail.com>
+Date:   Wed Oct 26 13:38:59 2016 -0400
+
+    Merge branch 'master' of https://github.com/loganallen/CS3110FinalProject
+
+commit 27742808bb69b69e5d7356082d757bb9a54ff3e5
+Author: Andrew Grossfeld <grossfeld.andrew@gmail.com>
+Date:   Wed Oct 26 13:38:27 2016 -0400
+
+    updated cml to include correct path to cml.byte
+
+commit a2edb8ddc5b6beb9d5775ade4e0f1ae422276e61
+Author: Andrew Grossfeld <amg445@cornell.edu>
+Date:   Wed Oct 26 13:03:34 2016 -0400
+
+    Update README.md
+
+commit a22889bb3cbb6811b132148e0a7c25babbe7a273
+Author: Andrew Grossfeld <amg445@cornell.edu>
+Date:   Wed Oct 26 13:01:53 2016 -0400
+
+    Update README.md
+
+commit 47aa434996c344f263e00749d8290a96b2fcd231
+Author: Andrew Grossfeld <grossfeld.andrew@gmail.com>
+Date:   Wed Oct 26 12:59:09 2016 -0400
+
+    re-reorganized
+
+commit 54faf2277e310685e9281f8221c609945aaf5660
+Author: Andrew Grossfeld <grossfeld.andrew@gmail.com>
+Date:   Wed Oct 26 12:56:49 2016 -0400
+
+    reorganized repo/added intial ocaml file and updated makefile
+
+commit 88e9439dd41e15899ca36212b2f3a85715b55ffe
+Author: M <mcg79@cornell.edu>
+Date:   Wed Oct 26 00:15:31 2016 -0400
+
+    updating bash script... no args = help
+
+commit 7a6f627d21684571f10c90f4e8e9c4e23625be09
+Author: Andrew Grossfeld <amg445@cornell.edu>
+Date:   Tue Oct 25 15:40:41 2016 -0400
+
+    Update README.md
+
+commit 08c7ac80a729f6a41e3c3258a9a717602b56c7bf
+Author: M <mcg79@cornell.edu>
+Date:   Tue Oct 25 15:28:45 2016 -0400
+
+    init Makefile, currently just install cml to usr/local/bin so user can run commands from any directory
+
+commit f966fb985b9dc2d319e64c8a041bbd9bf91916b0
+Author: Logan Allen <lga24@cornell.edu>
+Date:   Tue Oct 25 11:47:23 2016 -0400
+
+    New charter for cmlControl
+
+commit 8e5d15163a75c5da6bb81b93f1b1cb9d75892e1e
+Author: Andrew Grossfeld <amg445@cornell.edu>
+Date:   Mon Oct 24 17:33:44 2016 -0400
+
+    Update README.md
+
+commit ecbdcc26d5851f3bf946bcb6ac3785a810e8d72d
+Author: Andrew Grossfeld <grossfeld.andrew@gmail.com>
+Date:   Mon Oct 24 17:32:31 2016 -0400
+
+    add initial camel
+
+commit 5921fd025d81ae577339371e9415bfb9f2068ac4
+Author: Andrew Grossfeld <grossfeld.andrew@gmail.com>
+Date:   Mon Oct 24 17:31:10 2016 -0400
+
+    added gitignore, removed .DS_Store
+
+commit 57ef2540acd244d7c5700ef457f487df8e2151f8
+Author: Andrew Grossfeld <grossfeld.andrew@gmail.com>
+Date:   Mon Oct 24 16:55:34 2016 -0400
+
+    removed old project
+
+commit 6de1524f2edcee112cb842d17304f2d00d87c21c
+Author: M <mcg79@cornell.edu>
+Date:   Sat Oct 22 19:24:59 2016 -0400
+
+    updating stuff
+
+commit 2e80d5463969e467561975aba1afdec7578a75b1
+Merge: e6f36a1 2be0fa4
+Author: M <mcg79@cornell.edu>
+Date:   Sat Oct 22 18:33:13 2016 -0400
+
+    Merge branch 'master' of https://github.com/loganallen/CS3110FinalProject
+
+commit e6f36a1f81f841a7690d6754a54f1ac6ba5c216d
+Author: M <mcg79@cornell.edu>
+Date:   Sat Oct 22 18:30:08 2016 -0400
+
+    adding all the shit
+
+commit 2be0fa430d325980900d0fc2d1fc22f96273d1e2
+Author: Logan Allen <lga24@cornell.edu>
+Date:   Thu Oct 20 12:36:21 2016 -0400
+
+    Initial commit
