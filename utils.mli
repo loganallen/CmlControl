@@ -19,9 +19,6 @@ type blob = string
  * referred to as the index in git *)
 type index = (string * string) list
 
-(* Fatal exception for internal cml execution errors *)
-exception Fatal of string
-
 (***************************** Generic Helpers ********************************)
 (******************************************************************************)
 
@@ -39,9 +36,6 @@ val cml_initialized: string -> bool
 (* returns true if the current directory (or parent) is an initialized Cml repo,
  * otherwise returns false *)
 val cml_initialized_r : string -> bool
-
-(* ($) is an infix operator for appending a char to a string *)
-val ($): string -> char -> string
 
 (* sets the cwd (current working directory) to the nearest .cml directory.
  * Raises Fatal exception if directory is not a Cml repository
@@ -74,38 +68,8 @@ val arg_is_flag : string -> bool
  * example: [get_flags_from_arg "--hi" ~ ["hi"]] *)
 val get_flags_from_arg : string -> string list
 
-(************************* File Compression & Hashing *************************)
+(************************ Object Creation & Parsing  **************************)
 (******************************************************************************)
-
-(* hash returns a SHA-1 hash of a given input *)
-val hash : string -> string
-
-(* copy creates copy of a file in a new destination *)
-val copy: string -> string -> unit
-
-(* compress compresses a file/directory
- * takes initial path and final path as arguments.
- *)
-val compress: string -> string -> unit
-
-(* returns the compressed [in_string] *)
-val compress_string : string -> string
-
-(* decompress decompresses a file/directory
- * takes initial and final path as arguments.
- *)
-val decompress: string -> string -> unit
-
-(* returns the decompressed [in_string] *)
-val decompress_string : string -> string
-
-(* returns the string list of lines in the file_name
- * precondition: file_name exists from the cwd *)
-val parse_lines : string -> string list
-
-(* returns the string list of lines in the decompressed file given the
- * file_name of a compressed file *)
-val decompress_contents : string -> string list
 
 (* creates a blob object for the given file. Returns the hash. *)
 val create_blob: string -> string
@@ -115,6 +79,9 @@ val create_commit: string -> string -> string -> string -> string -> string
 
 (* returns a commit record for the given commit ptr *)
 val parse_commit: string -> commit
+
+(* takes a commit hash and returns  the index of the commit *)
+val get_commit_index: string -> index
 
 (**************************** HEAD Ptr Manipulation ***************************)
 (******************************************************************************)
@@ -215,6 +182,9 @@ val delete_branch: string -> unit
 (* switch current working branch *)
 (* precondition: [branch] exists *)
 val switch_branch: string -> bool -> unit
+
+(* switches state of repo to state of given commit_hash *)
+val switch_version: string -> unit
 
 (******************************** User Info ***********************************)
 (******************************************************************************)

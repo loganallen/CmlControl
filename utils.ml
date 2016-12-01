@@ -1,7 +1,8 @@
 open Unix
-open Cryptokit
 open Print
 open Common
+open Crypto
+open Tree
 
 type commit = {
   tree: string;
@@ -14,8 +15,6 @@ type commit = {
 type blob = string
 
 type index = (string * string) list
-
-exception Fatal of string
 
 let perm = 0o777
 
@@ -70,9 +69,6 @@ let chdir_to_cml () =
   match cml_path ((Sys.getcwd ())^"/") with
   | Some path -> Sys.chdir path
   | None -> raise (Fatal "Not a Cml repository (or any of the parent directories)")
-
-(* ($) is an infix operator for appending a char to a string *)
-let ($) (str : string) (c : char) : string =  str ^ Char.escaped c
 
 (* returns the path of an object with file name hash
  * precondition: hash is a valid  40 char string *)
@@ -158,100 +154,15 @@ let get_flags_from_arg arg =
   else
     Str.replace_first r_single_dash "" arg |> Str.split (Str.regexp "")
 
-(************************* File Compression & Hashing *************************)
+(************************ Object Creation & Parsing  **************************)
 (******************************************************************************)
-
-(* hash returns a SHA-1 hash of a given input *)
-let hash (file_name : string) : string =
-	try
-		let fd = openfile file_name [O_RDONLY] 0o777 in
-		let channel = in_channel_of_descr fd in
-		let hash = hash_channel (Hash.sha1 ()) channel in
-		close_in channel; transform_string (Hexa.encode ()) hash
-	with
-		Unix_error (Unix.ENOENT,_,_) -> raise (Fatal ("Could not find file: "^file_name))
-
-(* [copy filename destination] creates exact copy of filename at destination *)
-let copy (file_name : string) (dest_path : string) : unit =
-  let rec loop ic oc =
-    try Printf.fprintf oc ("%s\n") (input_line ic); loop ic oc
-    with End_of_file -> close_in ic; close_out oc
-  in try
-    let ic = open_in file_name in
-    let oc = open_out dest_path in
-    loop ic oc
-  with
-    Sys_error _ -> raise (Fatal "utils.copy, file not found")
-
-(* compress compresses a file/directory
- * takes initial path and final path as arguments.
- *)
-let compress (file_name : string) (dest_path : string) : unit =
-  try begin
-    let ic = open_in file_name in
-    let oc = open_out dest_path in
-    let compress = Cryptokit.Zlib.compress () in
-    Cryptokit.transform_channel compress ic oc;
-    close_in ic;
-    close_out oc
-  end with
-    | _ -> raise (Fatal ("Failure compressing '"^file_name^"'"))
-
-(* returns the compressed [in_string] *)
-let compress_string in_string =
-    Cryptokit.transform_string (Cryptokit.Zlib.compress ()) in_string
-
-(* decompress decompresses a file/directory
- * takes initial and final path as arguments.
- *)
-let decompress (file_name : string) (dest_path : string) : unit =
-  try begin
-    let ic = open_in file_name in
-    let oc = open_out dest_path in
-    let uncompress = Cryptokit.Zlib.uncompress () in
-    Cryptokit.transform_channel uncompress ic oc;
-    close_in ic;
-    close_out oc
-  end with
-    | _ -> raise (Fatal ("Failure uncompressing '"^file_name^"'"))
-
-(* returns the decompressed [in_string] *)
-let decompress_string in_string =
-    Cryptokit.transform_string (Cryptokit.Zlib.uncompress ()) in_string
-
-(* returns the string list of lines in the file_name
- * precondition: file_name exists from the cwd *)
-let parse_lines file_name =
-  let rec acc_lines acc ic =
-    try begin
-      let line = input_line ic in
-      acc_lines (acc@[line]) ic
-    end with
-    | End_of_file -> close_in ic; acc
-    | _ -> raise (Fatal ("Failure reading file '"^file_name^"'"))
-  in
-  try acc_lines [] (open_in file_name) with
-  | _ -> raise (Fatal ("Failure reading file '"^file_name^"'"))
-
-(* returns the string list of lines in the decompressed file given the
- * file_name of a compressed file *)
-let decompress_contents file_name =
-  try begin
-    let decomp_name = file_name^"uncmlpressed" in
-    decompress file_name decomp_name;
-    let file_lines = parse_lines decomp_name in
-    Sys.remove decomp_name;
-    file_lines
-  end with
-  | _ -> raise (Fatal ("Failure decompressing file '"^file_name^"'"))
 
 (* creates a blob object for the given file. Returns the hash. *)
 let create_blob (file_name: string) : string =
   let hsh = hash file_name in
   let (d1,path) = split_hash hsh in
-  if not (Sys.file_exists (".cml/objects/"^d1)) then
-    mkdir (".cml/objects/"^d1) perm;
-    open_out path |> close_out; copy file_name path; hsh
+  let _ =  if Sys.file_exists (".cml/objects/"^d1) then () else mkdir (".cml/objects/"^d1) perm in
+  open_out path |> close_out; compress file_name path; hsh
 
 (* creates a commit object for the given commit. Returns the hash. *)
 let create_commit (ptr : string) (user : string) (date : string) (msg: string) (parent : string) : string =
@@ -265,9 +176,8 @@ let create_commit (ptr : string) (user : string) (date : string) (msg: string) (
   let _ = write_commit oc lines in
   let hsh = hash temp_name in
   let (d1,path) = split_hash hsh in
-    if not (Sys.file_exists (".cml/objects/"^d1)) then
-      mkdir (".cml/objects/"^d1) perm;
-    Sys.rename temp_name path; hsh
+  let _ = if Sys.file_exists (".cml/objects/"^d1) then () else mkdir (".cml/objects/"^d1) perm in
+  Sys.rename temp_name path; hsh
 
 (* returns a commit record for the given commit ptr *)
 let parse_commit (ptr : string) : commit =
@@ -285,6 +195,13 @@ let parse_commit (ptr : string) : commit =
     | Invalid_argument _ -> raise (Fatal ("commit - "^ptr^": not valid"))
     | End_of_file -> raise (Fatal ("commit - "^ptr^": corrupted"))
 
+(* takes a commit hash and returns  the index of the commit *)
+let get_commit_index (ptr : string) : index =
+  try
+    let commit = parse_commit ptr in
+    Tree.read_tree "" commit.tree |> Tree.tree_to_index
+  with
+    | Tree_ex _ -> raise (Fatal ("commit - " ^ ptr ^ " is corrupted"))
 
 (**************************** HEAD Ptr Manipulation ***************************)
 (******************************************************************************)
@@ -364,7 +281,7 @@ let set_branch_ptr (branch_name : string) (commit_hash : string) : unit =
 let checkout_file (file_name : string) (idx : index) : unit =
   try
     let obj_path = get_object_path (List.assoc file_name idx) in
-    copy obj_path file_name
+    decompress obj_path file_name
   with
     | Not_found -> ()
 
@@ -618,6 +535,17 @@ let switch_branch (branch : string) (isdetached : bool) : unit =
   else
     let ch = open_out ".cml/HEAD" in
     output_string ch ("heads/"^branch); close_out ch
+
+(* switches state of repo to state of given commit_hash *)
+let switch_version (commit_hash : string) : unit =
+  let ohead = parse_commit (get_head ()) in
+  let oindex = Tree.read_tree "" ohead.tree |> Tree.tree_to_index in
+  let nhead = parse_commit commit_hash in
+  let ntree = Tree.read_tree "" nhead.tree in
+  let nindex = Tree.tree_to_index ntree in
+  List.iter (fun (fn, hn) -> Sys.remove fn ) oindex;
+  Tree.recreate_tree "" ntree;
+  set_index nindex
 
 (******************************** User Info ***********************************)
 (******************************************************************************)
