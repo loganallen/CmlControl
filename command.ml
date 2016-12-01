@@ -310,9 +310,9 @@ let init () : unit =
 let log () : unit =
   chdir_to_cml ();
   let rec log_loop ptr cmt =
-    let _ = print_commit ptr cmt.author cmt.date cmt.message in
-    if cmt.parent = "None" then ()
-    else cmt.parent |> parse_commit |> log_loop cmt.parent
+    if cmt.parent <> "None" then
+      cmt.parent |> parse_commit |> log_loop cmt.parent;
+    print_commit ptr cmt.author cmt.date cmt.message
   in try
     let head = get_head_safe () in
     parse_commit head |> log_loop head
@@ -326,9 +326,9 @@ let log () : unit =
 
 (* perform fast-forward merge by updating the head to the branch head *)
 let merge_fast_forward (branch : string) (ptr : string) : unit =
-  print ("Updating branch '" ^ branch ^ "' with fast-forward merge...");
+  print "Performing fast-forward merge...";
   set_head ptr; switch_version ptr;
-  print "\nMerge successful."
+  print ("Branch '" ^ branch ^ "' is now up-to-date.")
 
 (* join two or more development histories together *)
 let merge (args: string list) : unit =
