@@ -191,6 +191,9 @@ val get_changed: string list -> index -> string list
 (* returns a list of untracked files *)
 val get_untracked: string list -> index -> string list
 
+(* recursively delete the empty directories in the cwd *)
+val delete_empty_dirs : string -> unit
+
 (******************************** Branching ***********************************)
 (******************************************************************************)
 

@@ -515,6 +515,22 @@ let get_untracked (cwd : string list) (idx : index) : string list =
   in
   List.fold_left find_untracked [] cwd |> List.sort (Pervasives.compare)
 
+(* recursively delete the empty directories in the [path] *)
+let rec delete_empty_dirs path =
+  let files = Sys.readdir path in
+  if files = [||] then begin
+    try Unix.rmdir path with
+    | _ -> ()
+  end else begin
+    let delete_empty_dirs_helper file =
+      let file_path = path^"/"^file in
+      if try Sys.is_directory file_path with _ -> false then
+        delete_empty_dirs file_path
+      else ()
+    in
+    Array.iter delete_empty_dirs_helper files
+  end
+
 (******************************** Branching ***********************************)
 (******************************************************************************)
 
