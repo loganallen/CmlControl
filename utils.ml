@@ -374,16 +374,24 @@ let is_bad_dir name =
     | "." | ".." | ".cml" -> true
     | _ -> false
 
+(* returns true if the file is an ignored file *)
+let is_ignored_file ignored_files file =
+  List.mem file ignored_files
+
 (* returns a list of all files in working repo by absolute path *)
 let rec get_all_files (dirs : string list) (acc : string list) : string list =
-  let rec loop dir_h path files directories =
+  let rec loop ignored dir_h path files directories =
     try
       let temp = readdir dir_h in
-      let fn = (if path = "" || path = "./" then temp else (path^"/"^temp)) in
-      if Sys.is_directory fn then
-        loop dir_h path files (fn::directories)
-      else
-        loop dir_h path (fn::files) directories
+      if is_ignored_file ignored temp then
+        loop ignored dir_h path files directories
+      else begin
+        let fn = (if path = "" || path = "./" then temp else (path^"/"^temp)) in
+        if Sys.is_directory fn then
+          loop ignored dir_h path files (fn::directories)
+        else
+          loop ignored dir_h path (fn::files) directories
+      end
     with
       End_of_file -> closedir dir_h; (files, directories)
   in match dirs with
@@ -394,7 +402,7 @@ let rec get_all_files (dirs : string list) (acc : string list) : string list =
           get_all_files t acc
         else
           let dir_h = opendir dir_name in
-          let (files, directories) = loop dir_h dir_name acc [] in
+          let (files, directories) = loop [".DS_Store"] dir_h dir_name acc [] in
           get_all_files (t@directories) files
       end
 

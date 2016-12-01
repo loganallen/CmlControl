@@ -141,6 +141,9 @@ val add_files_to_idx : string list -> unit
 (* returns true if dir is known link, or if is .cml *)
 val is_bad_dir: string -> bool
 
+(* returns true if the file is an ignored file *)
+val is_ignored_file : string list -> string -> bool
+
 (* returns a list of all files in working repo by absolute path *)
 val get_all_files: string list -> string list -> string list
 
