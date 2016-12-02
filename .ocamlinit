@@ -12,7 +12,6 @@
 #load "utils.cmo";;
 #load "command.cmo";;
 #load "cml.cmo";;
-#load "Str.cma"
 
 open Utils;;
 open Command;;

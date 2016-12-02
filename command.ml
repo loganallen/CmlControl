@@ -445,7 +445,7 @@ let stash (args: string list) : unit =
                 | Fatal f -> print_endline "not a valid command - cannot stash."
              end
   | h::t -> begin
-                if h = "pop" then
+                if h = "apply" then
                 let ic = open_in ".cml/stash" in
                 let version = input_line ic in
                 switch_version version;
