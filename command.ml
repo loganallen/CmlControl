@@ -389,8 +389,11 @@ let log () : unit =
 (******************************************************************************)
 
 (* returns a commit history that is the merge of two histories *)
-let rec merge_histories (des: string list) (h1: string list) (h2: string list) : string list =
-  let common = List.filter (fun c -> List.mem c h2) h1 in
+let merge_histories (h1: string list) (h2: string list) : string list =
+  let base = List.filter (fun c -> List.mem c h2) h1 in
+  let h1' = List.filter (fun c -> not (List.mem c base)) h1 in
+  let h2' = List.filter (fun c -> not (List.mem c base)) h2 in
+  base @ h1' @ h2'
 
 (* recursivley builds the commit history starting from a specified hash ptr *)
 let rec get_commit_history (des: string list) (acc: string list) (ptr: string) : string list =
@@ -402,7 +405,7 @@ let rec get_commit_history (des: string list) (acc: string list) (ptr: string) :
     let des' = acc@des in
     let h1 = get_commit_history des' [p1] p1 in
     let h2 = get_commit_history des' [p2] p2 in
-    merge_histories des' h1 h2
+    (merge_histories h1 h2) @ des'
   end
   | _ -> raise (Fatal ("ERROR - Corrupt commit "^cmt.tree))
 
