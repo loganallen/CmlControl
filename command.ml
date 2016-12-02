@@ -260,8 +260,8 @@ let commit (args: string list) : unit =
           let msg = List.rev lst |> List.fold_left (fun acc s -> s^" "^acc) ""
                     |> String.trim in
           let tm = time () |> localtime |> Time.get_time in
-          let last_commit =
-            try if isdetached then get_detached_head () else get_head ()
+          let last_commit = try
+            if isdetached then get_detached_head () else get_head ()
             with Fatal n -> "None" in
           create_commit tree user tm msg [last_commit]
         end
@@ -376,18 +376,6 @@ let init () : unit =
 		output_string out "heads/master"; close_out out;
     print_color "initialized empty Cml repository" "b"
 
-(* display the current branches commit history *)
-let log () : unit =
-  chdir_to_cml ();
-  let oc = open_out ".cml/log" in
-  let rec log_loop oc ptr cmt =
-    let _ = print_commit oc ptr cmt.author cmt.date cmt.message in
-    if cmt.parent = "None" then close_out oc
-    else cmt.parent |> parse_commit |> log_loop oc cmt.parent
-
-(*********************************** Merge ************************************)
-(******************************************************************************)
-
 (* returns a commit history that is the merge of two histories *)
 let merge_histories (h1: string list) (h2: string list) : string list =
   let base = List.filter (fun c -> List.mem c h2) h1 in
@@ -408,6 +396,28 @@ let rec get_commit_history (des: string list) (acc: string list) (ptr: string) :
     (merge_histories h1 h2) @ des'
   end
   | _ -> raise (Fatal ("ERROR - Corrupt commit "^cmt.tree))
+
+(* display the current branches commit history *)
+let log () : unit =
+  chdir_to_cml ();
+  let ch = open_out ".cml/log" in
+  let log_help ptr =
+    let cmt = parse_commit ptr in
+    print_commit ch ptr cmt.author cmt.date cmt.message
+  in try
+    let head = get_head_safe () in
+    head |> get_commit_history [] [head] |> List.rev |> List.iter log_help;
+    close_out ch; let _ = Sys.command "less -RXF .cml/log" in ()
+  with
+  | Fatal m -> begin
+    if m = "HEAD not initialized" then
+      let br = get_current_branch () in
+      raise (Fatal ("current branch '"^br^"' does not have any commits yet"))
+    else raise (Fatal m)
+  end
+
+(*********************************** Merge ************************************)
+(******************************************************************************)
 
 (* returns the commit ptr of the common ancestor between two branches
  * and the next commit for the branch *)
@@ -456,7 +466,7 @@ let true_merge (cur_ptr: string) (br_ptr: string) (branch: string) : unit =
   let msg = "Merged branch '" ^ branch ^ "' into " ^ get_current_branch () in
   let tm = time () |> localtime |> Time.get_time in
   create_commit tree_hash user tm msg [cur_ptr;br_ptr] |> set_head;
-  set_index merged_idx; Tree.recreate_tree "" tree
+  set_index merged_idx; Tree.recreate_tree "" tree; print msg
 
 (* perform fast-forward merge by updating the head to the branch head *)
 let fast_forward_merge (branch: string) (ptr: string) : unit =
