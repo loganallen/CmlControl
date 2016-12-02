@@ -1,7 +1,9 @@
+open Common
 open Utils
 open Print
 open Unix
 open Tree
+
 
 type command =
 | Add | Branch | Checkout | Commit | Diff | Help | Init | Log
@@ -38,7 +40,7 @@ let rec verify_allowed_flags allowed_flags flags =
 (* helper function that returns a list of files staged for commit *)
 let get_staged_help (idx : index) : string list =
   try
-    let cmt = get_head () |> parse_commit in
+    let cmt = get_head_safe () |> parse_commit in
     Tree.read_tree "" cmt.tree |> Tree.tree_to_index |> get_staged idx
   with
   | Fatal _ -> get_staged idx []
@@ -54,7 +56,7 @@ let files_in_index idx =
 let get_deleted cwd_files idx =
   let idx_files = files_in_index idx in
   try
-    let cmt = get_head () |> parse_commit in
+    let cmt = get_head_safe () |> parse_commit in
     let cmt_files = Tree.read_tree "" cmt.tree |> Tree.tree_to_index |> files_in_index in
     List.filter (fun file -> (not (List.mem file idx_files)) || (not (List.mem file cwd_files))) cmt_files |> List.sort Pervasives.compare
   with
@@ -64,7 +66,7 @@ let get_deleted cwd_files idx =
  * precondition: cwd is the .cml repo (chdir_to_cml ()) *)
 let add_print_msg files =
   let cmt_idx = try begin
-    let cmt = get_head () |> parse_commit in
+    let cmt = get_head_safe () |> parse_commit in
     Tree.read_tree "" cmt.tree |> Tree.tree_to_index |> files_in_index
   end with
   | Fatal _ -> []
@@ -144,16 +146,13 @@ let branch (args: string list) : unit =
     else raise (Fatal "invalid flags, see [--help]")
   end
 
-(* switches state of repo to state of given commit_hash *)
-let switch_version (commit_hash : string) : unit =
-  let ohead = parse_commit (get_head ()) in
-  let oindex = Tree.read_tree "" ohead.tree |> Tree.tree_to_index in
-  let nhead = parse_commit commit_hash in
-  let ntree = Tree.read_tree "" nhead.tree in
-  let nindex = Tree.tree_to_index ntree in
-  List.iter (fun (fn, hn) -> Sys.remove fn ) oindex;
-  Tree.recreate_tree "" ntree;
-  set_index nindex
+let invalid_cml_state (st : string list) (ch : string list) : unit =
+  let _ = print "Your changes to the following files would be overwritten:\n" in
+  let rec loop = function
+    | [] -> ()
+    | h::t -> print_indent h "y" 3; loop t
+  in loop (st @ ch);
+  print "\nPlease commit or stash your changes beforehand."
 
 (* switch branches or restore working tree files *)
 let checkout (args: string list) : unit =
@@ -167,38 +166,35 @@ let checkout (args: string list) : unit =
   | []    -> raise (Fatal "branch name or HEAD version required")
   | [arg] ->
     begin
-        if st <> [] || ch <> [] then
-          let _ = print_error ("Could not checkout " ^ arg) in
-          let _ = print "Your changes to the following files would be overwritten" in
-          let rec loop = function
-            | [] -> ()
-            | h::t -> print_indent h "y" 1; loop t
-          in loop (st @ ch);
-          print "Please commit or stash your changes before checking out"
-        else if (get_branches () |> List.mem arg) then
-          let _ = switch_version (get_branch_ptr arg) in
-          let _ = switch_branch arg isdetached in
-          print ("Switched to branch '"^arg^"'")
-        else if ((get_all_files ["./"] []) |> List.mem arg) then
-          get_index () |> checkout_file arg
-        else
-          try
-            if isdetached && arg = get_detached_head () then
-              print ("Already detached HEAD at " ^ arg)
-            else
-              let commit = parse_commit arg in
-              let tree = Tree.read_tree "" commit.tree in
-              Tree.recreate_tree "" tree;
-              set_index (Tree.tree_to_index tree);
-              set_detached_head arg;
-              print_detached_warning arg
-          with
-            | Fatal _ -> raise (Fatal ("pathspec '"^arg^"' does not match an file(s)/branch/commit"))
+      if ((get_all_files ["./"] []) |> List.mem arg) then
+        get_index () |> checkout_file arg
+      else if st <> [] || ch <> [] then
+        invalid_cml_state st ch
+      else if (get_branches () |> List.mem arg) then
+        if switch_branch arg isdetached then
+        get_branch_ptr arg |> switch_version else ()
+      else
+        try
+          if isdetached && arg = get_detached_head () then
+            print ("Already detached HEAD at " ^ arg)
+          else
+            let commit = parse_commit arg in
+            let tree = Tree.read_tree "" commit.tree in
+            Tree.recreate_tree "" tree;
+            set_index (Tree.tree_to_index tree);
+            set_detached_head arg;
+            print_detached_warning arg
+        with
+          | Fatal _ -> raise (Fatal ("pathspec '"^arg^"' does not match an file(s)/branch/commit"))
     end
   | flag::b::_ ->
     begin
       if flag = "-b" || flag = "-B" then
-        let _ = get_head () |> create_branch b in switch_branch b isdetached
+        if st <> [] || ch <> [] then
+          invalid_cml_state st ch
+        else
+          let _ = get_head_safe () |> create_branch b in
+          let _ = switch_branch b isdetached in ()
       else
         raise (Fatal ("invalid flags, see [--help]"))
     end
@@ -261,28 +257,39 @@ let commit (args: string list) : unit =
   else set_head new_head
 
 (* diff map helper function *)
-let diff_map_help (file, hash) = (file, get_object_path hash)
+let diff_map_help (file, hash) = ((file, false), (get_object_path hash, true))
 
 (* show changes between working tree and previous commits *)
 let diff (args: string list) : unit =
-  let ch_idx = get_index () |> get_changed_as_index (get_all_files ["./"] []) in
+  let idx = get_index () in
+  let ch_idx = idx |> get_changed_as_index (get_all_files ["./"] []) in
   try match args with
     | [] -> List.map diff_map_help ch_idx |> Diff.diff_mult
     | hd::[] -> begin
       if hd = "." || hd = "-a" then
         List.map diff_map_help ch_idx |> Diff.diff_mult
+      else if List.mem_assoc hd ch_idx then
+        (get_object_path (List.assoc hd ch_idx), true) |> Diff.diff (hd, false)
       else
-        get_object_path (List.assoc hd ch_idx) |> Diff.diff_file hd
+        let oidx = get_commit_index hd in
+        let folder acc (fn, hn) =
+          try
+            let obj = List.assoc fn oidx in
+            ((fn, false),(get_object_path obj, true))::acc
+          with
+            | Not_found -> acc
+        in List.fold_left folder [] idx |> Diff.diff_mult
     end
     | hd::t -> begin
       if hd = "." || hd = "-a" then
         raise (Fatal "invalid arguments, see [--help]")
       else
-        List.map (fun f -> (f, get_object_path (List.assoc f ch_idx))) args
+        List.map (fun f -> ((f, false), (get_object_path (List.assoc f ch_idx), true))) args
         |> Diff.diff_mult
     end
   with
   | Not_found -> ()
+  | Fatal _ -> ()
 
 (* display help information about CmlControl. *)
 let help () : unit =
@@ -302,12 +309,15 @@ let init () : unit =
 (* display the current branches commit history *)
 let log () : unit =
   chdir_to_cml ();
-  let rec log_loop ptr cmt =
-    let _ = print_commit ptr cmt.author cmt.date cmt.message in
-    if cmt.parent = "None" then ()
-    else cmt.parent |> parse_commit |> log_loop cmt.parent
+  let oc = open_out ".cml/log" in
+  let rec log_loop oc ptr cmt =
+    let _ = print_commit oc ptr cmt.author cmt.date cmt.message in
+    if cmt.parent = "None" then close_out oc
+    else cmt.parent |> parse_commit |> log_loop oc cmt.parent
   in try
-    let head = get_head () in parse_commit head |> log_loop head
+    let head = get_head_safe () in
+    parse_commit head |> log_loop oc head;
+    let _ = Sys.command "less -RXF .cml/log" in ()
   with
   | Fatal m -> begin
     if m = "HEAD not initialized" then
@@ -316,9 +326,48 @@ let log () : unit =
     else raise (Fatal m)
   end
 
+(* perform fast-forward merge by updating the head to the branch head *)
+let merge_fast_forward (branch : string) (ptr : string) : unit =
+  print ("Updating branch '" ^ branch ^ "' with fast-forward merge...");
+  set_head ptr; switch_version ptr;
+  print "\nMerge successful."
+
 (* join two or more development histories together *)
 let merge (args: string list) : unit =
-  failwith "Unimplemented"
+  match args with
+  | []     -> raise (Fatal "no branch specified, see [--help]")
+  | br::[] -> begin
+    let cwd = get_all_files ["./"] [] in
+    let idx = get_index () in
+    let st = get_staged_help idx in
+    let ch = get_changed cwd idx in
+    if st <> [] || ch <> [] then invalid_cml_state st ch
+    else begin
+      let cur_hd = get_head () in
+      let branch_hd = get_branch_ptr br in
+      (* check for up-to-date merge *)
+      let rec soft_loop_check ptr =
+        if ptr = "None" then true
+        else if ptr = branch_hd then
+          let _ = print "Already up-to-date." in false
+        else
+          let cmt = parse_commit ptr in soft_loop_check cmt.parent
+      in
+      if soft_loop_check cur_hd then
+        (* fast-forward loop check *)
+        let rec ff_loop_check ptr =
+          if ptr = "None" then true
+          else if ptr = cur_hd then
+            let _ = merge_fast_forward (get_current_branch ()) branch_hd in false
+          else
+            let cmt = parse_commit ptr in ff_loop_check cmt.parent
+        in
+        if ff_loop_check branch_hd then
+          print_color "TODO: Actual merging :(" "r"
+    end
+  end
+  | _ -> raise (Fatal "too many arguments, see [--help]")
+
 
 (* reset the current HEAD to a specified state *)
 let reset (args: string list) : unit =
@@ -330,7 +379,7 @@ let reset (args: string list) : unit =
   else () end;
   chdir_to_cml ();
   let head_hash = match args with
-    | [] -> get_head ()
+    | [] -> get_head_safe ()
     | h::[] -> h
     | _ -> raise (Fatal "usage: git reset [--soft | --mixed | --hard] [<commit>]")
   in
@@ -338,12 +387,8 @@ let reset (args: string list) : unit =
   set_head head_hash;
   if List.mem "soft" flags then ()
   else begin
-    print_endline "before: ";
-    print_list (get_index () |> files_in_index);
     let tree = Tree.read_tree "" commit.tree in
     let index = Tree.tree_to_index tree in
-    print_endline "after: ";
-    print_list (index |> files_in_index);
     set_index index;
     if List.mem "hard" flags then
       Tree.recreate_tree "" tree
@@ -392,7 +437,12 @@ let status_message () =
 let status () : unit =
   let cwd = Sys.getcwd () in
   chdir_to_cml ();
-  print ("On branch "^(get_current_branch ())^"\n");
+  begin
+    if detached_head () then
+      print_color ("HEAD detached at "^(get_detached_head ())) "red"
+    else
+      print ("On branch "^(get_current_branch ())^"\n")
+  end;
   let cwd_files = get_all_files ["./"] [] in
   let idx = get_index () in
   let st = get_staged_help idx in
@@ -425,7 +475,7 @@ let user (args: string list) : unit =
 (* parses bash string input and returns a Cml input type *)
 let parse_input (args : string array) : input =
   match (Array.to_list args) with
-  | [] -> raise (Fatal "no command given, see [--help]")
+  | [] -> {cmd = Help; args = []}
   | h::t -> begin
     match h with
     | "add"      -> {cmd = Add; args = t}

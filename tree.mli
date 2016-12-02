@@ -9,7 +9,7 @@ module type TreeSig = sig
   type t
 
   (* type index is the same as defined in Utils *)
-  type index = Utils.index
+  type index = (string * string) list
 
   (* an empty Tree *)
   val empty : t
