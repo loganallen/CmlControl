@@ -96,7 +96,7 @@ module Tree = struct
           | "tree" -> loop ic ((obj_name, obj_hash)::dirs) acc
           | _ -> raise (Tree_ex (Read, "Error: invalid object type in " ^ ptr))
       with
-      | End_of_file -> close_in ic; acc@(List.map map_helper dirs)
+      | _ -> close_in ic; acc@(List.map map_helper dirs)
     in
     let ic = open_in (get_object_path ptr) in
     Tree(tree_name, loop ic [] [])
