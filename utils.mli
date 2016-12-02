@@ -9,7 +9,7 @@ type commit = {
   author: string;
   date: string;
   message: string;
-  parents: string listm;
+  parents: string list;
 }
 
 (* type blob represents a compressed file object *)
@@ -78,7 +78,7 @@ val create_commit: string -> string -> string -> string -> string list -> string
 (* returns a commit record for the given commit ptr *)
 val parse_commit: string -> commit
 
-(* takes a commit hash and returns  the index of the commit *)
+(* takes a commit hash and returns the index of the commit *)
 val get_commit_index: string -> index
 
 (**************************** HEAD Ptr Manipulation ***************************)

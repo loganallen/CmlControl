@@ -442,21 +442,21 @@ let true_merge (cur_ptr: string) (br_ptr: string) (branch: string) : unit =
     | (false,false) -> raise (Fatal "Cannot merge branches with incompatible files")
   in
   let merged_base = List.map compare_base ancestor in
-  print "...base...";
-  List.iter (fun (f,h) -> print (f^": "^h)) merged_base;
+  print "...base..."; List.iter (fun (f,h) -> print (f^": "^h)) merged_base;
   (* append new files from each index *)
   let new_cur = cur_idx |> List.fold_left (get_new_files merged_base) [] in
-  print "...new_cur...";
-  List.iter (fun (f,h) -> print (f^": "^h)) new_cur;
+  print "...new_cur..."; List.iter (fun (f,h) -> print (f^": "^h)) new_cur;
   let new_br = br_idx |> List.fold_left (get_new_files merged_base) [] in
-  print "...new_branch...";
-  List.iter (fun (f,h) -> print (f^": "^h)) new_br;
-  (* Change first new commit from branch to point to cur_head *)
+  print "...new_branch..."; List.iter (fun (f,h) -> print (f^": "^h)) new_br;
+  (* merge the indexes, create a merge commit, and repopulate the repo, *)
   let merged_idx = merged_base @ new_cur @ new_br in
-  let tree = merged_idx |> Tree.index_to_tree |> Tree.write_tree in
+  let tree = Tree.index_to_tree merged_idx in
+  let tree_hash = Tree.write_tree tree in
+  let user = get_user_info () in
   let msg = "Merged branch '" ^ branch ^ "' into " ^ get_current_branch () in
-  let tm = time () |> localtime |> Time.get_time in ()
-
+  let tm = time () |> localtime |> Time.get_time in
+  create_commit tree_hash user tm msg [cur_ptr;br_ptr] |> set_head;
+  set_index merged_idx; Tree.recreate_tree "" tree
 
 (* perform fast-forward merge by updating the head to the branch head *)
 let fast_forward_merge (branch: string) (ptr: string) : unit =
@@ -477,25 +477,12 @@ let merge (args: string list) : unit =
     else begin
       let cur_ptr = get_head () in
       let br_ptr = get_branch_ptr br in
-      (* check for up-to-date merge *)
-      let rec soft_merge_loop ptr =
-        if ptr = "None" then true
-        else if ptr = br_ptr then
-          let _ = print "Already up-to-date." in false
-        else
-          let cmt = parse_commit ptr in soft_merge_loop cmt.parent
-      in
-      if soft_merge_loop cur_ptr then
-        (* fast-forward loop check *)
-        let rec ff_merge_loop ptr =
-          if ptr = "None" then true
-          else if ptr = cur_ptr then
-            let _ = fast_forward_merge (get_current_branch ()) br_ptr in false
-          else
-            let cmt = parse_commit ptr in ff_merge_loop cmt.parent
-        in
-        if ff_merge_loop br_ptr then
-          true_merge cur_ptr br_ptr br
+      if (cur_ptr |> get_commit_history [] [cur_ptr] |> List.mem br_ptr) then
+        print "Already up-to-date." (* soft-merge: nothing done *)
+      else if (br_ptr |> get_commit_history [] [br_ptr] |> List.mem cur_ptr) then
+        fast_forward_merge (get_current_branch ()) br_ptr (* fast-forward merge *)
+      else
+        true_merge cur_ptr br_ptr br (* perform true merge *)
     end
   end
   | _ -> raise (Fatal "cml only supports merging two branches, see [--help]")
