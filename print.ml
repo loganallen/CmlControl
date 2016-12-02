@@ -66,10 +66,11 @@ let print_untracked (files : string list) : unit =
   end
 
 (* prints the commit message for [cml log] *)
-let print_commit (ptr : string) (author : string) (time : string) (msg : string) : unit =
-  print_color ("commit "^ptr) "y"; print ("Author: "^author);
-  print ("Date:   "^time); print_newline ();
-  print_indent msg "" 2; print_newline ()
+let print_commit (oc : out_channel) (ptr : string) (author : string) (time : string) (msg : string) : unit =
+  Printf.fprintf oc "[33mcommit %s\n" ptr;
+  Printf.fprintf oc "Author: %s\n" author;
+  Printf.fprintf oc "Date: %s\n\n" time;
+  Printf.fprintf oc "    %s\n\n" msg
 
 (* print help info for add *)
 let print_help_add () : unit =
@@ -89,7 +90,8 @@ let print_help_rm () : unit =
 (* print help info for stash *)
 let print_help_stash () : unit =
   print_indent "stash\t\tStashes changes made to the current working tree" "b" 1;
-  print_indent "usage: [ apply ] will reapply the stashed changes" "y" 8
+  print_indent "returns working directory to current HEAD pointer" "b" 1;
+  print_indent "usage: [ pop ] will reapply the stashed changes" "y" 8
 
 (* print help info for branch *)
 let print_help_branch () : unit =

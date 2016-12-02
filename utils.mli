@@ -19,9 +19,6 @@ type blob = string
  * referred to as the index in git *)
 type index = (string * string) list
 
-(* Fatal exception for internal cml execution errors *)
-exception Fatal of string
-
 (***************************** Generic Helpers ********************************)
 (******************************************************************************)
 
@@ -40,9 +37,6 @@ val cml_initialized: string -> bool
  * otherwise returns false *)
 val cml_initialized_r : string -> bool
 
-(* ($) is an infix operator for appending a char to a string *)
-val ($): string -> char -> string
-
 (* sets the cwd (current working directory) to the nearest .cml directory.
  * Raises Fatal exception if directory is not a Cml repository
  * (or any of the parent directories) *)
@@ -59,11 +53,6 @@ val get_rel_path : string -> string
 (* returns [str] without [sub] *)
 val remove_from_string : string -> string -> string
 
-(* returns the path of an object represented by hash
- * precondition: hash is a valid  40 char string
- * postcondition: get_object_path raise Fatal if hash doens't exist *)
- val get_object_path : string -> string
-
 (* returns whether the given argument is a flag (if arg is of the form
  * dash [-] followed by any number of characters > 0) *)
 val arg_is_flag : string -> bool
@@ -74,38 +63,11 @@ val arg_is_flag : string -> bool
  * example: [get_flags_from_arg "--hi" ~ ["hi"]] *)
 val get_flags_from_arg : string -> string list
 
-(************************* File Compression & Hashing *************************)
+(* recursively delete the empty directories in the cwd *)
+val remove_empty_dirs : string -> unit
+
+(************************ Object Creation & Parsing  **************************)
 (******************************************************************************)
-
-(* hash returns a SHA-1 hash of a given input *)
-val hash : string -> string
-
-(* copy creates copy of a file in a new destination *)
-val copy: string -> string -> unit
-
-(* compress compresses a file/directory
- * takes initial path and final path as arguments.
- *)
-val compress: string -> string -> unit
-
-(* returns the compressed [in_string] *)
-val compress_string : string -> string
-
-(* decompress decompresses a file/directory
- * takes initial and final path as arguments.
- *)
-val decompress: string -> string -> unit
-
-(* returns the decompressed [in_string] *)
-val decompress_string : string -> string
-
-(* returns the string list of lines in the file_name
- * precondition: file_name exists from the cwd *)
-val parse_lines : string -> string list
-
-(* returns the string list of lines in the decompressed file given the
- * file_name of a compressed file *)
-val decompress_contents : string -> string list
 
 (* creates a blob object for the given file. Returns the hash. *)
 val create_blob: string -> string
@@ -115,6 +77,9 @@ val create_commit: string -> string -> string -> string -> string -> string
 
 (* returns a commit record for the given commit ptr *)
 val parse_commit: string -> commit
+
+(* takes a commit hash and returns  the index of the commit *)
+val get_commit_index: string -> index
 
 (**************************** HEAD Ptr Manipulation ***************************)
 (******************************************************************************)
@@ -133,6 +98,9 @@ val get_detached_head: unit -> string
 
 (* returns true if repo currently is in detached head mode, else false *)
 val detached_head: unit -> bool
+
+(* returns correct head depending on detached_head mode *)
+val get_head_safe : unit -> string
 
 (* returns the HASH of a head of the given branch *)
 val get_branch_ptr: string -> string
@@ -173,6 +141,9 @@ val add_files_to_idx : string list -> unit
 (* returns true if dir is known link, or if is .cml *)
 val is_bad_dir: string -> bool
 
+(* returns true if the file is an ignored file *)
+val is_ignored_file : string list -> string -> bool
+
 (* returns a list of all files in working repo by absolute path *)
 val get_all_files: string list -> string list -> string list
 
@@ -208,7 +179,10 @@ val delete_branch: string -> unit
 
 (* switch current working branch *)
 (* precondition: [branch] exists *)
-val switch_branch: string -> bool -> unit
+val switch_branch: string -> bool -> bool
+
+(* switches state of repo to state of given commit_hash *)
+val switch_version: string -> unit
 
 (******************************** User Info ***********************************)
 (******************************************************************************)
