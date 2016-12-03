@@ -268,40 +268,94 @@ let commit (args: string list) : unit =
     print_detached_warning new_head
   else set_head new_head
 
-(* diff map helper function *)
-let diff_map_help (file, hash) = ((file, false), (get_object_path hash, true))
+(* precondition: cwd is cml repo root *)
+let get_diff_current_index () =
+  let idx = get_index () in
+  let cwd_files = get_all_files ["./"] [] in
+  let deleted_files = get_deleted cwd_files idx in
+  let changed_files = get_changed cwd_files idx in
+  let changed_diff_index = List.map (fun file -> (file, file)) changed_files
+                           |> Diff.index_to_diff_index false in
+  List.filter (fun (file,_) -> not (List.mem file deleted_files)) idx
+  |> Diff.index_to_diff_index true
+  |> List.map (fun (file,hash) ->
+    if List.mem_assoc file changed_diff_index then
+      (file, List.assoc file changed_diff_index)
+    else
+      (file,hash))
+
+(* precondition: [abs_path_lst] holds the absolute paths from cml.
+                 Also, all the files are uncompressed *)
+let diff_idx_current_files abs_path_lst =
+  List.map (fun f -> (f,f)) abs_path_lst |> Diff.index_to_diff_index false
+
+(* return the diff index of the cmt_idx for each file in [files] *)
+let diff_idx_commit idx files =
+  let acc_idx acc file =
+    try begin
+      let hash = List.assoc file idx in
+      (file,hash)::acc
+    end with
+      | Not_found -> acc
+  in
+  List.fold_left acc_idx [] files |> Diff.index_to_diff_index true
 
 (* show changes between working tree and previous commits *)
 let diff (args: string list) : unit =
-  let idx = get_index () in
-  let ch_idx = idx |> get_changed_as_index (get_all_files ["./"] []) in
-  try match args with
-    | [] -> List.map diff_map_help ch_idx |> Diff.diff_mult
-    | hd::[] -> begin
-      if hd = "." || hd = "-a" then
-        List.map diff_map_help ch_idx |> Diff.diff_mult
-      else if List.mem_assoc hd ch_idx then
-        (get_object_path (List.assoc hd ch_idx), true) |> Diff.diff (hd, false)
-      else
-        let oidx = get_commit_index hd in
-        let folder acc (fn, hn) =
-          try
-            let obj = List.assoc fn oidx in
-            ((fn, false),(get_object_path obj, true))::acc
-          with
-            | Not_found -> acc
-        in List.fold_left folder [] idx |> Diff.diff_mult
+  let cwd = Sys.getcwd () in
+  chdir_to_cml ();
+  let current_diff_idx = get_diff_current_index () in
+  let commit_index = get_commit_index (get_head_safe ()) in
+  let commit_diff_idx = commit_index |> Diff.index_to_diff_index true in
+  let get_arg_file arg =
+    if Sys.file_exists arg then begin
+      Sys.chdir cwd;
+      let arg_file = abs_path_from_cml arg |> Str.(replace_first (regexp "/") "") in
+      chdir_to_cml ();
+      arg_file
+    end else arg
+  in
+  match args with
+  | [] -> begin
+    Diff.diff_indexes commit_diff_idx current_diff_idx
+  end
+  | arg::[] -> begin
+    let arg_file = get_arg_file arg in
+    (* print_endline ("arg_file: "^ arg_file); *)
+    if Sys.file_exists arg_file || arg_file = "" then
+      let files = get_files_from_rel_path arg_file in
+      let current_diff_idx = diff_idx_current_files files in
+      let commit_diff_idx = diff_idx_commit commit_index files in
+      Diff.diff_indexes commit_diff_idx current_diff_idx
+    else if Sys.file_exists arg then
+      raise (Fatal ("pathspec '"^arg^"' is outside the repository"))
+    else if List.mem arg (get_branches ()) then
+      let prev_commit_diff_idx = get_branch_index arg |> Diff.index_to_diff_index true in
+      Diff.diff_indexes prev_commit_diff_idx current_diff_idx
+    else begin
+      let prev_commit_diff_idx = get_commit_index arg |> Diff.index_to_diff_index true in
+      Diff.diff_indexes prev_commit_diff_idx current_diff_idx
     end
-    | hd::t -> begin
-      if hd = "." || hd = "-a" then
-        raise (Fatal "invalid arguments, see [--help]")
+  end
+  | arg1::arg2::[] -> begin
+    let old_idx =
+      if List.mem arg1 (get_branches ()) then
+        get_branch_index arg1
       else
-        List.map (fun f -> ((f, false), (get_object_path (List.assoc f ch_idx), true))) args
-        |> Diff.diff_mult
-    end
-  with
-  | Not_found -> ()
-  | Fatal _ -> ()
+        get_commit_index arg1
+    in
+    let arg_file = get_arg_file arg2 in
+    if Sys.file_exists arg_file || arg_file = "" then
+      let files = get_files_from_rel_path arg_file in
+      let current_diff_idx = diff_idx_current_files files in
+      let old_diff_idx = diff_idx_commit old_idx files in
+      Diff.diff_indexes old_diff_idx current_diff_idx
+    else
+      let old_diff_idx = old_idx |> Diff.index_to_diff_index true in
+      let new_diff_idx = get_commit_index arg2 |> Diff.index_to_diff_index true in
+      Diff.diff_indexes old_diff_idx new_diff_idx
+  end
+  | _ -> raise (Fatal "invalid arguments, see [--help]")
 
 (* display help information about CmlControl. *)
 let help () : unit =
