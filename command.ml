@@ -171,8 +171,8 @@ let checkout (args: string list) : unit =
       else if st <> [] || ch <> [] then
         invalid_cml_state st ch
       else if (get_branches () |> List.mem arg) then
-        let _ = switch_version (get_branch_ptr arg) in
-        switch_branch arg isdetached
+        if switch_branch arg isdetached then
+        get_branch_ptr arg |> switch_version else ()
       else
         try
           if isdetached && arg = get_detached_head () then
@@ -193,7 +193,8 @@ let checkout (args: string list) : unit =
         if st <> [] || ch <> [] then
           invalid_cml_state st ch
         else
-          let _ = get_head_safe () |> create_branch b in switch_branch b isdetached
+          let _ = get_head_safe () |> create_branch b in
+          let _ = switch_branch b isdetached in ()
       else
         raise (Fatal ("invalid flags, see [--help]"))
     end
@@ -311,13 +312,15 @@ let init () : unit =
 (* display the current branches commit history *)
 let log () : unit =
   chdir_to_cml ();
-  let rec log_loop ptr cmt =
-    let _ = print_commit ptr cmt.author cmt.date cmt.message in
-    if cmt.parent = "None" then ()
-    else cmt.parent |> parse_commit |> log_loop cmt.parent
+  let oc = open_out ".cml/log" in
+  let rec log_loop oc ptr cmt =
+    let _ = print_commit oc ptr cmt.author cmt.date cmt.message in
+    if cmt.parent = "None" then close_out oc
+    else cmt.parent |> parse_commit |> log_loop oc cmt.parent
   in try
     let head = get_head_safe () in
-    parse_commit head |> log_loop head
+    parse_commit head |> log_loop oc head;
+    let _ = Sys.command "less -RXF .cml/log" in ()
   with
   | Fatal m -> begin
     if m = "HEAD not initialized" then
@@ -475,7 +478,7 @@ let user (args: string list) : unit =
 (* parses bash string input and returns a Cml input type *)
 let parse_input (args : string array) : input =
   match (Array.to_list args) with
-  | [] -> raise (Fatal "no command given, see [--help]")
+  | [] -> {cmd = Help; args = []}
   | h::t -> begin
     match h with
     | "add"      -> {cmd = Add; args = t}
