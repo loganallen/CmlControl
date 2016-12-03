@@ -81,6 +81,14 @@ let add_print_msg files =
 let add_delete_print_msg files =
   List.map (fun file -> "deleted:    "^file) files
 
+let verify_files_in_repo files =
+  let filter file =
+    if not (Sys.file_exists file) then
+      raise (Fatal ("pathspec '"^file^"' is outside the repository"))
+    else true
+  in
+  List.filter filter files
+
 (* returns a list of the file names in [rel_path] to cwd, (the returned
  * filenames are relative to cml repo) *)
 let get_files_from_rel_path rel_path =
@@ -105,6 +113,7 @@ let get_files_from_rel_path rel_path =
       [path_from_cml]
   end |> List.map (fun s -> Str.replace_first (Str.regexp "//") "/" s)
       |> List.map (fun s -> Str.replace_first (Str.regexp "^/") "" s)
+      |> verify_files_in_repo
 
 (* add file contents to the index *)
 let add (args: string list) : unit =
@@ -113,8 +122,11 @@ let add (args: string list) : unit =
   else
     let add_to_idx rel_path =
       if Sys.file_exists rel_path then begin
-        let add_files = get_files_from_rel_path rel_path in
-        add_files_to_idx add_files
+        try begin
+          let add_files = get_files_from_rel_path rel_path in
+          add_files_to_idx add_files
+        end
+          with _ -> raise (Fatal ("pathspec '"^rel_path^"' is outside the repository"))
       end else if rel_path = "-A" then begin
         let cwd = Sys.getcwd () in
         chdir_to_cml ();
@@ -409,15 +421,18 @@ let rm (args: string list) : unit =
   else begin
     let remove_from_idx rel_path =
       if Sys.file_exists rel_path then begin
-        let rm_files = get_files_from_rel_path rel_path in
-        rm_files_from_idx rm_files;
-        if List.mem "f" flags then begin
-          if Sys.is_directory rel_path then begin
-            rm_files_from_repo rm_files;
-            Unix.rmdir rel_path
-          end else
-            rm_files_from_repo rm_files
-        end else ()
+        try begin
+          let rm_files = get_files_from_rel_path rel_path in
+          rm_files_from_idx rm_files;
+          if List.mem "f" flags then begin
+            if Sys.is_directory rel_path then begin
+              rm_files_from_repo rm_files;
+              try Unix.rmdir rel_path with _ -> ()
+            end else
+              rm_files_from_repo rm_files
+          end else ()
+        end
+          with _ -> raise (Fatal ("pathspec '"^rel_path^"' is outside the repository"))
       end else
         raise (Fatal ("pathspec '"^rel_path^"' does not match an file(s)"))
     in
