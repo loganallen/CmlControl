@@ -102,12 +102,6 @@ val detached_head: unit -> bool
 (* returns correct head depending on detached_head mode *)
 val get_head_safe : unit -> string
 
-(* returns the HASH of a head of the given branch *)
-val get_branch_ptr: string -> string
-
-(* initializes a given commit to a given branch name *)
-val set_branch_ptr: string -> string -> unit
-
 (* overwrites file with version added to supplied index
  * if the file is not in the index, do nothing *)
 val checkout_file: string -> index -> unit
@@ -158,28 +152,6 @@ val get_changed: string list -> index -> string list
 
 (* returns a list of untracked files *)
 val get_untracked: string list -> index -> string list
-
-(******************************** Branching ***********************************)
-(******************************************************************************)
-
-(* validate the branch name *)
-val validate_branch: string -> unit
-
-(* returns a list of all branches *)
-val get_branches: unit -> string list
-
-(* returns string representation of repo's current branch *)
-val get_current_branch: unit -> string
-
-(* create a new branch at the specified ptr if it doesn't exist *)
-val create_branch: string -> string -> unit
-
-(* delete a branch if it exists *)
-val delete_branch: string -> unit
-
-(* switch current working branch *)
-(* precondition: [branch] exists *)
-val switch_branch: string -> bool -> bool
 
 (* switches state of repo to state of given commit_hash *)
 val switch_version: string -> unit

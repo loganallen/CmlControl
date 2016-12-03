@@ -3,7 +3,7 @@ open Utils
 open Print
 open Unix
 open Tree
-
+open Branch
 
 type command =
 | Add | Branch | Checkout | Commit | Diff | Help | Init | Log
