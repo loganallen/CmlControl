@@ -54,9 +54,7 @@ let diff old_file new_file : Odiff.diffs =
 
 let print_separator do_print =
   if do_print then begin
-    Print.print_newline ();
     Print.print "--------------------";
-    Print.print_newline ();
   end else
     ()
 

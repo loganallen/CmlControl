@@ -174,6 +174,12 @@ val get_branches: unit -> string list
 (* returns string representation of repo's current branch *)
 val get_current_branch: unit -> string
 
+(* returns the head pointer of the branch *)
+val get_branch : string -> string
+
+(* returns the index of the branch *)
+val get_branch_index : string -> index
+
 (* create a new branch at the specified ptr if it doesn't exist *)
 val create_branch: string -> string -> unit
 

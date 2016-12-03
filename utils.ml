@@ -487,6 +487,25 @@ let get_current_branch () : string =
     | Sys_error _ -> raise (Fatal "HEAD not found")
     | End_of_file -> raise (Fatal "HEAD not initialized")
 
+(* returns the head pointer of the branch *)
+let get_branch branch =
+  let branch_path = ".cml/heads/"^branch in
+  if Sys.file_exists branch_path then
+    try
+      let ic = open_in branch_path in
+      let head = input_line ic in
+      close_in ic;
+      head
+    with
+      | _ -> raise (Fatal ("Could not find branch '"^branch^"'"))
+  else
+    raise (Fatal ("Branch '"^branch^"' does not exist"))
+
+(* returns the index of the branch *)
+let get_branch_index branch =
+  let commit = parse_commit (get_branch branch) in
+  Tree.read_tree "" commit.tree |> Tree.tree_to_index
+
 (* recursively creates branch sub-directories as needed *)
 let rec branch_help (path : string) (branch : string) : out_channel =
   try
