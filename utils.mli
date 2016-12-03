@@ -135,6 +135,9 @@ val rm_files_from_repo : string list -> unit
 (* adds [add_files] list from the index *)
 val add_files_to_idx : string list -> unit
 
+(* creates an index from the given files *)
+
+
 (****************************** File Fetching *********************************)
 (******************************************************************************)
 
