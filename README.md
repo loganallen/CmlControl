@@ -6,7 +6,7 @@
 
 Cml has the following dependencies: <br>
 
-	~ cryptokit
+	~ cryptokit (may need to run opam depext conf-zlib.1)
 	~ ANSITerminal
 	~ str
 	~ unix

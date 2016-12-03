@@ -1,11 +1,11 @@
 install:
 	ocamlbuild -pkgs diff,unix,ANSITerminal,cryptokit,str cml.byte
-	cp cml /usr/local/bin
-	cp cml.byte /usr/local/bin
+	sudo cp cml /usr/local/bin
+	sudo cp cml.byte /usr/local/bin
 
 uninstall:
-	rm /usr/local/bin/cml
-	rm /usr/local/bin/cml.byte
+	sudo rm /usr/local/bin/cml
+	sudo rm /usr/local/bin/cml.byte
 
 clean:
 	ocamlbuild -clean

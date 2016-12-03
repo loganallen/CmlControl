@@ -17,7 +17,7 @@ exception Parsing of string
 let perm = 0o777
 
 (* parses string of args into flags and actual arguments *)
-let parse_args (args : string list) : args_input =
+let parse_args (args: string list) : args_input =
   let acc_flags = fun acc arg ->
     if arg_is_flag arg then (get_flags_from_arg arg) @ acc else acc
   in
@@ -38,7 +38,7 @@ let rec verify_allowed_flags allowed_flags flags =
   end
 
 (* helper function that returns a list of files staged for commit *)
-let get_staged_help (idx : index) : string list =
+let get_staged_help (idx: index) : string list =
   try
     let cmt = get_head_safe () |> parse_commit in
     Tree.read_tree "" cmt.tree |> Tree.tree_to_index |> get_staged idx
@@ -81,6 +81,14 @@ let add_print_msg files =
 let add_delete_print_msg files =
   List.map (fun file -> "deleted:    "^file) files
 
+let verify_files_in_repo files =
+  let filter file =
+    if not (Sys.file_exists file) then
+      raise (Fatal ("pathspec '"^file^"' is outside the repository"))
+    else true
+  in
+  List.filter filter files
+
 (* returns a list of the file names in [rel_path] to cwd, (the returned
  * filenames are relative to cml repo) *)
 let get_files_from_rel_path rel_path =
@@ -105,6 +113,7 @@ let get_files_from_rel_path rel_path =
       [path_from_cml]
   end |> List.map (fun s -> Str.replace_first (Str.regexp "//") "/" s)
       |> List.map (fun s -> Str.replace_first (Str.regexp "^/") "" s)
+      |> verify_files_in_repo
 
 (* add file contents to the index *)
 let add (args: string list) : unit =
@@ -113,8 +122,11 @@ let add (args: string list) : unit =
   else
     let add_to_idx rel_path =
       if Sys.file_exists rel_path then begin
-        let add_files = get_files_from_rel_path rel_path in
-        add_files_to_idx add_files
+        try begin
+          let add_files = get_files_from_rel_path rel_path in
+          add_files_to_idx add_files
+        end
+          with _ -> raise (Fatal ("pathspec '"^rel_path^"' is outside the repository"))
       end else if rel_path = "-A" then begin
         let cwd = Sys.getcwd () in
         chdir_to_cml ();
@@ -146,7 +158,7 @@ let branch (args: string list) : unit =
     else raise (Fatal "invalid flags, see [--help]")
   end
 
-let invalid_cml_state (st : string list) (ch : string list) : unit =
+let invalid_cml_state (st: string list) (ch: string list) : unit =
   let _ = print "Your changes to the following files would be overwritten:\n" in
   let rec loop = function
     | [] -> ()
@@ -170,10 +182,14 @@ let checkout (args: string list) : unit =
         get_index () |> checkout_file arg
       else if st <> [] || ch <> [] then
         invalid_cml_state st ch
-      else if (get_branches () |> List.mem arg) then
-        if switch_branch arg isdetached then
-        get_branch_ptr arg |> switch_version else ()
-      else
+      else if (get_branches () |> List.mem arg) then begin
+        if arg = get_current_branch () then
+          print ("Already on branch '"^arg^"'")
+        else begin
+          get_branch_ptr arg |> switch_version;
+          switch_branch arg isdetached
+        end
+      end else
         try
           if isdetached && arg = get_detached_head () then
             print ("Already detached HEAD at " ^ arg)
@@ -194,7 +210,7 @@ let checkout (args: string list) : unit =
           invalid_cml_state st ch
         else
           let _ = get_head_safe () |> create_branch b in
-          let _ = switch_branch b isdetached in ()
+          switch_branch b isdetached
       else
         raise (Fatal ("invalid flags, see [--help]"))
     end
@@ -244,10 +260,10 @@ let commit (args: string list) : unit =
           let msg = List.rev lst |> List.fold_left (fun acc s -> s^" "^acc) ""
                     |> String.trim in
           let tm = time () |> localtime |> Time.get_time in
-          let last_commit =
-            try if isdetached then get_detached_head () else get_head ()
+          let last_commit = try
+            if isdetached then get_detached_head () else get_head ()
             with Fatal n -> "None" in
-          create_commit tree user tm msg last_commit
+          create_commit tree user tm msg [last_commit]
         end
     end
   in
@@ -256,40 +272,94 @@ let commit (args: string list) : unit =
     print_detached_warning new_head
   else set_head new_head
 
-(* diff map helper function *)
-let diff_map_help (file, hash) = ((file, false), (get_object_path hash, true))
+(* precondition: cwd is cml repo root *)
+let get_diff_current_index () =
+  let idx = get_index () in
+  let cwd_files = get_all_files ["./"] [] in
+  let deleted_files = get_deleted cwd_files idx in
+  let changed_files = get_changed cwd_files idx in
+  let changed_diff_index = List.map (fun file -> (file, file)) changed_files
+                           |> Diff.index_to_diff_index false in
+  List.filter (fun (file,_) -> not (List.mem file deleted_files)) idx
+  |> Diff.index_to_diff_index true
+  |> List.map (fun (file,hash) ->
+    if List.mem_assoc file changed_diff_index then
+      (file, List.assoc file changed_diff_index)
+    else
+      (file,hash))
+
+(* precondition: [abs_path_lst] holds the absolute paths from cml.
+                 Also, all the files are uncompressed *)
+let diff_idx_current_files abs_path_lst =
+  List.map (fun f -> (f,f)) abs_path_lst |> Diff.index_to_diff_index false
+
+(* return the diff index of the cmt_idx for each file in [files] *)
+let diff_idx_commit idx files =
+  let acc_idx acc file =
+    try begin
+      let hash = List.assoc file idx in
+      (file,hash)::acc
+    end with
+      | Not_found -> acc
+  in
+  List.fold_left acc_idx [] files |> Diff.index_to_diff_index true
 
 (* show changes between working tree and previous commits *)
 let diff (args: string list) : unit =
-  let idx = get_index () in
-  let ch_idx = idx |> get_changed_as_index (get_all_files ["./"] []) in
-  try match args with
-    | [] -> List.map diff_map_help ch_idx |> Diff.diff_mult
-    | hd::[] -> begin
-      if hd = "." || hd = "-a" then
-        List.map diff_map_help ch_idx |> Diff.diff_mult
-      else if List.mem_assoc hd ch_idx then
-        (get_object_path (List.assoc hd ch_idx), true) |> Diff.diff (hd, false)
-      else
-        let oidx = get_commit_index hd in
-        let folder acc (fn, hn) =
-          try
-            let obj = List.assoc fn oidx in
-            ((fn, false),(get_object_path obj, true))::acc
-          with
-            | Not_found -> acc
-        in List.fold_left folder [] idx |> Diff.diff_mult
+  let cwd = Sys.getcwd () in
+  chdir_to_cml ();
+  let current_diff_idx = get_diff_current_index () in
+  let commit_index = get_commit_index (get_head_safe ()) in
+  let commit_diff_idx = commit_index |> Diff.index_to_diff_index true in
+  let get_arg_file arg =
+    if Sys.file_exists arg then begin
+      Sys.chdir cwd;
+      let arg_file = abs_path_from_cml arg |> Str.(replace_first (regexp "/") "") in
+      chdir_to_cml ();
+      arg_file
+    end else arg
+  in
+  match args with
+  | [] -> begin
+    Diff.diff_indexes commit_diff_idx current_diff_idx
+  end
+  | arg::[] -> begin
+    let arg_file = get_arg_file arg in
+    (* print_endline ("arg_file: "^ arg_file); *)
+    if Sys.file_exists arg_file || arg_file = "" then
+      let files = get_files_from_rel_path arg_file in
+      let current_diff_idx = diff_idx_current_files files in
+      let commit_diff_idx = diff_idx_commit commit_index files in
+      Diff.diff_indexes commit_diff_idx current_diff_idx
+    else if Sys.file_exists arg then
+      raise (Fatal ("pathspec '"^arg^"' is outside the repository"))
+    else if List.mem arg (get_branches ()) then
+      let prev_commit_diff_idx = get_branch_index arg |> Diff.index_to_diff_index true in
+      Diff.diff_indexes prev_commit_diff_idx current_diff_idx
+    else begin
+      let prev_commit_diff_idx = get_commit_index arg |> Diff.index_to_diff_index true in
+      Diff.diff_indexes prev_commit_diff_idx current_diff_idx
     end
-    | hd::t -> begin
-      if hd = "." || hd = "-a" then
-        raise (Fatal "invalid arguments, see [--help]")
+  end
+  | arg1::arg2::[] -> begin
+    let old_idx =
+      if List.mem arg1 (get_branches ()) then
+        get_branch_index arg1
       else
-        List.map (fun f -> ((f, false), (get_object_path (List.assoc f ch_idx), true))) args
-        |> Diff.diff_mult
-    end
-  with
-  | Not_found -> ()
-  | Fatal _ -> ()
+        get_commit_index arg1
+    in
+    let arg_file = get_arg_file arg2 in
+    if Sys.file_exists arg_file || arg_file = "" then
+      let files = get_files_from_rel_path arg_file in
+      let current_diff_idx = diff_idx_current_files files in
+      let old_diff_idx = diff_idx_commit old_idx files in
+      Diff.diff_indexes old_diff_idx current_diff_idx
+    else
+      let old_diff_idx = old_idx |> Diff.index_to_diff_index true in
+      let new_diff_idx = get_commit_index arg2 |> Diff.index_to_diff_index true in
+      Diff.diff_indexes old_diff_idx new_diff_idx
+  end
+  | _ -> raise (Fatal "invalid arguments, see [--help]")
 
 (* display help information about CmlControl. *)
 let help () : unit =
@@ -306,18 +376,38 @@ let init () : unit =
 		output_string out "heads/master"; close_out out;
     print_color "initialized empty Cml repository" "b"
 
+(* returns a commit history that is the merge of two histories *)
+let merge_histories (h1: string list) (h2: string list) : string list =
+  let base = List.filter (fun c -> List.mem c h2) h1 in
+  let h1' = List.filter (fun c -> not (List.mem c base)) h1 in
+  let h2' = List.filter (fun c -> not (List.mem c base)) h2 in
+  base @ h1' @ h2'
+
+(* recursivley builds the commit history starting from a specified hash ptr *)
+let rec get_commit_history (des: string list) (acc: string list) (ptr: string) : string list =
+  let cmt = parse_commit ptr in
+  match cmt.parents with
+  | [] -> raise (Fatal ("ERROR - Corrupt commit "^cmt.tree))
+  | p::[] -> if p = "None" then acc else get_commit_history des (p::acc) p
+  | p1::p2::[] -> begin
+    let des' = acc@des in
+    let h1 = get_commit_history des' [p1] p1 in
+    let h2 = get_commit_history des' [p2] p2 in
+    (merge_histories h1 h2) @ des'
+  end
+  | _ -> raise (Fatal ("ERROR - Corrupt commit "^cmt.tree))
+
 (* display the current branches commit history *)
 let log () : unit =
   chdir_to_cml ();
-  let oc = open_out ".cml/log" in
-  let rec log_loop oc ptr cmt =
-    let _ = print_commit oc ptr cmt.author cmt.date cmt.message in
-    if cmt.parent = "None" then close_out oc
-    else cmt.parent |> parse_commit |> log_loop oc cmt.parent
+  let ch = open_out ".cml/log" in
+  let log_help ptr =
+    let cmt = parse_commit ptr in
+    print_commit ch ptr cmt.author cmt.date cmt.message
   in try
     let head = get_head_safe () in
-    parse_commit head |> log_loop oc head;
-    let _ = Sys.command "less -RXF .cml/log" in ()
+    head |> get_commit_history [] [head] |> List.rev |> List.iter log_help;
+    close_out ch; let _ = Sys.command "less -RXF .cml/log" in ()
   with
   | Fatal m -> begin
     if m = "HEAD not initialized" then
@@ -326,8 +416,66 @@ let log () : unit =
     else raise (Fatal m)
   end
 
+(*********************************** Merge ************************************)
+(******************************************************************************)
+
+(* returns the commit ptr of the common ancestor between two branches
+ * and the next commit for the branch *)
+let get_common_ancestor (cur_ptr: string) (br_ptr: string) : string =
+  let h1 = get_commit_history [] [cur_ptr] cur_ptr in
+  let h2 = get_commit_history [] [br_ptr] br_ptr in
+  let common = List.filter (fun c -> List.mem c h2) h1 in
+  match List.rev common with
+  | []   -> raise (Fatal "These branches don't have any ancestor in common") (* Edge case when branches are made before the first commit *)
+  | h::_ -> h
+
+(* returns an index with a new (f,h) mapping if f is not in [idx] *)
+let get_new_files (idx: index) (acc: index) (f,h) : index =
+  if List.mem_assoc f idx then acc else (f,h)::acc
+
+(* perform a true merge if there are no merge conflicts by creating
+ * a new commit that combines the states of the two branches *)
+let true_merge (cur_ptr: string) (br_ptr: string) (branch: string) : unit =
+  let cur = parse_commit cur_ptr in
+  let cur_idx = cur.tree |> Tree.read_tree "" |> Tree.tree_to_index in
+  let br = parse_commit br_ptr in
+  let br_idx = br.tree |> Tree.read_tree "" |> Tree.tree_to_index in
+  let anc = get_common_ancestor cur_ptr br_ptr |> parse_commit in
+  let anc_idx = anc.tree |> Tree.read_tree "" |> Tree.tree_to_index in
+  let compare_base (acc,inc_f) (f,h) =
+    let c_hash = List.assoc f cur_idx in
+    let b_hash = List.assoc f br_idx in
+    match (h=c_hash,h=b_hash) with
+    | (true,true)   -> ((f,h)::acc, inc_f) (* neither branch changed file *)
+    | (true,false)  -> ((f,b_hash)::acc, inc_f) (* merge branch changed file *)
+    | (false,true)  -> ((f,c_hash)::acc, inc_f) (* current branch changed file *)
+    | (false,false) -> if c_hash = b_hash then ((f,c_hash)::acc, inc_f)
+                       else (acc, f::inc_f) (* both branches changed file *)
+  in
+  let (merged_base,incomp_fs) = List.fold_left compare_base ([],[]) anc_idx in
+  if incomp_fs = [] then
+    (* let merged_base = List.map compare_base anc_idx in *)
+    (* print "...base..."; List.iter (fun (f,h) -> print (f^": "^h)) merged_base; *)
+    let new_cur = cur_idx |> List.fold_left (get_new_files merged_base) [] in
+    (* print "...new_cur..."; List.iter (fun (f,h) -> print (f^": "^h)) new_cur; *)
+    let new_br = br_idx |> List.fold_left (get_new_files merged_base) [] in
+    (* print "...new_branch..."; List.iter (fun (f,h) -> print (f^": "^h)) new_br; *)
+    (* merge the indexes, create a merge commit, and repopulate the repo, *)
+    let merged_idx = merged_base @ new_cur @ new_br in
+    let tree = Tree.index_to_tree merged_idx in
+    let tree_hash = Tree.write_tree tree in
+    let user = get_user_info () in
+    let msg = "Merged branch '" ^ branch ^ "' into " ^ get_current_branch () in
+    let tm = time () |> localtime |> Time.get_time in
+    create_commit tree_hash user tm msg [cur_ptr;br_ptr] |> set_head;
+    set_index merged_idx; Tree.recreate_tree "" tree; print msg
+  else
+    print "Unable to merge branches because of the following incompatible files:\n";
+    List.iter (fun f -> print_indent f "y" 3) incomp_fs;
+    print "\nPlease resolve these conflicts so that the vile versions match."
+
 (* perform fast-forward merge by updating the head to the branch head *)
-let merge_fast_forward (branch : string) (ptr : string) : unit =
+let fast_forward_merge (branch: string) (ptr: string) : unit =
   print ("Updating branch '" ^ branch ^ "' with fast-forward merge...");
   set_head ptr; switch_version ptr;
   print "\nMerge successful."
@@ -343,31 +491,20 @@ let merge (args: string list) : unit =
     let ch = get_changed cwd idx in
     if st <> [] || ch <> [] then invalid_cml_state st ch
     else begin
-      let cur_hd = get_head () in
-      let branch_hd = get_branch_ptr br in
-      (* check for up-to-date merge *)
-      let rec soft_loop_check ptr =
-        if ptr = "None" then true
-        else if ptr = branch_hd then
-          let _ = print "Already up-to-date." in false
-        else
-          let cmt = parse_commit ptr in soft_loop_check cmt.parent
-      in
-      if soft_loop_check cur_hd then
-        (* fast-forward loop check *)
-        let rec ff_loop_check ptr =
-          if ptr = "None" then true
-          else if ptr = cur_hd then
-            let _ = merge_fast_forward (get_current_branch ()) branch_hd in false
-          else
-            let cmt = parse_commit ptr in ff_loop_check cmt.parent
-        in
-        if ff_loop_check branch_hd then
-          print_color "TODO: Actual merging :(" "r"
+      let cur_ptr = get_head () in
+      let br_ptr = get_branch_ptr br in
+      if (cur_ptr |> get_commit_history [] [cur_ptr] |> List.mem br_ptr) then
+        print "Already up-to-date." (* soft-merge: nothing done *)
+      else if (br_ptr |> get_commit_history [] [br_ptr] |> List.mem cur_ptr) then
+        fast_forward_merge (get_current_branch ()) br_ptr (* fast-forward merge *)
+      else
+        true_merge cur_ptr br_ptr br (* perform true merge *)
     end
   end
-  | _ -> raise (Fatal "too many arguments, see [--help]")
+  | _ -> raise (Fatal "cml only supports merging two branches, see [--help]")
 
+(********************************* End Merge **********************************)
+(******************************************************************************)
 
 (* reset the current HEAD to a specified state *)
 let reset (args: string list) : unit =
@@ -384,17 +521,17 @@ let reset (args: string list) : unit =
     | _ -> raise (Fatal "usage: git reset [--soft | --mixed | --hard] [<commit>]")
   in
   let commit = parse_commit head_hash in   (* parse_commit does validation *)
-  set_head head_hash;
-  if List.mem "soft" flags then ()
-  else begin
-    let tree = Tree.read_tree "" commit.tree in
-    let index = Tree.tree_to_index tree in
-    set_index index;
-    if List.mem "hard" flags then
-      Tree.recreate_tree "" tree
-    else
-      ()
-  end
+  if List.mem "hard" flags then begin
+    switch_version head_hash;
+    set_head head_hash
+  end else
+    set_head head_hash;
+    if List.mem "soft" flags then ()
+    else begin
+      let tree = Tree.read_tree "" commit.tree in
+      let index = Tree.tree_to_index tree in
+      set_index index;
+    end
 
 (* remove files from working tree and index *)
 let rm (args: string list) : unit =
@@ -406,15 +543,18 @@ let rm (args: string list) : unit =
   else begin
     let remove_from_idx rel_path =
       if Sys.file_exists rel_path then begin
-        let rm_files = get_files_from_rel_path rel_path in
-        rm_files_from_idx rm_files;
-        if List.mem "f" flags then begin
-          if Sys.is_directory rel_path then begin
-            rm_files_from_repo rm_files;
-            Unix.rmdir rel_path
-          end else
-            rm_files_from_repo rm_files
-        end else ()
+        try begin
+          let rm_files = get_files_from_rel_path rel_path in
+          rm_files_from_idx rm_files;
+          if List.mem "f" flags then begin
+            if Sys.is_directory rel_path then begin
+              rm_files_from_repo rm_files;
+              try Unix.rmdir rel_path with _ -> ()
+            end else
+              rm_files_from_repo rm_files
+          end else ()
+        end
+          with _ -> raise (Fatal ("pathspec '"^rel_path^"' is outside the repository"))
       end else
         raise (Fatal ("pathspec '"^rel_path^"' does not match an file(s)"))
     in
@@ -473,7 +613,7 @@ let user (args: string list) : unit =
   end
 
 (* parses bash string input and returns a Cml input type *)
-let parse_input (args : string array) : input =
+let parse_input (args: string array) : input =
   match (Array.to_list args) with
   | [] -> {cmd = Help; args = []}
   | h::t -> begin

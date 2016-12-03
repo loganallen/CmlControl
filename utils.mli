@@ -9,7 +9,7 @@ type commit = {
   author: string;
   date: string;
   message: string;
-  parent: string;
+  parents: string list;
 }
 
 (* type blob represents a compressed file object *)
@@ -73,12 +73,12 @@ val remove_empty_dirs : string -> unit
 val create_blob: string -> string
 
 (* creates a commit object for the given commit. Returns the hash. *)
-val create_commit: string -> string -> string -> string -> string -> string
+val create_commit: string -> string -> string -> string -> string list -> string
 
 (* returns a commit record for the given commit ptr *)
 val parse_commit: string -> commit
 
-(* takes a commit hash and returns  the index of the commit *)
+(* takes a commit hash and returns the index of the commit *)
 val get_commit_index: string -> index
 
 (**************************** HEAD Ptr Manipulation ***************************)
@@ -135,6 +135,9 @@ val rm_files_from_repo : string list -> unit
 (* adds [add_files] list from the index *)
 val add_files_to_idx : string list -> unit
 
+(* creates an index from the given files *)
+
+
 (****************************** File Fetching *********************************)
 (******************************************************************************)
 
@@ -171,6 +174,12 @@ val get_branches: unit -> string list
 (* returns string representation of repo's current branch *)
 val get_current_branch: unit -> string
 
+(* returns the head pointer of the branch *)
+val get_branch : string -> string
+
+(* returns the index of the branch *)
+val get_branch_index : string -> index
+
 (* create a new branch at the specified ptr if it doesn't exist *)
 val create_branch: string -> string -> unit
 
@@ -179,7 +188,7 @@ val delete_branch: string -> unit
 
 (* switch current working branch *)
 (* precondition: [branch] exists *)
-val switch_branch: string -> bool -> bool
+val switch_branch: string -> bool -> unit
 
 (* switches state of repo to state of given commit_hash *)
 val switch_version: string -> unit
