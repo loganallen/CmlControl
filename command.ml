@@ -449,15 +449,17 @@ let true_merge (cur_ptr: string) (br_ptr: string) (branch: string) : unit =
     | (true,true)   -> (f,h) (* neither branch changed this file *)
     | (true,false)  -> (f,b_hash) (* merge branch changed this file *)
     | (false,true)  -> (f,c_hash) (* current branch changed this file *)
-    | (false,false) -> raise (Fatal "Cannot merge branches with incompatible files")
+    | (false,false) -> begin
+      if c_hash = b_hash then (f,c_hash)
+      else raise (Fatal "Cannot merge branches with incompatible files")
+    end
   in
   let merged_base = List.map compare_base ancestor in
-  print "...base..."; List.iter (fun (f,h) -> print (f^": "^h)) merged_base;
-  (* append new files from each index *)
+  (* print "...base..."; List.iter (fun (f,h) -> print (f^": "^h)) merged_base; *)
   let new_cur = cur_idx |> List.fold_left (get_new_files merged_base) [] in
-  print "...new_cur..."; List.iter (fun (f,h) -> print (f^": "^h)) new_cur;
+  (* print "...new_cur..."; List.iter (fun (f,h) -> print (f^": "^h)) new_cur; *)
   let new_br = br_idx |> List.fold_left (get_new_files merged_base) [] in
-  print "...new_branch..."; List.iter (fun (f,h) -> print (f^": "^h)) new_br;
+  (* print "...new_branch..."; List.iter (fun (f,h) -> print (f^": "^h)) new_br; *)
   (* merge the indexes, create a merge commit, and repopulate the repo, *)
   let merged_idx = merged_base @ new_cur @ new_br in
   let tree = Tree.index_to_tree merged_idx in
