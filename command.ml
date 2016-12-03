@@ -338,7 +338,12 @@ let diff (args: string list) : unit =
     end
   end
   | arg1::arg2::[] -> begin
-    let old_idx = get_commit_index arg1 in
+    let old_idx =
+      if List.mem arg1 (get_branches ()) then
+        get_branch_index arg1
+      else
+        get_commit_index arg1
+    in
     let arg_file = get_arg_file arg2 in
     if Sys.file_exists arg_file || arg_file = "" then
       let files = get_files_from_rel_path arg_file in
