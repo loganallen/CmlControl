@@ -529,14 +529,14 @@ let delete_branch (branch : string) : unit =
 
 (* switch current working branch *)
 (* precondition: [branch] exists *)
-let switch_branch (branch : string) (isdetached : bool) : bool =
+let switch_branch (branch : string) (isdetached : bool) : unit =
   let cur = if isdetached then "" else get_current_branch () in
   if cur = branch then
-    let _ = print ("Already on branch '"^branch^"'") in false
+    print ("Already on branch '"^branch^"'")
   else
     let ch = open_out ".cml/HEAD" in
     output_string ch ("heads/"^branch); close_out ch;
-    let _ = print ("Switched to branch '"^branch^"'") in true
+    print ("Switched to branch '"^branch^"'")
 
 (* switches state of repo to state of given commit_hash *)
 let switch_version (commit_hash : string) : unit =

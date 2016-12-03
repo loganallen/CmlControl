@@ -182,10 +182,14 @@ let checkout (args: string list) : unit =
         get_index () |> checkout_file arg
       else if st <> [] || ch <> [] then
         invalid_cml_state st ch
-      else if (get_branches () |> List.mem arg) then
-        if switch_branch arg isdetached then
-        get_branch_ptr arg |> switch_version else ()
-      else
+      else if (get_branches () |> List.mem arg) then begin
+        if arg = get_current_branch () then
+          print ("Already on branch '"^arg^"'")
+        else begin
+          get_branch_ptr arg |> switch_version;
+          switch_branch arg isdetached
+        end
+      end else
         try
           if isdetached && arg = get_detached_head () then
             print ("Already detached HEAD at " ^ arg)
@@ -206,7 +210,7 @@ let checkout (args: string list) : unit =
           invalid_cml_state st ch
         else
           let _ = get_head_safe () |> create_branch b in
-          let _ = switch_branch b isdetached in ()
+          switch_branch b isdetached
       else
         raise (Fatal ("invalid flags, see [--help]"))
     end
@@ -396,17 +400,17 @@ let reset (args: string list) : unit =
     | _ -> raise (Fatal "usage: git reset [--soft | --mixed | --hard] [<commit>]")
   in
   let commit = parse_commit head_hash in   (* parse_commit does validation *)
-  set_head head_hash;
-  if List.mem "soft" flags then ()
-  else begin
-    let tree = Tree.read_tree "" commit.tree in
-    let index = Tree.tree_to_index tree in
-    set_index index;
-    if List.mem "hard" flags then
-      Tree.recreate_tree "" tree
-    else
-      ()
-  end
+  if List.mem "hard" flags then begin
+    switch_version head_hash;
+    set_head head_hash
+  end else
+    set_head head_hash;
+    if List.mem "soft" flags then ()
+    else begin
+      let tree = Tree.read_tree "" commit.tree in
+      let index = Tree.tree_to_index tree in
+      set_index index;
+    end
 
 (* remove files from working tree and index *)
 let rm (args: string list) : unit =
