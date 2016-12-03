@@ -563,7 +563,34 @@ let rm (args: string list) : unit =
 
 (* stashes changes made to the current working tree *)
 let stash (args: string list) : unit =
-  failwith "Unimplemented"
+  match args with
+  | [] ->    begin
+               try
+                chdir_to_cml ();
+                let cwd = get_all_files ["./"] [] in
+                let idx = get_index () in
+                let ch = get_changed cwd idx in
+                let idx_new = List.map (fun file -> (file,create_blob file)) ch in
+                let idx_final = List.fold_left (fun idx id -> update_index id idx) idx idx_new in
+                let new_tree = Tree.index_to_tree idx_final |> Tree.write_tree in
+                let user = get_user_info () in
+                let tm = time () |> localtime |> Time.get_time in
+                let head = get_head () in
+                let commit = create_commit new_tree user tm "Stash" head in
+                switch_version head;
+                let oc = open_out ".cml/stash" in
+                output_string oc commit;
+                close_out oc;
+                with
+                | Fatal f -> print_endline "not a valid command - cannot stash."
+             end
+  | h::t -> begin
+                if h = "apply" then
+                let ic = open_in ".cml/stash" in
+                let version = input_line ic in
+                switch_version version;
+                else raise (Fatal ("not a valid argument to the stash command"))
+             end
 
 (* helper for printing status message *)
 let status_message () =
