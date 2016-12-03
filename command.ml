@@ -441,34 +441,38 @@ let true_merge (cur_ptr: string) (br_ptr: string) (branch: string) : unit =
   let br = parse_commit br_ptr in
   let br_idx = br.tree |> Tree.read_tree "" |> Tree.tree_to_index in
   let anc = get_common_ancestor cur_ptr br_ptr |> parse_commit in
-  let ancestor = anc.tree |> Tree.read_tree "" |> Tree.tree_to_index in
-  let compare_base (f,h) =
+  let anc_idx = anc.tree |> Tree.read_tree "" |> Tree.tree_to_index in
+  let compare_base (acc,inc_f) (f,h) =
     let c_hash = List.assoc f cur_idx in
     let b_hash = List.assoc f br_idx in
     match (h=c_hash,h=b_hash) with
-    | (true,true)   -> (f,h) (* neither branch changed this file *)
-    | (true,false)  -> (f,b_hash) (* merge branch changed this file *)
-    | (false,true)  -> (f,c_hash) (* current branch changed this file *)
-    | (false,false) -> begin
-      if c_hash = b_hash then (f,c_hash)
-      else raise (Fatal "Cannot merge branches with incompatible files")
-    end
+    | (true,true)   -> ((f,h)::acc, inc_f) (* neither branch changed file *)
+    | (true,false)  -> ((f,b_hash)::acc, inc_f) (* merge branch changed file *)
+    | (false,true)  -> ((f,c_hash)::acc, inc_f) (* current branch changed file *)
+    | (false,false) -> if c_hash = b_hash then ((f,c_hash)::acc, inc_f)
+                       else (acc, f::inc_f) (* both branches changed file *)
   in
-  let merged_base = List.map compare_base ancestor in
-  (* print "...base..."; List.iter (fun (f,h) -> print (f^": "^h)) merged_base; *)
-  let new_cur = cur_idx |> List.fold_left (get_new_files merged_base) [] in
-  (* print "...new_cur..."; List.iter (fun (f,h) -> print (f^": "^h)) new_cur; *)
-  let new_br = br_idx |> List.fold_left (get_new_files merged_base) [] in
-  (* print "...new_branch..."; List.iter (fun (f,h) -> print (f^": "^h)) new_br; *)
-  (* merge the indexes, create a merge commit, and repopulate the repo, *)
-  let merged_idx = merged_base @ new_cur @ new_br in
-  let tree = Tree.index_to_tree merged_idx in
-  let tree_hash = Tree.write_tree tree in
-  let user = get_user_info () in
-  let msg = "Merged branch '" ^ branch ^ "' into " ^ get_current_branch () in
-  let tm = time () |> localtime |> Time.get_time in
-  create_commit tree_hash user tm msg [cur_ptr;br_ptr] |> set_head;
-  set_index merged_idx; Tree.recreate_tree "" tree; print msg
+  let (merged_base,incomp_fs) = List.fold_left compare_base ([],[]) anc_idx in
+  if incomp_fs = [] then
+    (* let merged_base = List.map compare_base anc_idx in *)
+    (* print "...base..."; List.iter (fun (f,h) -> print (f^": "^h)) merged_base; *)
+    let new_cur = cur_idx |> List.fold_left (get_new_files merged_base) [] in
+    (* print "...new_cur..."; List.iter (fun (f,h) -> print (f^": "^h)) new_cur; *)
+    let new_br = br_idx |> List.fold_left (get_new_files merged_base) [] in
+    (* print "...new_branch..."; List.iter (fun (f,h) -> print (f^": "^h)) new_br; *)
+    (* merge the indexes, create a merge commit, and repopulate the repo, *)
+    let merged_idx = merged_base @ new_cur @ new_br in
+    let tree = Tree.index_to_tree merged_idx in
+    let tree_hash = Tree.write_tree tree in
+    let user = get_user_info () in
+    let msg = "Merged branch '" ^ branch ^ "' into " ^ get_current_branch () in
+    let tm = time () |> localtime |> Time.get_time in
+    create_commit tree_hash user tm msg [cur_ptr;br_ptr] |> set_head;
+    set_index merged_idx; Tree.recreate_tree "" tree; print msg
+  else
+    print "Unable to merge branches because of the following incompatible files:\n";
+    List.iter (fun f -> print_indent f "y" 3) incomp_fs;
+    print "\nPlease resolve these conflicts so that the vile versions match."
 
 (* perform fast-forward merge by updating the head to the branch head *)
 let fast_forward_merge (branch: string) (ptr: string) : unit =
