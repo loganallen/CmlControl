@@ -5,6 +5,16 @@
  * referred to as the index in git *)
 type index = (string * string) list
 
+(* a record representing all the information about a commit type.
+ * note: pointers in this case are string file names. *)
+type commit = {
+  tree: string;
+  author: string;
+  date: string;
+  message: string;
+  parent: string;
+}
+
 (* Fatal exception for internal cml execution errors *)
 exception Fatal of string
 

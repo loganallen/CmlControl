@@ -5,6 +5,15 @@
  * referred to as the index in git *)
 type index = (string * string) list
 
+(* commit record type for to represent commit objects *)
+type commit = {
+  tree: string;
+  author: string;
+  date: string;
+  message: string;
+  parent: string;
+}
+
 (* Fatal exception for internal cml execution errors *)
 exception Fatal of string
 

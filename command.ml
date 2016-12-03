@@ -4,18 +4,20 @@ open Print
 open Unix
 open Tree
 open Branch
-open Files
+open Filesystem
+open Index
+open Object
+open Head
 
 type command =
 | Add | Branch | Checkout | Commit | Diff | Help | Init | Log
 | Merge | Reset | Rm | Stash | Status | User
 
 type input = { cmd: command; args: string list }
+
 type args_input = { flags: string list; args: string list }
 
 exception Parsing of string
-
-let perm = 0o777
 
 (* parses string of args into flags and actual arguments *)
 let parse_args (args : string list) : args_input =
@@ -50,19 +52,6 @@ let rec print_list = function
   | [] -> ()
   | h::t -> print_endline h; print_list t
 
-let files_in_index idx =
-  List.map (fun (file,_) -> file) idx
-
-(* returns a list of files that were deleted since last commit *)
-let get_deleted cwd_files idx =
-  let idx_files = files_in_index idx in
-  try
-    let cmt = get_head_safe () |> parse_commit in
-    let cmt_files = Tree.read_tree "" cmt.tree |> Tree.tree_to_index |> files_in_index in
-    List.filter (fun file -> (not (List.mem file idx_files)) || (not (List.mem file cwd_files))) cmt_files |> List.sort Pervasives.compare
-  with
-  | Fatal _ -> []
-
 (* add print message of 'new file:' or 'modified:' to the files
  * precondition: cwd is the .cml repo (chdir_to_cml ()) *)
 let add_print_msg files =
@@ -81,40 +70,6 @@ let add_print_msg files =
 (* add print message of 'deleted:' to the files *)
 let add_delete_print_msg files =
   List.map (fun file -> "deleted:    "^file) files
-
-let verify_files_in_repo files =
-  let filter file =
-    if not (Sys.file_exists file) then
-      raise (Fatal ("pathspec '"^file^"' is outside the repository"))
-    else true
-  in
-  List.filter filter files
-
-(* returns a list of the file names in [rel_path] to cwd, (the returned
- * filenames are relative to cml repo) *)
-let get_files_from_rel_path rel_path =
-  let path_from_cml = abs_path_from_cml rel_path in
-  begin
-    if Sys.is_directory rel_path then
-      let rel_path' = begin
-        if Str.string_match (Str.regexp ".*/$") rel_path 0 then
-          rel_path
-        else
-          rel_path^"/"
-      end in
-      get_all_files [rel_path'] []
-      |> List.map (fun s ->
-        let name = Str.replace_first (Str.regexp "^/") "" (rel_path')
-          |> Str.global_replace (Str.regexp "\\.") "\\." in
-        Str.replace_first (Str.regexp name) "" s)
-      |> List.map (fun s -> (path_from_cml^"/"^s))
-      |> List.map (fun s -> Str.global_replace (Str.regexp "\\.\\./") "" s)
-      |> List.map (fun s -> Str.global_replace (Str.regexp "\\./") "" s)
-    else
-      [path_from_cml]
-  end |> List.map (fun s -> Str.replace_first (Str.regexp "//") "/" s)
-      |> List.map (fun s -> Str.replace_first (Str.regexp "^/") "" s)
-      |> verify_files_in_repo
 
 (* add file contents to the index *)
 let add (args: string list) : unit =
@@ -313,7 +268,7 @@ let init () : unit =
   if cml_initialized "./" then
     raise (Fatal "Cml repository already initialized")
   else
-    mkdir ".cml" perm; mkdir ".cml/heads" perm; mkdir ".cml/objects" perm;
+    mkdir ".cml" 0o777; mkdir ".cml/heads" 0o777; mkdir ".cml/objects" 0o777;
     let _ = create_branch "master" "" in
 		let out = open_out ".cml/HEAD" in
 		output_string out "heads/master"; close_out out;
