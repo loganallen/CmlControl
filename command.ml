@@ -4,6 +4,7 @@ open Print
 open Unix
 open Tree
 open Branch
+open Files
 
 type command =
 | Add | Branch | Checkout | Commit | Diff | Help | Init | Log

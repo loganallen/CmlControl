@@ -1,6 +1,9 @@
 open Unix
 open Common
 
+(******************************* Tree Module **********************************)
+(******************************************************************************)
+
 (* variant type representing one of the tree operations *)
 type op = Insert | Read | Write
 

@@ -15,10 +15,6 @@ type commit = {
 (* type blob represents a compressed file object *)
 type blob = string
 
-(* type index is a list of mappings from filename to its hash,
- * referred to as the index in git *)
-type index = (string * string) list
-
 (***************************** Generic Helpers ********************************)
 (******************************************************************************)
 
@@ -79,7 +75,7 @@ val create_commit: string -> string -> string -> string -> string -> string
 val parse_commit: string -> commit
 
 (* takes a commit hash and returns  the index of the commit *)
-val get_commit_index: string -> index
+val get_commit_index: string -> Common.index
 
 (**************************** HEAD Ptr Manipulation ***************************)
 (******************************************************************************)
@@ -104,20 +100,20 @@ val get_head_safe : unit -> string
 
 (* overwrites file with version added to supplied index
  * if the file is not in the index, do nothing *)
-val checkout_file: string -> index -> unit
+val checkout_file: string -> Common.index -> unit
 
 (***************************** Index Manipulation *****************************)
 (******************************************************************************)
 
 (* returns the index which is a list that maps tracked filenames
  * to their most recent hash string value *)
-val get_index: unit -> index
+val get_index: unit -> Common.index
 
 (* updates the index by adding a new mapping *)
-val update_index: string * string -> index -> index
+val update_index: string * string -> Common.index -> Common.index
 
 (* initializes an index in the cml directory *)
-val set_index: index -> unit
+val set_index: Common.index -> unit
 
 (* removes [rm_files] list from the index *)
 val rm_files_from_idx : string list -> unit
@@ -128,30 +124,6 @@ val rm_files_from_repo : string list -> unit
 
 (* adds [add_files] list from the index *)
 val add_files_to_idx : string list -> unit
-
-(****************************** File Fetching *********************************)
-(******************************************************************************)
-
-(* returns true if dir is known link, or if is .cml *)
-val is_bad_dir: string -> bool
-
-(* returns true if the file is an ignored file *)
-val is_ignored_file : string list -> string -> bool
-
-(* returns a list of all files in working repo by absolute path *)
-val get_all_files: string list -> string list -> string list
-
-(* returns a list of all files staged (added) for commit *)
-val get_staged: index -> index -> string list
-
-(* returns a mapping of changed files to their old obj hashes *)
-val get_changed_as_index: string list -> index -> index
-
-(* returns a list of changed files *)
-val get_changed: string list -> index -> string list
-
-(* returns a list of untracked files *)
-val get_untracked: string list -> index -> string list
 
 (* switches state of repo to state of given commit_hash *)
 val switch_version: string -> unit

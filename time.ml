@@ -1,3 +1,6 @@
+(******************************* Time Module **********************************)
+(******************************************************************************)
+
 (* returns a timestamp in the format [hr:min:sec] *)
 let time (h : int) (m : int) (s : int) : string =
   (string_of_int h) ^ ":" ^ (string_of_int m) ^ ":" ^ (string_of_int s)

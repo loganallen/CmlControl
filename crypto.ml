@@ -1,7 +1,9 @@
-open Cryptokit
 open Unix
+open Common
+open Cryptokit
 
-exception Fatal of string
+(****************************** Crypto Module *********************************)
+(******************************************************************************)
 
 (* returns the string list of lines in the file_name
  * precondition: file_name exists from the cwd *)
@@ -17,7 +19,6 @@ let parse_lines file_name =
   try acc_lines [] (open_in file_name) with
   | _ -> raise (Fatal ("Failure reading file '"^file_name^"'"))
 
-
 (* hash returns a SHA-1 hash of a given input *)
 let hash (file_name : string) : string =
 	try
@@ -28,13 +29,11 @@ let hash (file_name : string) : string =
 	with
 		Unix_error (Unix.ENOENT,_,_) -> raise (Fatal ("Could not find file: "^file_name))
 
-(* compress compresses a file/directory
- * takes initial path and final path as arguments.
- *)
-let compress (file_name : string) (dest_path : string) : unit =
+(* compresses a file/directory to the specified destination *)
+let compress (file_name : string) (path : string) : unit =
   try begin
     let ic = open_in file_name in
-    let oc = open_out dest_path in
+    let oc = open_out path in
     let compress = Cryptokit.Zlib.compress () in
     Cryptokit.transform_channel compress ic oc;
     close_in ic;
@@ -42,13 +41,11 @@ let compress (file_name : string) (dest_path : string) : unit =
   end with
     | _ -> raise (Fatal ("Failure compressing '"^file_name^"'"))
 
-(* returns the compressed [in_string] *)
-let compress_string in_string =
-    Cryptokit.transform_string (Cryptokit.Zlib.compress ()) in_string
+(* returns the compressed [str] *)
+let compress_string str =
+    Cryptokit.transform_string (Cryptokit.Zlib.compress ()) str
 
-(* decompress decompresses a file/directory
- * takes initial and final path as arguments.
- *)
+(* decompresses a file/directory to the specified destination *)
 let decompress (file_name : string) (dest_path : string) : unit =
   try begin
     let ic = open_in file_name in
@@ -60,9 +57,9 @@ let decompress (file_name : string) (dest_path : string) : unit =
   end with
     | _ -> raise (Fatal ("Failure uncompressing '"^file_name^"'"))
 
-(* returns the decompressed [in_string] *)
-let decompress_string in_string =
-    Cryptokit.transform_string (Cryptokit.Zlib.uncompress ()) in_string
+(* returns the decompressed [str] *)
+let decompress_string str =
+    Cryptokit.transform_string (Cryptokit.Zlib.uncompress ()) str
 
 (* returns the string list of lines in the decompressed file given the
  * file_name of a compressed file *)

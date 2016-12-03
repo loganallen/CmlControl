@@ -1,3 +1,10 @@
+(***************************** Universal Module *******************************)
+(******************************************************************************)
+
+(* type index is a list of mappings from filename to its hash,
+ * referred to as the index in git *)
+type index = (string * string) list
+
 (* Fatal exception for internal cml execution errors *)
 exception Fatal of string
 
