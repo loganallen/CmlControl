@@ -475,6 +475,12 @@ let user (args: string list) : unit =
 (************************ Command Parsing and Exection ************************)
 (******************************************************************************)
 
+let run (run_fun, run_args) (help_fun, help_args) =
+  if List.mem "--help" help_args then
+    help_fun ()
+  else
+    run_fun run_args
+
 (* parses bash string input and returns a Cml input type *)
 let parse_input (args: string array) : input =
   match (Array.to_list args) with
@@ -506,20 +512,20 @@ let execute (i : input) : unit =
       raise (Fatal "Not a Cml repository (or any of the parent directories)")
     else
       match i.cmd with
-      | Add      -> add i.args
-      | Branch   -> branch i.args
-      | Checkout -> checkout i.args
-      | Commit   -> commit i.args
-      | Diff     -> diff i.args
-      | Help     -> help ()
-  		| Init     -> init ()
-      | Log      -> log ()
-      | Merge    -> merge i.args
-      | Reset    -> reset i.args
-      | Rm       -> rm i.args
-      | Stash    -> stash i.args
-      | Status   -> status ()
-      | User     -> user i.args
+      | Add      -> run (add, i.args) (print_help_add_long, i.args)
+      | Branch   -> run (branch, i.args) (print_help_branch_long, i.args)
+      | Checkout -> run (checkout, i.args) (print_help_checkout_long, i.args)
+      | Commit   -> run (commit, i.args) (print_help_commit_long, i.args)
+      | Diff     -> run (diff, i.args) (print_help_diff_long, i.args)
+      | Help     -> run (help, ()) (print_help, i.args)
+  		| Init     -> run (init, ()) (print_help_init_long, i.args)
+      | Log      -> run (log, ()) (print_help_log_long, i.args)
+      | Merge    -> run (merge, i.args) (print_help_merge_long, i.args)
+      | Reset    -> run (reset, i.args) (print_help_reset_long, i.args)
+      | Rm       -> run (rm, i.args) (print_help_rm_long, i.args)
+      | Stash    -> run (stash, i.args) (print_help_stash_long, i.args)
+      | Status   -> run (status, ()) (print_help_status_long, i.args)
+      | User     -> run (user, i.args) (print_help_user_long, i.args)
   with
     | Fatal msg -> print ("fatal: "^msg)
     | Corrupt -> print_corrupt ()

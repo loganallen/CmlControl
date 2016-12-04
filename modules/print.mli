@@ -40,11 +40,20 @@ val print_commit: out_channel -> string -> string -> string -> string -> unit
 (* prints a help log for all Cml commands *)
 val print_help: unit -> unit
 
-(* print help info for add (long version) *)
+(* print help info for commands (long version) *)
 val print_help_add_long : unit -> unit
-
-(* print help info for rm (long version) *)
 val print_help_rm_long : unit -> unit
+val print_help_reset_long : unit -> unit
+val print_help_branch_long : unit -> unit
+val print_help_status_long : unit -> unit
+val print_help_log_long : unit -> unit
+val print_help_merge_long : unit -> unit
+val print_help_diff_long : unit -> unit
+val print_help_checkout_long : unit -> unit
+val print_help_commit_long : unit -> unit
+val print_help_init_long : unit -> unit
+val print_help_stash_long : unit -> unit
+val print_help_user_long : unit -> unit
 
 (* print help info for reset (long version) *)
 val print_help_reset_long : unit -> unit

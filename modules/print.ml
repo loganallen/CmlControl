@@ -296,7 +296,7 @@ let print_help_diff () : unit =
   print_indent "       cml diff <commit1> <commit2>" "y" 8
 
 (* print help info for merge (long version) *)
-let print_help_merge () : unit =
+let print_help_merge_long () : unit =
   print_indent "cml merge <branch>" "b" 1;
   print_newline ();
   print_indent "Joins two branches together as long as they both do not have files" "" 1;
@@ -310,10 +310,32 @@ let print_help_merge () : unit =
   print_indent "merge\t\tJoin two development histories together" "b" 1;
   print_indent "usage: cml merge <branch>" "y" 8
 
+(* print help info for status (long version) *)
+let print_help_status_long () : unit =
+  print_indent "cml status" "b" 1;
+  print_newline ();
+  print_indent "Show the working tree status" "" 1
+
+(* print help info for status *)
+let print_help_status () : unit =
+  print_indent "status\tShow the working tree status" "b" 1;
+  print_indent "usage: cml status" "y" 8
+
+(* print help info for log (long version) *)
+let print_help_log_long () : unit =
+  print_indent "cml log" "b" 1;
+  print_newline ();
+  print_indent "Show commit logs" "" 1
+
+(* print help info for log *)
+let print_help_log () : unit =
+  print_indent "log\t\tShow commit logs" "b" 1;
+  print_indent "usage: cml log" "y" 8
+
 (* prints a help log for all Cml commands *)
 let print_help () : unit =
   print_camel (); print_newline ();
-  print_color "usage: cml <command> [--help] [<args>]" "b"; print_newline ();
+  print_color "usage: cml <command> [--help] [<arg>...]" "b"; print_newline ();
   print "The following are cml commands and usages:";
   print_newline ();
   print_color "starting a cml version control repository" "";
@@ -323,8 +345,7 @@ let print_help () : unit =
   print_help_add (); print_help_reset (); print_help_rm (); print_help_stash ();
   print_newline ();
   print "examine the history and state";
-  print_indent "log\t\tShow commit logs" "b" 1;
-  print_indent "status\tShow the working tree status" "b" 1;
+  print_help_log (); print_help_status ();
   print_newline ();
   print "grow and tweak the cml history";
   print_help_branch (); print_help_checkout (); print_help_commit ();
