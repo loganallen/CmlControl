@@ -39,7 +39,7 @@ let get_current_branch () : string =
     | Sys_error _ -> raise (Fatal "HEAD not found")
     | End_of_file -> raise (Fatal "HEAD not initialized")
 
-(* returns the HASH of a head of the given branch *)
+(* returns the head ptr of the given branch *)
 let get_branch_ptr (branch_name : string) : string =
   try
     let ch = open_in (".cml/heads/" ^ branch_name) in
@@ -48,24 +48,6 @@ let get_branch_ptr (branch_name : string) : string =
   with
     | Sys_error _ -> raise (Fatal ("branch "^branch_name^" not found"))
     | End_of_file -> raise (Fatal (branch_name^" ptr not set"))
-
-(*** DUPLICATION ***)
-
-(* returns the head pointer of the branch *)
-let get_branch branch =
-  let branch_path = ".cml/heads/"^branch in
-  if Sys.file_exists branch_path then
-    try
-      let ic = open_in branch_path in
-      let head = input_line ic in
-      close_in ic;
-      head
-    with
-      | _ -> raise (Fatal ("Could not find branch '"^branch^"'"))
-  else
-    raise (Fatal ("Branch '"^branch^"' does not exist"))
-
-(*** END DUPLICATION ***)
 
 (* initializes a given commit to a given branch name *)
 let set_branch_ptr (branch_name : string) (commit_hash : string) : unit =
