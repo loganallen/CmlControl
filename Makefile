@@ -1,5 +1,5 @@
 install:
-	ocamlbuild -pkgs diff,unix,ANSITerminal,cryptokit,str cml.byte
+	ocamlbuild -pkgs diff,unix,ANSITerminal,cryptokit,str -I modules cml.byte
 	sudo cp cml /usr/local/bin
 	sudo cp cml.byte /usr/local/bin
 

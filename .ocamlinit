@@ -1,4 +1,5 @@
 #directory "_build";;
+#directory "_build/modules";;
 #require "ANSITerminal";;
 #require "cryptokit";;
 #require "diff";;
