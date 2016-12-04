@@ -44,7 +44,7 @@ let get_user_info () : string =
     let split = (String.index raw ' ') + 1 in
     close_in ch; String.sub raw split (String.length raw - split)
   with
-  | Sys_error _ -> raise (Fatal "username not set, set with [--user <name>]")
+  | Sys_error _ -> raise (Fatal "username not set, set with [cml --user <name>]")
 
 (* set the user info (username) *)
 let set_user_info (name : string) : unit =
