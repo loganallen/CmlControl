@@ -17,7 +17,7 @@ exception Parsing of string
 let perm = 0o777
 
 (* parses string of args into flags and actual arguments *)
-let parse_args (args : string list) : args_input =
+let parse_args (args: string list) : args_input =
   let acc_flags = fun acc arg ->
     if arg_is_flag arg then (get_flags_from_arg arg) @ acc else acc
   in
@@ -38,7 +38,7 @@ let rec verify_allowed_flags allowed_flags flags =
   end
 
 (* helper function that returns a list of files staged for commit *)
-let get_staged_help (idx : index) : string list =
+let get_staged_help (idx: index) : string list =
   try
     let cmt = get_head_safe () |> parse_commit in
     Tree.read_tree "" cmt.tree |> Tree.tree_to_index |> get_staged idx
@@ -87,7 +87,11 @@ let verify_files_in_repo files =
       raise (Fatal ("pathspec '"^file^"' is outside the repository"))
     else true
   in
-  List.filter filter files
+  let cwd = Sys.getcwd () in
+  chdir_to_cml ();
+  let filtered_files = List.filter filter files in
+  Sys.chdir cwd;
+  filtered_files
 
 (* returns a list of the file names in [rel_path] to cwd, (the returned
  * filenames are relative to cml repo) *)
@@ -158,7 +162,7 @@ let branch (args: string list) : unit =
     else raise (Fatal "invalid flags, see [--help]")
   end
 
-let invalid_cml_state (st : string list) (ch : string list) : unit =
+let invalid_cml_state (st: string list) (ch: string list) : unit =
   let _ = print "Your changes to the following files would be overwritten:\n" in
   let rec loop = function
     | [] -> ()
@@ -173,6 +177,8 @@ let checkout (args: string list) : unit =
   let idx = get_index () in
   let st = get_staged_help idx in
   let ch = get_changed cwd idx in
+  let ut = get_untracked cwd idx in
+  print_list ut;
   let isdetached = detached_head () in
   match args with
   | []    -> raise (Fatal "branch name or HEAD version required")
@@ -182,10 +188,24 @@ let checkout (args: string list) : unit =
         get_index () |> checkout_file arg
       else if st <> [] || ch <> [] then
         invalid_cml_state st ch
-      else if (get_branches () |> List.mem arg) then
-        if switch_branch arg isdetached then
-        get_branch_ptr arg |> switch_version true else ()
-      else
+      else if (get_branches () |> List.mem arg) then begin
+        if arg = get_current_branch () then
+          print ("Already on branch '"^arg^"'")
+        else
+          let branch_hd = get_branch_ptr arg in
+          let branch_idx = (parse_commit branch_hd).tree |> Tree.read_tree ""
+                           |> Tree.tree_to_index in
+          let conflicting_files =
+            List.fold_left (fun acc fn ->
+              if List.mem_assoc fn branch_idx then fn::acc else acc) [] ut in
+          if conflicting_files <> [] then begin
+            print_endline "fatal: The following untracked working tree files would be overwritten by checkout:";
+            List.iter (fun fn -> print_indent fn "r" 3) conflicting_files
+          end else begin
+            get_branch_ptr arg |> switch_version true;
+            switch_branch arg isdetached
+          end
+      end else
         try
           if isdetached && arg = get_detached_head () then
             print ("Already detached HEAD at " ^ arg)
@@ -206,7 +226,7 @@ let checkout (args: string list) : unit =
           invalid_cml_state st ch
         else
           let _ = get_head_safe () |> create_branch b in
-          let _ = switch_branch b isdetached in ()
+          switch_branch b isdetached
       else
         raise (Fatal ("invalid flags, see [--help]"))
     end
@@ -256,10 +276,10 @@ let commit (args: string list) : unit =
           let msg = List.rev lst |> List.fold_left (fun acc s -> s^" "^acc) ""
                     |> String.trim in
           let tm = time () |> localtime |> Time.get_time in
-          let last_commit =
-            try if isdetached then get_detached_head () else get_head ()
+          let last_commit = try
+            if isdetached then get_detached_head () else get_head ()
             with Fatal n -> "None" in
-          create_commit tree user tm msg last_commit
+          create_commit tree user tm msg [last_commit]
         end
     end
   in
@@ -308,12 +328,13 @@ let diff (args: string list) : unit =
   let commit_index = get_commit_index (get_head_safe ()) in
   let commit_diff_idx = commit_index |> Diff.index_to_diff_index true in
   let get_arg_file arg =
+    Sys.chdir cwd;
     if Sys.file_exists arg then begin
-      Sys.chdir cwd;
       let arg_file = abs_path_from_cml arg |> Str.(replace_first (regexp "/") "") in
       chdir_to_cml ();
+      let _ = verify_files_in_repo [arg_file] in
       arg_file
-    end else arg
+    end else (chdir_to_cml (); arg)
   in
   match args with
   | [] -> begin
@@ -321,18 +342,15 @@ let diff (args: string list) : unit =
   end
   | arg::[] -> begin
     let arg_file = get_arg_file arg in
-    (* print_endline ("arg_file: "^ arg_file); *)
-    if Sys.file_exists arg_file || arg_file = "" then
+    if Sys.file_exists arg_file || arg_file = "" then begin
       let files = get_files_from_rel_path arg_file in
       let current_diff_idx = diff_idx_current_files files in
       let commit_diff_idx = diff_idx_commit commit_index files in
       Diff.diff_indexes commit_diff_idx current_diff_idx
-    else if Sys.file_exists arg then
-      raise (Fatal ("pathspec '"^arg^"' is outside the repository"))
-    else if List.mem arg (get_branches ()) then
+    end else if List.mem arg (get_branches ()) then begin
       let prev_commit_diff_idx = get_branch_index arg |> Diff.index_to_diff_index true in
       Diff.diff_indexes prev_commit_diff_idx current_diff_idx
-    else begin
+    end else begin
       let prev_commit_diff_idx = get_commit_index arg |> Diff.index_to_diff_index true in
       Diff.diff_indexes prev_commit_diff_idx current_diff_idx
     end
@@ -372,18 +390,38 @@ let init () : unit =
 		output_string out "heads/master"; close_out out;
     print_color "initialized empty Cml repository" "b"
 
+(* returns a commit history that is the merge of two histories *)
+let merge_histories (h1: string list) (h2: string list) : string list =
+  let base = List.filter (fun c -> List.mem c h2) h1 in
+  let h1' = List.filter (fun c -> not (List.mem c base)) h1 in
+  let h2' = List.filter (fun c -> not (List.mem c base)) h2 in
+  base @ h1' @ h2'
+
+(* recursivley builds the commit history starting from a specified hash ptr *)
+let rec get_commit_history (des: string list) (acc: string list) (ptr: string) : string list =
+  let cmt = parse_commit ptr in
+  match cmt.parents with
+  | [] -> raise (Fatal ("ERROR - Corrupt commit "^cmt.tree))
+  | p::[] -> if p = "None" then acc else get_commit_history des (p::acc) p
+  | p1::p2::[] -> begin
+    let des' = acc@des in
+    let h1 = get_commit_history des' [p1] p1 in
+    let h2 = get_commit_history des' [p2] p2 in
+    (merge_histories h1 h2) @ des'
+  end
+  | _ -> raise (Fatal ("ERROR - Corrupt commit "^cmt.tree))
+
 (* display the current branches commit history *)
 let log () : unit =
   chdir_to_cml ();
-  let oc = open_out ".cml/log" in
-  let rec log_loop oc ptr cmt =
-    let _ = print_commit oc ptr cmt.author cmt.date cmt.message in
-    if cmt.parent = "None" then close_out oc
-    else cmt.parent |> parse_commit |> log_loop oc cmt.parent
+  let ch = open_out ".cml/log" in
+  let log_help ptr =
+    let cmt = parse_commit ptr in
+    print_commit ch ptr cmt.author cmt.date cmt.message
   in try
     let head = get_head_safe () in
-    parse_commit head |> log_loop oc head;
-    let _ = Sys.command "less -RXF .cml/log" in ()
+    head |> get_commit_history [] [head] |> List.rev |> List.iter log_help;
+    close_out ch; let _ = Sys.command "less -RXF .cml/log" in ()
   with
   | Fatal m -> begin
     if m = "HEAD not initialized" then
@@ -392,8 +430,66 @@ let log () : unit =
     else raise (Fatal m)
   end
 
+(*********************************** Merge ************************************)
+(******************************************************************************)
+
+(* returns the commit ptr of the common ancestor between two branches
+ * and the next commit for the branch *)
+let get_common_ancestor (cur_ptr: string) (br_ptr: string) : string =
+  let h1 = get_commit_history [] [cur_ptr] cur_ptr in
+  let h2 = get_commit_history [] [br_ptr] br_ptr in
+  let common = List.filter (fun c -> List.mem c h2) h1 in
+  match List.rev common with
+  | []   -> raise (Fatal "These branches don't have any ancestor in common") (* Edge case when branches are made before the first commit *)
+  | h::_ -> h
+
+(* returns an index with a new (f,h) mapping if f is not in [idx] *)
+let get_new_files (idx: index) (acc: index) (f,h) : index =
+  if List.mem_assoc f idx then acc else (f,h)::acc
+
+(* perform a true merge if there are no merge conflicts by creating
+ * a new commit that combines the states of the two branches *)
+let true_merge (cur_ptr: string) (br_ptr: string) (branch: string) : unit =
+  let cur = parse_commit cur_ptr in
+  let cur_idx = cur.tree |> Tree.read_tree "" |> Tree.tree_to_index in
+  let br = parse_commit br_ptr in
+  let br_idx = br.tree |> Tree.read_tree "" |> Tree.tree_to_index in
+  let anc = get_common_ancestor cur_ptr br_ptr |> parse_commit in
+  let anc_idx = anc.tree |> Tree.read_tree "" |> Tree.tree_to_index in
+  let compare_base (acc,inc_f) (f,h) =
+    let c_hash = List.assoc f cur_idx in
+    let b_hash = List.assoc f br_idx in
+    match (h=c_hash,h=b_hash) with
+    | (true,true)   -> ((f,h)::acc, inc_f) (* neither branch changed file *)
+    | (true,false)  -> ((f,b_hash)::acc, inc_f) (* merge branch changed file *)
+    | (false,true)  -> ((f,c_hash)::acc, inc_f) (* current branch changed file *)
+    | (false,false) -> if c_hash = b_hash then ((f,c_hash)::acc, inc_f)
+                       else (acc, f::inc_f) (* both branches changed file *)
+  in
+  let (merged_base,incomp_fs) = List.fold_left compare_base ([],[]) anc_idx in
+  if incomp_fs = [] then
+    (* let merged_base = List.map compare_base anc_idx in *)
+    (* print "...base..."; List.iter (fun (f,h) -> print (f^": "^h)) merged_base; *)
+    let new_cur = cur_idx |> List.fold_left (get_new_files merged_base) [] in
+    (* print "...new_cur..."; List.iter (fun (f,h) -> print (f^": "^h)) new_cur; *)
+    let new_br = br_idx |> List.fold_left (get_new_files merged_base) [] in
+    (* print "...new_branch..."; List.iter (fun (f,h) -> print (f^": "^h)) new_br; *)
+    (* merge the indexes, create a merge commit, and repopulate the repo, *)
+    let merged_idx = merged_base @ new_cur @ new_br in
+    let tree = Tree.index_to_tree merged_idx in
+    let tree_hash = Tree.write_tree tree in
+    let user = get_user_info () in
+    let msg = "Merged branch '" ^ branch ^ "' into " ^ get_current_branch () in
+    let tm = time () |> localtime |> Time.get_time in
+    create_commit tree_hash user tm msg [cur_ptr;br_ptr] |> set_head;
+    set_index merged_idx; Tree.recreate_tree "" tree; print msg
+  else
+    print "Unable to merge branches because of the following incompatible files:\n";
+    List.iter (fun f -> print_indent f "y" 3) incomp_fs;
+    print "\nPlease resolve these conflicts so that the vile versions match."
+
 (* perform fast-forward merge by updating the head to the branch head *)
-let merge_fast_forward (branch : string) (ptr : string) : unit =
+let fast_forward_merge (branch: string) (ptr: string) : unit =
   print ("Updating branch '" ^ branch ^ "' with fast-forward merge...");
   set_head ptr; switch_version true ptr;
   print "\nMerge successful."
@@ -409,31 +505,20 @@ let merge (args: string list) : unit =
     let ch = get_changed cwd idx in
     if st <> [] || ch <> [] then invalid_cml_state st ch
     else begin
-      let cur_hd = get_head () in
-      let branch_hd = get_branch_ptr br in
-      (* check for up-to-date merge *)
-      let rec soft_loop_check ptr =
-        if ptr = "None" then true
-        else if ptr = branch_hd then
-          let _ = print "Already up-to-date." in false
-        else
-          let cmt = parse_commit ptr in soft_loop_check cmt.parent
-      in
-      if soft_loop_check cur_hd then
-        (* fast-forward loop check *)
-        let rec ff_loop_check ptr =
-          if ptr = "None" then true
-          else if ptr = cur_hd then
-            let _ = merge_fast_forward (get_current_branch ()) branch_hd in false
-          else
-            let cmt = parse_commit ptr in ff_loop_check cmt.parent
-        in
-        if ff_loop_check branch_hd then
-          print_color "TODO: Actual merging :(" "r"
+      let cur_ptr = get_head () in
+      let br_ptr = get_branch_ptr br in
+      if (cur_ptr |> get_commit_history [] [cur_ptr] |> List.mem br_ptr) then
+        print "Already up-to-date." (* soft-merge: nothing done *)
+      else if (br_ptr |> get_commit_history [] [br_ptr] |> List.mem cur_ptr) then
+        fast_forward_merge (get_current_branch ()) br_ptr (* fast-forward merge *)
+      else
+        true_merge cur_ptr br_ptr br (* perform true merge *)
     end
   end
-  | _ -> raise (Fatal "too many arguments, see [--help]")
+  | _ -> raise (Fatal "cml only supports merging two branches, see [--help]")
 
+(********************************* End Merge **********************************)
+(******************************************************************************)
 
 (* reset the current HEAD to a specified state *)
 let reset (args: string list) : unit =
@@ -450,17 +535,17 @@ let reset (args: string list) : unit =
     | _ -> raise (Fatal "usage: git reset [--soft | --mixed | --hard] [<commit>]")
   in
   let commit = parse_commit head_hash in   (* parse_commit does validation *)
-  set_head head_hash;
-  if List.mem "soft" flags then ()
-  else begin
-    let tree = Tree.read_tree "" commit.tree in
-    let index = Tree.tree_to_index tree in
-    set_index index;
-    if List.mem "hard" flags then
-      Tree.recreate_tree "" tree
-    else
-      ()
-  end
+  if List.mem "hard" flags then begin
+    switch_version true head_hash;
+    set_head head_hash
+  end else
+    set_head head_hash;
+    if List.mem "soft" flags then ()
+    else begin
+      let tree = Tree.read_tree "" commit.tree in
+      let index = Tree.tree_to_index tree in
+      set_index index;
+    end
 
 (* remove files from working tree and index *)
 let rm (args: string list) : unit =
@@ -509,7 +594,7 @@ let stash (args: string list) : unit =
           let user = get_user_info () in
           let tm = time () |> localtime |> Time.get_time in
           let head = get_head () in
-          let commit = create_commit new_tree user tm "Stash" head in
+          let commit = create_commit new_tree user tm "Stash" [head] in
           switch_version true head;
           let oc = open_out ".cml/stash" in
           output_string oc commit;
@@ -578,7 +663,7 @@ let user (args: string list) : unit =
   end
 
 (* parses bash string input and returns a Cml input type *)
-let parse_input (args : string array) : input =
+let parse_input (args: string array) : input =
   match (Array.to_list args) with
   | [] -> {cmd = Help; args = []}
   | h::t -> begin
