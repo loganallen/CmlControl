@@ -24,6 +24,9 @@ type args_input = { flags: string list; args: string list }
 
 exception Parsing of string
 
+(******************************* Extra Helpers ********************************)
+(******************************************************************************)
+
 (* parses string of args into flags and actual arguments *)
 let parse_args (args: string list) : args_input =
   let acc_flags = fun acc arg ->
@@ -68,6 +71,9 @@ let add_print_msg (abs_paths : string list) (rel_paths : string list) : string l
 (* add print message of 'deleted:' to the files *)
 let add_delete_print_msg (files : string list) : string list =
   List.map (fun file -> "deleted:    "^file) files
+
+(********************************** Commands **********************************)
+(******************************************************************************)
 
 (* add file contents to the index *)
 let add (args: string list) : unit =
@@ -427,14 +433,6 @@ let stash (args: string list) : unit =
       else raise (Fatal ("not a valid argument to the stash command"))
     end
 
-(* helper for printing status message *)
-let status_message () =
-  if detached_head () then
-    let head = get_detached_head () in
-    print_color ("HEAD detached at " ^ head) "r"
-  else
-    print ("On branch "^(get_current_branch ())^"\n")
-
 (* show the working tree status *)
 let status () : unit =
   let cwd = Sys.getcwd () in
@@ -473,6 +471,9 @@ let user (args: string list) : unit =
     List.rev lst |> List.fold_left (fun acc s -> s^" "^acc) "" |>
     String.trim |> set_user_info
   end
+
+(************************ Command Parsing and Exection ************************)
+(******************************************************************************)
 
 (* parses bash string input and returns a Cml input type *)
 let parse_input (args: string array) : input =
