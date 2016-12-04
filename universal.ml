@@ -34,7 +34,7 @@ let split_path (file : string) : string * string =
 
 (* returns the path of an object with file name hash
  * precondition: hash is a valid  40 char string *)
-let get_object_path (hash : string) =
+let get_object_path (hash : string) : string =
   let root = ".cml/objects/" in
   let subdir = String.sub hash 0 2 in
   let fn = String.sub hash 2 (String.length hash - 2) in

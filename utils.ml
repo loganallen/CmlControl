@@ -11,7 +11,7 @@ let cml_initialized (path : string) : bool =
 
 (* returns true if the current directory (or parent) is an initialized Cml repo,
  * otherwise returns false *)
-let cml_initialized_r path =
+let cml_initialized_r (path : string) : bool =
   try match Filesystem.cml_path path with
     | Some _ -> true
     | None -> false
@@ -20,7 +20,7 @@ let cml_initialized_r path =
 
 (* returns whether the given argument is a flag (if arg is of the form
  * dash [-] followed by any number of characters > 0) *)
-let arg_is_flag arg =
+let arg_is_flag (arg : string) : bool =
   let r = Str.regexp "^-.*" in
   Str.string_match r arg 0
 
@@ -28,7 +28,7 @@ let arg_is_flag arg =
  * postcondition: returns the list of flags from the argument.
  * example: [get_flags_from_arg "-hi" ~ ["h"; "i"]]
  * example: [get_flags_from_arg "--hi" ~ ["hi"]] *)
-let get_flags_from_arg arg =
+let get_flags_from_arg (arg : string) : string list =
   let r_double_dash = Str.regexp "^--" in
   let r_single_dash = Str.regexp "^-" in
   if Str.string_match r_double_dash arg 0 then

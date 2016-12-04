@@ -32,7 +32,8 @@ let parse_args (args: string list) : args_input =
     args = List.fold_left acc_args [] args;
   }
 
-let rec verify_allowed_flags allowed_flags flags =
+(* raises an error if the [flags] are not valid *)
+let rec verify_allowed_flags (allowed_flags : string list) (flags : string list) : unit =
   match flags with
   | [] -> ()
   | h::t -> begin
@@ -50,7 +51,7 @@ let get_staged_help (idx: index) : string list =
 
 (* add print message of 'new file:' or 'modified:' to the files
  * precondition: cwd is the .cml repo (chdir_to_cml ()) *)
-let add_print_msg files =
+let add_print_msg (files : string list) : string list =
   let cmt_idx = try begin
     let cmt = get_head_safe () |> parse_commit in
     Tree.read_tree "" cmt.tree |> Tree.tree_to_index |> files_in_index
@@ -64,7 +65,7 @@ let add_print_msg files =
   List.map add_msg files
 
 (* add print message of 'deleted:' to the files *)
-let add_delete_print_msg files =
+let add_delete_print_msg (files : string list) : string list =
   List.map (fun file -> "deleted:    "^file) files
 
 (* add file contents to the index *)
