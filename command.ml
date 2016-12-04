@@ -57,7 +57,7 @@ let add_print_msg (abs_paths : string list) (rel_paths : string list) : string l
   chdir_to_cml ();
   let cmt_idx = try begin
     let cmt = get_head_safe () |> parse_commit in
-    Tree.read_tree "" cmt.tree |> Tree.tree_to_index |> files_in_index
+    cmt.tree |> Tree.read_tree "" |> Tree.tree_to_index |> files_in_index
   end with
   | Fatal _ -> []
   in
@@ -149,7 +149,7 @@ let checkout (args: string list) : unit =
             print_endline "fatal: The following untracked working tree files would be overwritten by checkout:";
             List.iter (fun fn -> print_indent fn "r" 3) conflicting_files
           end else begin
-            get_branch_ptr arg |> switch_version true;
+            arg |> get_branch_ptr |> switch_version true;
             switch_branch arg isdetached
           end
       end else
@@ -210,14 +210,14 @@ let commit (args: string list) : unit =
             raise (Fatal "nothing added to commit")
           else begin
             Sys.chdir cwd;
-            print_untracked (untracked_files |> List.map get_rel_path);
+            untracked_files |> List.map get_rel_path |> print_untracked;
             chdir_to_cml ();
             raise (Fatal "nothing added to commit but untracked files are present")
           end
         end else begin
-          let tree = Tree.index_to_tree idx |> Tree.write_tree in
-          let msg = List.rev lst |> List.fold_left (fun acc s -> s^" "^acc) ""
-                    |> String.trim in
+          let tree = idx |> Tree.index_to_tree |> Tree.write_tree in
+          let msg = lst |> List.rev |>
+                    List.fold_left (fun acc s -> s^" "^acc) "" |> String.trim in
           let tm = time () |> localtime |> Time.get_time in
           let last_commit = try
             if isdetached then get_detached_head () else get_head ()
@@ -240,7 +240,7 @@ let diff (args: string list) : unit =
   let get_arg_file arg =
     Sys.chdir cwd;
     if Sys.file_exists arg then begin
-      let arg_file = abs_path_from_cml arg |> Str.(replace_first (regexp "/") "") in
+      let arg_file = arg |> abs_path_from_cml |> Str.(replace_first (regexp "/") "") in
       chdir_to_cml ();
       let _ = verify_files_in_repo [arg_file] in arg_file
     end else (chdir_to_cml (); arg)
@@ -257,10 +257,10 @@ let diff (args: string list) : unit =
       let commit_diff_idx = diff_idx_commit commit_index files in
       Diff.diff_indexes commit_diff_idx current_diff_idx
     end else if List.mem arg (get_branches ()) then begin
-      let prev_commit_diff_idx = get_branch_index arg |> Diff.index_to_diff_index true in
+      let prev_commit_diff_idx = arg |> get_branch_index |> Diff.index_to_diff_index true in
       Diff.diff_indexes prev_commit_diff_idx current_diff_idx
     end else begin
-      let prev_commit_diff_idx = get_commit_index arg |> Diff.index_to_diff_index true in
+      let prev_commit_diff_idx = arg |> get_commit_index |> Diff.index_to_diff_index true in
       Diff.diff_indexes prev_commit_diff_idx current_diff_idx
     end
   end
@@ -277,7 +277,7 @@ let diff (args: string list) : unit =
       Diff.diff_indexes old_diff_idx current_diff_idx
     else
       let old_diff_idx = old_idx |> Diff.index_to_diff_index true in
-      let new_diff_idx = get_commit_index arg2 |> Diff.index_to_diff_index true in
+      let new_diff_idx = arg2 |> get_commit_index |> Diff.index_to_diff_index true in
       Diff.diff_indexes old_diff_idx new_diff_idx
   end
   | _ -> raise (Fatal "invalid arguments, see [--help]")
@@ -409,7 +409,7 @@ let stash (args: string list) : unit =
           let ch_idx = List.map (fun file -> (file,create_blob file)) ch in
           let st_idx = List.map (fun file -> (file, List.assoc file idx)) st in
           let f_idx = ch_idx @ st_idx in
-          let new_tree = Tree.index_to_tree f_idx |> Tree.write_tree in
+          let new_tree = f_idx |> Tree.index_to_tree |> Tree.write_tree in
           let user = get_user_info () in
           let tm = time () |> localtime |> Time.get_time in
           let head = get_head () in
@@ -426,8 +426,8 @@ let stash (args: string list) : unit =
       if h = "apply" then
         try
           let ic = open_in ".cml/stash" in
-          let version = input_line ic in
-          switch_version false version; open_out ".cml/stash" |> close_out;
+          let version = input_line ic in switch_version false version;
+          ".cml/stash" |> open_out |> close_out;
         with
           | Sys_error _ | End_of_file -> print "No saved stashes to apply"
       else raise (Fatal ("not a valid argument to the stash command"))
@@ -468,7 +468,7 @@ let user (args: string list) : unit =
   match args with
   | []   -> let name = get_user_info () in print ("Current user: "^name)
   | lst -> begin
-    List.rev lst |> List.fold_left (fun acc s -> s^" "^acc) "" |>
+    lst |> List.rev |> List.fold_left (fun acc s -> s^" "^acc) "" |>
     String.trim |> set_user_info
   end
 
