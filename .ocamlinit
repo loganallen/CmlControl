@@ -13,9 +13,9 @@
 #load "object.cmo";;
 #load "head.cmo";;
 #load "branch.cmo";;
-#load "diff.cmo";;
 #load "filesystem.cmo";;
 #load "index.cmo";;
+#load "diff.cmo";;
 #load "utils.cmo";;
 #load "merge.cmo";;
 #load "command.cmo";;

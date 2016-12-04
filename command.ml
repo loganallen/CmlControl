@@ -4,6 +4,7 @@ open Utils
 open Print
 open Tree
 open Branch
+open Diff
 open Filesystem
 open Index
 open Object
@@ -235,34 +236,6 @@ let commit (args: string list) : unit =
     let _ = set_detached_head new_head in
     print_detached_warning new_head
   else set_head new_head
-
-(* precondition: cwd is cml repo root *)
-let get_diff_current_index () =
-  let idx = get_index () in
-  let cwd_files = get_all_files ["./"] [] in
-  let deleted_files = get_deleted cwd_files idx in
-  let changed_files = get_changed cwd_files idx in
-  let changed_diff_index = changed_files |>
-    List.map (fun f -> (f,f)) |> Diff.index_to_diff_index false in
-  idx |> List.filter (fun (f,_) -> not (List.mem f deleted_files)) |>
-    Diff.index_to_diff_index true |>
-    List.map (fun (f,hash) -> if List.mem_assoc f changed_diff_index then
-      (f, List.assoc f changed_diff_index) else (f,hash))
-
-(* precondition: [abs_path_lst] holds the absolute paths from cml.
- * Also, all the files are uncompressed *)
-let diff_idx_current_files abs_path_lst =
-  abs_path_lst |> List.map (fun f -> (f,f)) |> Diff.index_to_diff_index false
-
-(* return the diff index of the cmt_idx for each file in [files] *)
-let diff_idx_commit idx files =
-  let acc_idx acc file =
-    try begin
-      let hash = List.assoc file idx in (file,hash)::acc
-    end with
-      | Not_found -> acc
-  in
-  files |> List.fold_left acc_idx [] |> Diff.index_to_diff_index true
 
 (* show changes between working tree and previous commits *)
 let diff (args: string list) : unit =

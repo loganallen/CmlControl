@@ -21,3 +21,13 @@ val index_to_diff_index : bool -> Universal.index -> (string * file_data) list
 
 (* Print the diff of two diff input lists *)
 val diff_indexes : (string * file_data) list -> (string * file_data) list -> unit
+
+(* precondition: cwd is cml repo root *)
+val get_diff_current_index: unit -> (string * file_data) list
+
+(* precondition: [abs_path_lst] holds the absolute paths from cml.
+ * Also, all the files are uncompressed *)
+val diff_idx_current_files: string list -> (string * file_data) list
+
+(* return the diff index of the cmt_idx for each file in [files] *)
+val diff_idx_commit: Universal.index -> string list -> (string * file_data) list
