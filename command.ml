@@ -47,19 +47,23 @@ let rec verify_allowed_flags (allowed_flags : string list) (flags : string list)
   end
 
 (* add print message of 'new file:' or 'modified:' to the files
- * precondition: cwd is the .cml repo (chdir_to_cml ()) *)
-let add_print_msg (files : string list) : string list =
+ * precondition: cwd is the .cml repo (chdir_to_cml ())
+ *               [abs_paths] are the paths from .cml repo *)
+let add_print_msg (abs_paths : string list) (rel_paths : string list) : string list =
+  let cwd = Sys.getcwd () in
+  chdir_to_cml ();
   let cmt_idx = try begin
     let cmt = get_head_safe () |> parse_commit in
     Tree.read_tree "" cmt.tree |> Tree.tree_to_index |> files_in_index
   end with
   | Fatal _ -> []
   in
-  let add_msg file =
-    if List.mem file cmt_idx then "modified:   "^file
-    else "new file:   "^file
+  Sys.chdir cwd;
+  let add_msg abs_file rel_file =
+    if List.mem abs_file cmt_idx then "modified:   "^rel_file
+    else "new file:   "^rel_file
   in
-  List.map add_msg files
+  List.map2 add_msg abs_paths rel_paths
 
 (* add print message of 'deleted:' to the files *)
 let add_delete_print_msg (files : string list) : string list =
@@ -458,8 +462,8 @@ let status () : unit =
   match (st', ch', ut', deleted_files') with
     | [],[],[],[] -> print "no changes to be committed, working tree clean"
     | _ -> begin
-      print_staged (st' |> add_print_msg) (deleted_files' |> add_delete_print_msg);
-      print_changed (ch' |> add_print_msg);
+      print_staged (st' |> add_print_msg st) (deleted_files' |> add_delete_print_msg);
+      print_changed (ch' |> add_print_msg ch);
       print_untracked ut'
     end
 
