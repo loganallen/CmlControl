@@ -87,7 +87,11 @@ let verify_files_in_repo files =
       raise (Fatal ("pathspec '"^file^"' is outside the repository"))
     else true
   in
-  List.filter filter files
+  let cwd = Sys.getcwd () in
+  chdir_to_cml ();
+  let filtered_files = List.filter filter files in
+  Sys.chdir cwd;
+  filtered_files
 
 (* returns a list of the file names in [rel_path] to cwd, (the returned
  * filenames are relative to cml repo) *)
@@ -173,6 +177,8 @@ let checkout (args: string list) : unit =
   let idx = get_index () in
   let st = get_staged_help idx in
   let ch = get_changed cwd idx in
+  let ut = get_untracked cwd idx in
+  print_list ut;
   let isdetached = detached_head () in
   match args with
   | []    -> raise (Fatal "branch name or HEAD version required")
@@ -185,10 +191,20 @@ let checkout (args: string list) : unit =
       else if (get_branches () |> List.mem arg) then begin
         if arg = get_current_branch () then
           print ("Already on branch '"^arg^"'")
-        else begin
-          get_branch_ptr arg |> switch_version;
-          switch_branch arg isdetached
-        end
+        else
+          let branch_hd = get_branch_ptr arg in
+          let branch_idx = (parse_commit branch_hd).tree |> Tree.read_tree ""
+                           |> Tree.tree_to_index in
+          let conflicting_files =
+            List.fold_left (fun acc fn ->
+              if List.mem_assoc fn branch_idx then fn::acc else acc) [] ut in
+          if conflicting_files <> [] then begin
+            print_endline "fatal: The following untracked working tree files would be overwritten by checkout:";
+            List.iter (fun fn -> print_indent fn "r" 3) conflicting_files
+          end else begin
+            get_branch_ptr arg |> switch_version;
+            switch_branch arg isdetached
+          end
       end else
         try
           if isdetached && arg = get_detached_head () then
@@ -312,12 +328,13 @@ let diff (args: string list) : unit =
   let commit_index = get_commit_index (get_head_safe ()) in
   let commit_diff_idx = commit_index |> Diff.index_to_diff_index true in
   let get_arg_file arg =
+    Sys.chdir cwd;
     if Sys.file_exists arg then begin
-      Sys.chdir cwd;
       let arg_file = abs_path_from_cml arg |> Str.(replace_first (regexp "/") "") in
       chdir_to_cml ();
+      let _ = verify_files_in_repo [arg_file] in
       arg_file
-    end else arg
+    end else (chdir_to_cml (); arg)
   in
   match args with
   | [] -> begin
@@ -325,18 +342,15 @@ let diff (args: string list) : unit =
   end
   | arg::[] -> begin
     let arg_file = get_arg_file arg in
-    (* print_endline ("arg_file: "^ arg_file); *)
-    if Sys.file_exists arg_file || arg_file = "" then
+    if Sys.file_exists arg_file || arg_file = "" then begin
       let files = get_files_from_rel_path arg_file in
       let current_diff_idx = diff_idx_current_files files in
       let commit_diff_idx = diff_idx_commit commit_index files in
       Diff.diff_indexes commit_diff_idx current_diff_idx
-    else if Sys.file_exists arg then
-      raise (Fatal ("pathspec '"^arg^"' is outside the repository"))
-    else if List.mem arg (get_branches ()) then
+    end else if List.mem arg (get_branches ()) then begin
       let prev_commit_diff_idx = get_branch_index arg |> Diff.index_to_diff_index true in
       Diff.diff_indexes prev_commit_diff_idx current_diff_idx
-    else begin
+    end else begin
       let prev_commit_diff_idx = get_commit_index arg |> Diff.index_to_diff_index true in
       Diff.diff_indexes prev_commit_diff_idx current_diff_idx
     end
