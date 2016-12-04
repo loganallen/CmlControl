@@ -11,6 +11,9 @@ open Object
 open Head
 open Merge
 
+(******************************* Command Module *******************************)
+(******************************************************************************)
+
 type command =
 | Add | Branch | Checkout | Commit | Diff | Help | Init | Log
 | Merge | Reset | Rm | Stash | Status | User

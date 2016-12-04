@@ -1,3 +1,6 @@
+(******************************** Print Module ********************************)
+(******************************************************************************)
+
 (* prints a string in the color specified *)
 let print_color (msg : string) (color : string) : unit =
   let m = (msg ^ "\n") in

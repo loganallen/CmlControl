@@ -1,7 +1,7 @@
 open Unix
 open Universal
 
-(************************** Miscellaneous Helpers *****************************)
+(******************************** Utils Module ********************************)
 (******************************************************************************)
 
 (* returns true if the path contains an initialized Cml repo,

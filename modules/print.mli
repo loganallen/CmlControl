@@ -1,4 +1,5 @@
-(* Print Module --- prints to the terminal *)
+(******************************** Print Module ********************************)
+(******************************************************************************)
 
 (* prints a string in the color specified *)
 val print_color: string -> string -> unit

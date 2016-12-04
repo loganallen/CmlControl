@@ -1,4 +1,9 @@
-(* Command Module --- types and functions for cml commands *)
+(******************************* Command Module *******************************)
+(******************************************************************************)
+
+(*
+ * Type and function definitions for cml commands
+ *)
 
 (* A variant type for the commands supported by cml control. *)
 type command =

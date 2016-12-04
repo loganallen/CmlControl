@@ -1,6 +1,8 @@
-(* Cml main file *)
 open Command
 open Print
+
+(********************************** Cml Main **********************************)
+(******************************************************************************)
 
 (* parse [cml] command line request and execute the respective command *)
 let () =

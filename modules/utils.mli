@@ -1,7 +1,4 @@
-(* Utils Module --- helper functions for directory data structure *)
-
-
-(***************************** Generic Helpers ********************************)
+(*************************** Miscellaneous Helpers ****************************)
 (******************************************************************************)
 
 (* returns true if the path contains an initialized Cml repo,
