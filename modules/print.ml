@@ -285,6 +285,7 @@ let print_help_diff_long () : unit =
   print_indent "Prints the difference between <file> in the current working tree and" "" 3;
   print_indent "<file> in the <commit>. If <commit> is not specified, the previous" "" 3;
   print_indent "commit is used." "" 3;
+  print_newline ();
   print_indent "cml diff <commit1> <commit2>" "" 1;
   print_indent "Prints the differences between <commit1> and <commit2>." "" 3
 
