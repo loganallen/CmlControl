@@ -43,7 +43,7 @@ let parse_commit (ptr : string) : commit =
   with
     | Sys_error _ -> raise (Fatal ("commit - "^ptr^": not found"))
     | Invalid_argument _ -> raise (Fatal ("commit - "^ptr^": not valid"))
-    | End_of_file -> raise (Fatal ("commit - "^ptr^": corrupted"))
+    | End_of_file -> raise Corrupt
 
 (* takes a commit hash and returns the index of the commit *)
 let get_commit_index (ptr : string) : index =

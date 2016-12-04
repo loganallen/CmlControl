@@ -16,7 +16,7 @@ let merge_histories (h1: string list) (h2: string list) : string list =
 let rec get_commit_history (des: string list) (acc: string list) (ptr: string) : string list =
   let cmt = Object.parse_commit ptr in
   match cmt.parents with
-  | [] -> raise (Fatal ("ERROR - Corrupt commit "^cmt.tree))
+  | [] -> raise Corrupt
   | p::[] -> if p = "None" then acc else get_commit_history des (p::acc) p
   | p1::p2::[] -> begin
     let des' = acc@des in
@@ -24,7 +24,7 @@ let rec get_commit_history (des: string list) (acc: string list) (ptr: string) :
     let h2 = get_commit_history des' [p2] p2 in
     (merge_histories h1 h2) @ des'
   end
-  | _ -> raise (Fatal ("ERROR - Corrupt commit "^cmt.tree))
+  | _ -> raise Corrupt
 
 (* returns the commit ptr of the common ancestor between two branches
  * and the next commit for the branch *)
