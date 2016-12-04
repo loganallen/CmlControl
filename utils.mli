@@ -1,5 +1,6 @@
 (* Utils Module --- helper functions for directory data structure *)
 
+
 (***************************** Generic Helpers ********************************)
 (******************************************************************************)
 
@@ -20,10 +21,6 @@ val arg_is_flag : string -> bool
  * example: [get_flags_from_arg "-hi" ~ ["h"; "i"]]
  * example: [get_flags_from_arg "--hi" ~ ["hi"]] *)
 val get_flags_from_arg : string -> string list
-
-
-
-
 
 (******************************** User Info ***********************************)
 (******************************************************************************)

@@ -10,6 +10,9 @@ val get_current_branch: unit -> string
 (* returns the HASH of a head of the given branch *)
 val get_branch_ptr: string -> string
 
+(* returns the head pointer of the branch *)
+val get_branch: string -> string
+
 (* initializes a given commit to a given branch name *)
 val set_branch_ptr: string -> string -> unit
 
@@ -21,4 +24,4 @@ val delete_branch: string -> unit
 
 (* switch current working branch *)
 (* precondition: [branch] exists *)
-val switch_branch: string -> bool -> bool
+val switch_branch: string -> bool -> unit

@@ -85,7 +85,7 @@ let chdir_to_cml () : unit =
 (*************************** Fetching and Comparing ***************************)
 
 (* returns true if dir is known link, or if is .cml *)
-let is_bad_dir (name : string) : bool =
+let is_bad_dir name =
   let temp =
     try
       let st = String.rindex name '/' in
@@ -134,7 +134,9 @@ let verify_files_in_repo (files : string list) : string list =
       raise (Fatal ("pathspec '"^file^"' is outside the repository"))
     else true
   in
-  List.filter filter files
+  let cwd = Sys.getcwd () in chdir_to_cml ();
+  let filtered_files = List.filter filter files in
+  Sys.chdir cwd; filtered_files
 
 (* returns a list of the file names in [rel_path] to cwd, (the returned
  * filenames are relative to cml repo) *)

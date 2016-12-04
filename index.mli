@@ -5,6 +5,9 @@
  * to their most recent hash string value *)
 val get_index: unit -> Common.index
 
+(* returns the index of the branch *)
+val get_branch_index: string -> Common.index
+
 (* updates the index by adding a new mapping *)
 val update_index: string * string -> Common.index -> Common.index
 
@@ -18,4 +21,4 @@ val rm_files_from_idx : string list -> unit
 val add_files_to_idx : string list -> unit
 
 (* switches state of repo to state of given commit_hash *)
-val switch_version: string -> unit
+val switch_version: bool -> string -> unit

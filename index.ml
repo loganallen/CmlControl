@@ -21,6 +21,15 @@ let get_index () : index =
   with
     | Sys_error _ -> []
 
+(*** DUPLICATION ***)
+
+(* returns the index of the branch *)
+let get_branch_index branch =
+  let commit = Object.parse_commit (Branch.get_branch branch) in
+  Tree.read_tree "" commit.tree |> Tree.tree_to_index
+
+(*** END DUPLICATION ***)
+
 (* updates the index by adding a new mapping *)
 let update_index (map : string * string) (idx : index) : index =
   map :: (List.remove_assoc (fst map) idx)
@@ -52,13 +61,17 @@ let add_files_to_idx (add_files : string list) : unit =
   set_index idx'; Sys.chdir cwd
 
 (* switches state of repo to state of given commit_hash *)
-let switch_version (commit_hash : string) : unit =
-  let ohead = Object.parse_commit (Head.get_head ()) in
-  let oindex = Tree.read_tree "" ohead.tree |> Tree.tree_to_index in
+let switch_version (is_hard : bool) (commit_hash : string) : unit =
   let nhead = Object.parse_commit commit_hash in
   let ntree = Tree.read_tree "" nhead.tree in
   let nindex = Tree.tree_to_index ntree in
-  List.iter (fun (fn, hn) -> Sys.remove fn ) oindex;
+  let ohead = Head.get_head () |> Object.parse_commit in
+  let oindex = ohead.tree |> Tree.read_tree "" |> Tree.tree_to_index in
+  let idx = begin
+    if is_hard then
+      let _ = List.iter (fun (fn, hn) -> Sys.remove fn ) oindex in nindex
+    else oindex
+  end in
   Tree.recreate_tree "" ntree;
   Filesystem.remove_empty_dirs "./";
-  set_index nindex
+  set_index idx

@@ -12,7 +12,7 @@ type commit = {
   author: string;
   date: string;
   message: string;
-  parent: string;
+  parents : string list;
 }
 
 (* Fatal exception for internal cml execution errors *)

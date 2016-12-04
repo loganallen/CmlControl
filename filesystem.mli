@@ -31,6 +31,9 @@ val is_bad_dir: string -> bool
 (* returns a list of all files in working repo by absolute path *)
 val get_all_files: string list -> string list -> string list
 
+(* returns a list of all files in the current repo *)
+val verify_files_in_repo: string list -> string list
+
 (* returns a list of the file names in [rel_path] to cwd, (the returned
  * filenames are relative to cml repo) *)
 val get_files_from_rel_path: string -> string list

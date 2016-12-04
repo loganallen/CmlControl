@@ -28,4 +28,3 @@ let get_time (tm : Unix.tm) : string =
   let mon  = month tm.Unix.tm_mon in
   let year = year tm.Unix.tm_year in
     (day ^ " " ^ mon ^ " " ^ date ^ " " ^ time ^ " " ^ year)
-

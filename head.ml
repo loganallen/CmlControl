@@ -29,16 +29,16 @@ let set_head (commit_hash : string) : unit =
 (* sets the HEAD of the cml repository to a commit hash *)
 let set_detached_head (commit_hash : string) : unit =
   try
-    let oc = open_out ".cml/HEAD" in
-    output_string oc commit_hash; close_out oc
+    let ch = open_out ".cml/HEAD" in
+    output_string ch commit_hash; close_out ch
   with
     | Sys_error _ -> raise (Fatal "could not set detached HEAD")
 
 (* returns the commit hash the head was detached at *)
 let get_detached_head () : string =
   try
-    let ic = open_in ".cml/HEAD" in
-    let raw = input_line ic in close_in ic; raw
+    let ch = open_in ".cml/HEAD" in
+    let raw = input_line ch in close_in ch; raw
   with
   | Sys_error _ -> raise (Fatal "could not get detached HEAD")
 

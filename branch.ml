@@ -42,18 +42,36 @@ let get_current_branch () : string =
 (* returns the HASH of a head of the given branch *)
 let get_branch_ptr (branch_name : string) : string =
   try
-    let in_ch = open_in (".cml/heads/" ^ branch_name) in
-    let ptr = input_line in_ch in
-    close_in in_ch; ptr
+    let ch = open_in (".cml/heads/" ^ branch_name) in
+    let ptr = input_line ch in
+    close_in ch; ptr
   with
     | Sys_error _ -> raise (Fatal ("branch "^branch_name^" not found"))
     | End_of_file -> raise (Fatal (branch_name^" ptr not set"))
 
+(*** DUPLICATION ***)
+
+(* returns the head pointer of the branch *)
+let get_branch branch =
+  let branch_path = ".cml/heads/"^branch in
+  if Sys.file_exists branch_path then
+    try
+      let ic = open_in branch_path in
+      let head = input_line ic in
+      close_in ic;
+      head
+    with
+      | _ -> raise (Fatal ("Could not find branch '"^branch^"'"))
+  else
+    raise (Fatal ("Branch '"^branch^"' does not exist"))
+
+(*** END DUPLICATION ***)
+
 (* initializes a given commit to a given branch name *)
 let set_branch_ptr (branch_name : string) (commit_hash : string) : unit =
   try
-    let out_ch = open_out (".cml/heads/" ^ branch_name) in
-    output_string out_ch commit_hash; close_out out_ch
+    let ch = open_out (".cml/heads/" ^ branch_name) in
+    output_string ch commit_hash; close_out ch
   with
     | Sys_error _ -> raise (Fatal "write error")
 
@@ -99,11 +117,11 @@ let delete_branch (branch : string) : unit =
 
 (* switch current working branch *)
 (* precondition: [branch] exists *)
-let switch_branch (branch : string) (isdetached : bool) : bool =
+let switch_branch (branch : string) (isdetached : bool) : unit =
   let cur = if isdetached then "" else get_current_branch () in
   if cur = branch then
-    let _ = Print.print ("Already on branch '"^branch^"'") in false
+    Print.print ("Already on branch '"^branch^"'")
   else
     let ch = open_out ".cml/HEAD" in
     output_string ch ("heads/"^branch); close_out ch;
-    let _ = Print.print ("Switched to branch '"^branch^"'") in true
+    Print.print ("Switched to branch '"^branch^"'")
