@@ -8,6 +8,7 @@ open Filesystem
 open Index
 open Object
 open Head
+open Merge
 
 type command =
 | Add | Branch | Checkout | Commit | Diff | Help | Init | Log
@@ -329,27 +330,6 @@ let init () : unit =
 		output_string out "heads/master"; close_out out;
     print_color "initialized empty Cml repository" "b"
 
-(* returns a commit history that is the merge of two histories *)
-let merge_histories (h1: string list) (h2: string list) : string list =
-  let base = List.filter (fun c -> List.mem c h2) h1 in
-  let h1' = List.filter (fun c -> not (List.mem c base)) h1 in
-  let h2' = List.filter (fun c -> not (List.mem c base)) h2 in
-  base @ h1' @ h2'
-
-(* recursivley builds the commit history starting from a specified hash ptr *)
-let rec get_commit_history (des: string list) (acc: string list) (ptr: string) : string list =
-  let cmt = parse_commit ptr in
-  match cmt.parents with
-  | [] -> raise (Fatal ("ERROR - Corrupt commit "^cmt.tree))
-  | p::[] -> if p = "None" then acc else get_commit_history des (p::acc) p
-  | p1::p2::[] -> begin
-    let des' = acc@des in
-    let h1 = get_commit_history des' [p1] p1 in
-    let h2 = get_commit_history des' [p2] p2 in
-    (merge_histories h1 h2) @ des'
-  end
-  | _ -> raise (Fatal ("ERROR - Corrupt commit "^cmt.tree))
-
 (* display the current branches commit history *)
 let log () : unit =
   chdir_to_cml ();
@@ -369,70 +349,6 @@ let log () : unit =
     else raise (Fatal m)
   end
 
-(*********************************** Merge ************************************)
-(******************************************************************************)
-
-(* returns the commit ptr of the common ancestor between two branches
- * and the next commit for the branch *)
-let get_common_ancestor (cur_ptr: string) (br_ptr: string) : string =
-  let h1 = get_commit_history [] [cur_ptr] cur_ptr in
-  let h2 = get_commit_history [] [br_ptr] br_ptr in
-  let common = List.filter (fun c -> List.mem c h2) h1 in
-  match List.rev common with
-  | []   -> raise (Fatal "These branches don't have any ancestor in common") (* Edge case when branches are made before the first commit *)
-  | h::_ -> h
-
-(* returns an index with a new (f,h) mapping if f is not in [idx] *)
-let get_new_files (idx: index) (acc: index) (f,h) : index =
-  if List.mem_assoc f idx then acc else (f,h)::acc
-
-(* perform a true merge if there are no merge conflicts by creating
- * a new commit that combines the states of the two branches *)
-let true_merge (cur_ptr: string) (br_ptr: string) (branch: string) : unit =
-  let cur = parse_commit cur_ptr in
-  let cur_idx = cur.tree |> Tree.read_tree "" |> Tree.tree_to_index in
-  let br = parse_commit br_ptr in
-  let br_idx = br.tree |> Tree.read_tree "" |> Tree.tree_to_index in
-  let anc = get_common_ancestor cur_ptr br_ptr |> parse_commit in
-  let anc_idx = anc.tree |> Tree.read_tree "" |> Tree.tree_to_index in
-  let compare_base (acc,inc_f) (f,h) =
-    let c_hash = List.assoc f cur_idx in
-    let b_hash = List.assoc f br_idx in
-    match (h=c_hash,h=b_hash) with
-    | (true,true)   -> ((f,h)::acc, inc_f) (* neither branch changed file *)
-    | (true,false)  -> ((f,b_hash)::acc, inc_f) (* merge branch changed file *)
-    | (false,true)  -> ((f,c_hash)::acc, inc_f) (* current branch changed file *)
-    | (false,false) -> if c_hash = b_hash then ((f,c_hash)::acc, inc_f)
-                       else (acc, f::inc_f) (* both branches changed file *)
-  in
-  let (merged_base,incomp_fs) = List.fold_left compare_base ([],[]) anc_idx in
-  if incomp_fs = [] then
-    (* let merged_base = List.map compare_base anc_idx in *)
-    (* print "...base..."; List.iter (fun (f,h) -> print (f^": "^h)) merged_base; *)
-    let new_cur = cur_idx |> List.fold_left (get_new_files merged_base) [] in
-    (* print "...new_cur..."; List.iter (fun (f,h) -> print (f^": "^h)) new_cur; *)
-    let new_br = br_idx |> List.fold_left (get_new_files merged_base) [] in
-    (* print "...new_branch..."; List.iter (fun (f,h) -> print (f^": "^h)) new_br; *)
-    (* merge the indexes, create a merge commit, and repopulate the repo, *)
-    let merged_idx = merged_base @ new_cur @ new_br in
-    let tree = Tree.index_to_tree merged_idx in
-    let tree_hash = Tree.write_tree tree in
-    let user = get_user_info () in
-    let msg = "Merged branch '" ^ branch ^ "' into " ^ get_current_branch () in
-    let tm = time () |> localtime |> Time.get_time in
-    create_commit tree_hash user tm msg [cur_ptr;br_ptr] |> set_head;
-    set_index merged_idx; Tree.recreate_tree "" tree; print msg
-  else
-    print "Unable to merge branches because of the following incompatible files:\n";
-    List.iter (fun f -> print_indent f "y" 3) incomp_fs;
-    print "\nPlease resolve these conflicts so that the vile versions match."
-
-(* perform fast-forward merge by updating the head to the branch head *)
-let fast_forward_merge (branch: string) (ptr: string) : unit =
-  print ("Updating branch '" ^ branch ^ "' with fast-forward merge...");
-  set_head ptr; switch_version true ptr;
-  print "\nMerge successful."
-
 (* join two or more development histories together *)
 let merge (args: string list) : unit =
   match args with
@@ -447,17 +363,14 @@ let merge (args: string list) : unit =
       let cur_ptr = get_head () in
       let br_ptr = get_branch_ptr br in
       if (cur_ptr |> get_commit_history [] [cur_ptr] |> List.mem br_ptr) then
-        print "Already up-to-date." (* soft-merge: nothing done *)
+        print "Already up-to-date."
       else if (br_ptr |> get_commit_history [] [br_ptr] |> List.mem cur_ptr) then
-        fast_forward_merge (get_current_branch ()) br_ptr (* fast-forward merge *)
+        fast_forward_merge (get_current_branch ()) br_ptr
       else
-        true_merge cur_ptr br_ptr br (* perform true merge *)
+        true_merge cur_ptr br_ptr br
     end
   end
   | _ -> raise (Fatal "cml only supports merging two branches, see [--help]")
-
-(********************************* End Merge **********************************)
-(******************************************************************************)
 
 (* reset the current HEAD to a specified state *)
 let reset (args: string list) : unit =

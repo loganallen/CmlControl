@@ -17,6 +17,7 @@
 #load "filesystem.cmo";;
 #load "index.cmo";;
 #load "utils.cmo";;
+#load "merge.cmo";;
 #load "command.cmo";;
 
 open Print
@@ -30,3 +31,4 @@ open Filesystem
 open Index
 open Object
 open Head
+open Merge
