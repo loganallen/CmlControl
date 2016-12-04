@@ -42,15 +42,15 @@ let diff_blobs (blob1 : string) (blob2 : string) : Odiff.diffs =
 
 (* [diff (file1, iscompressed1) (file2, iscompressed2)] prints a diff between
  * two files that can be compressed or decompressed *)
-let diff old_file new_file : Odiff.diffs =
+let diff (old_file : file_data) (new_file : file_data) : Odiff.diffs =
   match (old_file.compressed, new_file.compressed) with
     | (false, false) -> Odiff.files_diffs old_file.file_path new_file.file_path
     | (false, true) -> diff_vs_blob old_file.file_path new_file.file_path
     | (true, false) -> blob_vs_diff old_file.file_path new_file.file_path
     | (true, true) -> diff_blobs old_file.file_path new_file.file_path
 
-let print_separator do_print =
-  if do_print then Print.print "--------------------" else()
+let print_separator (do_print : bool) : unit =
+  if do_print then Print.print "--------------------" else ()
 
 (* prints diffs for all pairs of files in a list [lst] *)
 let rec diff_mult (lst : diff_input list) : unit =
@@ -74,16 +74,16 @@ let rec diff_mult (lst : diff_input list) : unit =
   let _ = List.fold_left acc_diff false lst in ()
 
 (* Convert an index into an associate list with file_data *)
-let index_to_diff_index compressed idx =
+let index_to_diff_index (is_compressed : bool) (idx : index) : (string * file_data) list =
   idx |> List.map (fun (file,hash) ->
-    let file_path = if compressed then get_object_path hash else file in
-    (file, { file_path = file_path; compressed = compressed }))
+    let file_path = if is_compressed then get_object_path hash else file in
+    (file, { file_path = file_path; compressed = is_compressed }))
 
 (* Print the diff of two diff input lists *)
-let diff_indexes old_diff_idx new_diff_idx =
+let diff_indexes (old_idx : (string * file_data) list) (new_idx : (string * file_data) list) : unit =
   let acc_diff_inputs acc (new_filename, new_file_data) =
-    if List.mem_assoc new_filename old_diff_idx then
-      let old_file_data = List.assoc new_filename old_diff_idx in
+    if List.mem_assoc new_filename old_idx then
+      let old_file_data = List.assoc new_filename old_idx in
       { name = new_filename;
         old_file_data = Some old_file_data;
         new_file_data = Some new_file_data;
@@ -95,7 +95,7 @@ let diff_indexes old_diff_idx new_diff_idx =
       } :: acc
   in
   let acc_removed_diff_inputs acc (old_filename, old_file_data) =
-    if List.mem_assoc old_filename new_diff_idx then
+    if List.mem_assoc old_filename new_idx then
       acc
     else
       { name = old_filename;
@@ -103,6 +103,6 @@ let diff_indexes old_diff_idx new_diff_idx =
         new_file_data = None;
       } :: acc
   in
-  let new_diff_inputs = List.fold_left acc_diff_inputs [] new_diff_idx in
-  List.fold_left acc_removed_diff_inputs new_diff_inputs old_diff_idx
+  let new_inputs = List.fold_left acc_diff_inputs [] new_idx in
+  List.fold_left acc_removed_diff_inputs new_inputs old_idx
   |> diff_mult
