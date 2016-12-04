@@ -71,7 +71,7 @@ let true_merge (cur_ptr: string) (br_ptr: string) (branch: string) : unit =
     let user = Utils.get_user_info () in
     let msg = "Merged branch '"^branch^"' into "^Branch.get_current_branch () in
     let tm = time () |> localtime |> Time.get_time in
-    Object.create_commit tree_hash user tm msg [cur_ptr;br_ptr] |> Head.set_head;
+    [cur_ptr;br_ptr] |> Object.create_commit tree_hash user tm msg |> Head.set_head;
     Index.set_index merged_idx; Tree.recreate_tree "" tree; Print.print msg
   else
     Print.print "Unable to merge branches because of the following incompatible files:\n";
