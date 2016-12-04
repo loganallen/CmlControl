@@ -1,10 +1,6 @@
 open Unix
 open Common
 
-type blob = string
-
-let perm = 0o777
-
 (***************************** Generic Helpers ********************************)
 (******************************************************************************)
 
@@ -16,9 +12,11 @@ let cml_initialized (path : string) : bool =
 (* returns true if the current directory (or parent) is an initialized Cml repo,
  * otherwise returns false *)
 let cml_initialized_r path =
-  match Filesystem.cml_path path with
-  | Some _ -> true
-  | None -> false
+  try match Filesystem.cml_path path with
+    | Some _ -> true
+    | None -> false
+  with
+  | Fatal _ -> false
 
 let current_dir () =
   Filename.basename (Sys.getcwd ())

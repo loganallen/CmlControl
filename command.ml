@@ -265,7 +265,7 @@ let help () : unit =
 
 (* init Create an empty CmlControl repository. *)
 let init () : unit =
-  if cml_initialized "./" then
+  if cml_initialized_r "./" then
     raise (Fatal "Cml repository already initialized")
   else
     mkdir ".cml" 0o777; mkdir ".cml/heads" 0o777; mkdir ".cml/objects" 0o777;

@@ -1,8 +1,5 @@
 (* Utils Module --- helper functions for directory data structure *)
 
-(* type blob represents a compressed file object *)
-type blob = string
-
 (***************************** Generic Helpers ********************************)
 (******************************************************************************)
 
