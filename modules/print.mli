@@ -19,6 +19,9 @@ val print_newline: unit -> unit
 (* prints the camel emoji *)
 val print_camel: unit -> unit
 
+(* prints the a warning specifying files that need to be delt with *)
+val print_invalid_cml_state: string list -> unit
+
 (* prints the given branch (with a * if it's the current branch) *)
 val branch_print: string -> string -> unit
 

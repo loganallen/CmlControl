@@ -32,6 +32,12 @@ let print_newline () :  unit =
 let print_camel () : unit =
 	print_endline "🐪 "
 
+(* prints the a warning specifying files that need to be delt with *)
+let print_invalid_cml_state (files: string list) : unit =
+  print "Your changes to the following files would be overwritten:\n";
+  List.iter (fun f -> print_indent f "y" 3) files;
+  print "\nPlease commit or stash your changes beforehand."
+
 (* prints the given branch (with a * if it's the current branch) *)
 let branch_print (cur : string) (branch : string) : unit =
   if branch = cur then (print_string "* "; print_color cur "g")

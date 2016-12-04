@@ -166,12 +166,20 @@ let get_files_from_rel_path (rel_path : string) : string list =
 
 (* returns a list of all files staged (added) for commit *)
 (* precondition: all files have objects in [.cml/objects/] *)
-let get_staged (idx : index) (commit_idx : index) : string list =
+let get_staged_help (idx : index) (commit_idx : index) : string list =
   let find_staged acc (f,h) =
     let hash = try List.assoc f commit_idx with Not_found -> "nil" in
     if hash = h then acc else f::acc
   in
   List.fold_left find_staged [] idx |> List.sort (Pervasives.compare)
+
+(* helper function that returns a list of files staged for commit *)
+let get_staged (idx: index) : string list =
+  try
+    let cmt = Head.get_head_safe () |> Object.parse_commit in
+    Tree.read_tree "" cmt.tree |> Tree.tree_to_index |> get_staged_help idx
+  with
+  | Fatal _ -> get_staged_help idx []
 
 (* returns a mapping of changed files to their old obj hashes *)
 let get_changed_as_index (cwd : string list) (idx : index) : index =

@@ -39,7 +39,10 @@ val verify_files_in_repo: string list -> string list
 val get_files_from_rel_path: string -> string list
 
 (* returns a list of all files staged (added) for commit *)
-val get_staged: Universal.index -> Universal.index -> string list
+(* val get_staged_help: Universal.index -> Universal.index -> string list *)
+
+(* helper function that returns a list of files staged for commit *)
+val get_staged: Universal.index -> string list
 
 (* returns a mapping of changed files to their old obj hashes *)
 val get_changed_as_index: string list -> Universal.index -> Universal.index

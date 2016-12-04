@@ -46,14 +46,6 @@ let rec verify_allowed_flags (allowed_flags : string list) (flags : string list)
     else raise (Fatal ("invalid flag '"^h^"'"))
   end
 
-(* helper function that returns a list of files staged for commit *)
-let get_staged_help (idx: index) : string list =
-  try
-    let cmt = get_head_safe () |> parse_commit in
-    Tree.read_tree "" cmt.tree |> Tree.tree_to_index |> get_staged idx
-  with
-  | Fatal _ -> get_staged idx []
-
 (* add print message of 'new file:' or 'modified:' to the files
  * precondition: cwd is the .cml repo (chdir_to_cml ()) *)
 let add_print_msg (files : string list) : string list =
@@ -116,20 +108,12 @@ let branch (args: string list) : unit =
     else raise (Fatal "invalid flags, see [--help]")
   end
 
-let invalid_cml_state (st: string list) (ch: string list) : unit =
-  let _ = print "Your changes to the following files would be overwritten:\n" in
-  let rec loop = function
-    | [] -> ()
-    | h::t -> print_indent h "y" 3; loop t
-  in loop (st @ ch);
-  print "\nPlease commit or stash your changes beforehand."
-
 (* switch branches or restore working tree files *)
 let checkout (args: string list) : unit =
   chdir_to_cml ();
   let cwd = get_all_files ["./"] [] in
   let idx = get_index () in
-  let st = get_staged_help idx in
+  let st = get_staged idx in
   let ch = get_changed cwd idx in
   let ut = get_untracked cwd idx in
   let isdetached = detached_head () in
@@ -140,7 +124,7 @@ let checkout (args: string list) : unit =
       if ((get_all_files ["./"] []) |> List.mem arg) then
         get_index () |> checkout_file arg
       else if st <> [] || ch <> [] then
-        invalid_cml_state st ch
+        print_invalid_cml_state (st@ch)
       else if (get_branches () |> List.mem arg) then begin
         if arg = get_current_branch () then
           print ("Already on branch '"^arg^"'")
@@ -176,7 +160,7 @@ let checkout (args: string list) : unit =
     begin
       if flag = "-b" || flag = "-B" then
         if st <> [] || ch <> [] then
-          invalid_cml_state st ch
+          print_invalid_cml_state (st@ch)
         else
           let _ = get_head_safe () |> create_branch b in
           switch_branch b isdetached
@@ -212,7 +196,7 @@ let commit (args: string list) : unit =
         let deleted_files = get_deleted (get_all_files ["./"] []) (get_index ()) in
           rm_files_from_idx deleted_files;
         let idx = get_index () in
-        let staged_files = get_staged_help idx in
+        let staged_files = get_staged idx in
         if staged_files = [] && deleted_files = [] then begin
           let untracked_files = get_untracked cwd_files (get_index ()) in
           if untracked_files = [] then
@@ -332,9 +316,9 @@ let merge (args: string list) : unit =
   | br::[] -> begin
     let cwd = get_all_files ["./"] [] in
     let idx = get_index () in
-    let st = get_staged_help idx in
+    let st = get_staged idx in
     let ch = get_changed cwd idx in
-    if st <> [] || ch <> [] then invalid_cml_state st ch
+    if st <> [] || ch <> [] then print_invalid_cml_state (st@ch)
     else begin
       let cur_ptr = get_head () in
       let br_ptr = get_branch_ptr br in
@@ -412,7 +396,7 @@ let stash (args: string list) : unit =
         let cwd = get_all_files ["./"] [] in
         let idx = get_index () in
         let ch = get_changed cwd idx in
-        let st = get_staged_help idx in
+        let st = get_staged idx in
         if ch = [] && st = [] then print "No changes to stash"
         else begin
           let ch_idx = List.map (fun file -> (file,create_blob file)) ch in
@@ -462,7 +446,7 @@ let status () : unit =
   end;
   let cwd_files = get_all_files ["./"] [] in
   let idx = get_index () in
-  let st = get_staged_help idx in
+  let st = get_staged idx in
   let ch = get_changed cwd_files idx in
   let ut = get_untracked cwd_files idx in
   let deleted_files = get_deleted cwd_files idx in
