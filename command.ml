@@ -136,7 +136,7 @@ let checkout (args: string list) : unit =
       else if st <> [] || ch <> [] then
         print_invalid_cml_state (st@ch)
       else if (get_branches () |> List.mem arg) then begin
-        if arg = get_current_branch () then
+        if not isdetached && arg = get_current_branch () then
           print ("Already on branch '"^arg^"'")
         else
           let branch_hd = get_branch_ptr arg in
