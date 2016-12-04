@@ -646,4 +646,5 @@ let execute (i : input) : unit =
       | Status   -> status ()
       | User     -> user i.args
   with
-  | Fatal msg -> print ("fatal: "^msg)
+    | Fatal msg -> print ("fatal: "^msg)
+    | Corrupt -> print_corrupt ()

@@ -1,12 +1,6 @@
 (******************************* Tree Module **********************************)
 (******************************************************************************)
 
-(* variant type representint a tree operation *)
-type op = Insert | Read | Write
-
-(* exception type for tree module: includes operartion and msg *)
-exception Tree_ex of op * string
-
 module type TreeSig = sig
 
   type t

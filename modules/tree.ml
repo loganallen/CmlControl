@@ -4,12 +4,6 @@ open Universal
 (******************************* Tree Module **********************************)
 (******************************************************************************)
 
-(* variant type representing one of the tree operations *)
-type op = Insert | Read | Write
-
-(* exception type for tree module: includes operartion and msg *)
-exception Tree_ex of op * string
-
 module type TreeSig = sig
 
   type t
@@ -57,7 +51,7 @@ module Tree = struct
       | (Blob (fx, hx))::t -> loop ((Blob (fx, hx))::acc) (fn, hn) t
     in match tree with
       | Tree (n, lst) -> Tree (n, loop [] (fn, hn) lst)
-      | _ -> raise (Tree_ex (Insert, "Error: cannot insert into blob"))
+      | _ -> raise Corrupt
 
   let index_to_tree (idx : index) : t =
     List.fold_left insert empty idx
@@ -97,7 +91,7 @@ module Tree = struct
         match obj_type with
           | "blob" -> loop ic dirs ((Blob (obj_name, obj_hash))::acc)
           | "tree" -> loop ic ((obj_name, obj_hash)::dirs) acc
-          | _ -> raise (Tree_ex (Read, "Error: invalid object type in " ^ ptr))
+          | _ -> raise Corrupt
       with
       | _ -> close_in ic; acc@(List.map map_helper dirs)
     in
@@ -127,8 +121,7 @@ module Tree = struct
           mkdir (".cml/objects/"^d1) 0o777;
           Sys.rename temp_name path; hsh
         end
-      | _ -> raise (Tree_ex (Write,
-                            "Error: invalid tree, cannot write tree for blob"))
+      | _ -> raise Corrupt
 
   let rec recreate_tree (path : string) (tree : t) : unit =
     match tree with

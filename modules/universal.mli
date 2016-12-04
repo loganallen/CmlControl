@@ -18,6 +18,9 @@ type commit = {
 (* Fatal exception for internal cml execution errors *)
 exception Fatal of string
 
+(* Corrupt exception for cml data corruption *)
+exception Corrupt
+
 (* returns a pairs (d1,path) where [d1] is the first 2 chars of the hash
  * and [path] is the .cml/objects path of the hash *)
 val split_hash: string -> string * string

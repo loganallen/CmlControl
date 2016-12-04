@@ -1,11 +1,10 @@
 (* Print Module --- prints to the terminal *)
 
-
 (* prints a string in the color specified *)
 val print_color: string -> string -> unit
 
 (* prints an error message in error format *)
-val print_error: string -> string -> unit
+val print_error: string -> unit
 
 (* prints a specified amount of indentations *)
 val print_indent: string -> string -> int -> unit
@@ -48,3 +47,6 @@ val print_help_reset_long : unit -> unit
 
 (* print a warning message to user about being in detached HEAD mode *)
 val print_detached_warning: string -> unit
+
+(* print an error message that the repository data is corrupted *)
+val print_corrupt: unit -> unit

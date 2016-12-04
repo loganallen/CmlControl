@@ -9,7 +9,7 @@ let print_color (msg : string) (color : string) : unit =
     | _              -> ANSITerminal.(print_string [black] m)
 
 (* prints an error message in error format *)
-let print_error (msg : string) (options : string) : unit =
+let print_error (msg : string) : unit =
   ANSITerminal.(print_string [red] (msg ^ "\n"))
 
 (* prints a specified amount of indentations *)
@@ -218,3 +218,7 @@ let print_help () : unit =
 let print_detached_warning (commit : string) : unit =
   print_color "warning: cml is in detached HEAD mode" "r";
   print_string "detached HEAD set at "; print_color commit "y"
+
+(* print an error message that the repository data is corrupted *)
+let print_corrupt () : unit =
+  print_error "error: your CmlControl repository may be corrupted"
