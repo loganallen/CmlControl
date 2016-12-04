@@ -171,13 +171,13 @@ let get_staged_help (idx : index) (commit_idx : index) : string list =
     let hash = try List.assoc f commit_idx with Not_found -> "nil" in
     if hash = h then acc else f::acc
   in
-  List.fold_left find_staged [] idx |> List.sort (Pervasives.compare)
+  idx |> List.fold_left find_staged [] |> List.sort (Pervasives.compare)
 
 (* helper function that returns a list of files staged for commit *)
 let get_staged (idx: index) : string list =
   try
     let cmt = Head.get_head_safe () |> Object.parse_commit in
-    Tree.read_tree "" cmt.tree |> Tree.tree_to_index |> get_staged_help idx
+    cmt.tree |> Tree.read_tree "" |> Tree.tree_to_index |> get_staged_help idx
   with
   | Fatal _ -> get_staged_help idx []
 
@@ -191,7 +191,7 @@ let get_changed_as_index (cwd : string list) (idx : index) : index =
     with
     | Not_found -> acc
   in
-  List.fold_left find_changed [] cwd |> List.sort (Pervasives.compare)
+  cwd |> List.fold_left find_changed [] |> List.sort (Pervasives.compare)
 
 (* returns a list of changed files (different from the working index) *)
 let get_changed (cwd : string list) (idx : index) : string list =
@@ -203,14 +203,14 @@ let get_changed (cwd : string list) (idx : index) : string list =
     with
     | Not_found -> acc
   in
-  List.fold_left find_changed [] cwd |> List.sort (Pervasives.compare)
+  cwd |> List.fold_left find_changed [] |> List.sort (Pervasives.compare)
 
 (* returns a list of untracked files (i.e. not in the index) *)
 let get_untracked (cwd : string list) (idx : index) : string list =
   let find_untracked acc fn =
     try let _ = List.assoc fn idx in acc with Not_found -> fn::acc
   in
-  List.fold_left find_untracked [] cwd |> List.sort (Pervasives.compare)
+  cwd |> List.fold_left find_untracked [] |> List.sort (Pervasives.compare)
 
 (* returns a list of all files in the index *)
 let files_in_index (idx : index) : string list =
@@ -221,7 +221,7 @@ let get_deleted (cwd_files : string list) (idx : index) : string list =
   let idx_files = files_in_index idx in
   try
     let cmt = Head.get_head_safe () |> Object.parse_commit in
-    Tree.read_tree "" cmt.tree |> Tree.tree_to_index |> files_in_index
+    cmt.tree |> Tree.read_tree "" |> Tree.tree_to_index |> files_in_index
     |> List.filter (fun file -> (not (List.mem file idx_files)) || (not (List.mem file cwd_files)))
     |> List.sort Pervasives.compare
   with

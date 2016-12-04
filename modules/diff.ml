@@ -107,8 +107,7 @@ let diff_indexes (old_idx : (string * file_data) list) (new_idx : (string * file
       } :: acc
   in
   let new_inputs = List.fold_left acc_diff_inputs [] new_idx in
-  List.fold_left acc_removed_diff_inputs new_inputs old_idx
-  |> diff_mult
+  old_idx |> List.fold_left acc_removed_diff_inputs new_inputs |> diff_mult
 
 (* precondition: cwd is cml repo root *)
 let get_diff_current_index () : (string * file_data) list =

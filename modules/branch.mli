@@ -7,11 +7,8 @@ val get_branches: unit -> string list
 (* returns string representation of repo's current branch *)
 val get_current_branch: unit -> string
 
-(* returns the HASH of a head of the given branch *)
+(* returns the head ptr of the given branch *)
 val get_branch_ptr: string -> string
-
-(* returns the head pointer of the branch *)
-val get_branch: string -> string
 
 (* initializes a given commit to a given branch name *)
 val set_branch_ptr: string -> string -> unit

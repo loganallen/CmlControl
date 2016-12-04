@@ -21,14 +21,10 @@ let get_index () : index =
   with
     | Sys_error _ -> []
 
-(*** DUPLICATION ***)
-
 (* returns the index of the branch *)
 let get_branch_index branch =
-  let commit = Object.parse_commit (Branch.get_branch branch) in
-  Tree.read_tree "" commit.tree |> Tree.tree_to_index
-
-(*** END DUPLICATION ***)
+  let commit = branch |> Branch.get_branch_ptr |> Object.parse_commit in
+  commit.tree |> Tree.read_tree "" |> Tree.tree_to_index
 
 (* updates the index by adding a new mapping *)
 let update_index (map : string * string) (idx : index) : index =

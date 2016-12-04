@@ -4,6 +4,7 @@ open Universal
 (******************************* Tree Module **********************************)
 (******************************************************************************)
 
+(* TreeSig: same as defined in tree.mli *)
 module type TreeSig = sig
 
   type t
@@ -26,6 +27,7 @@ module Tree = struct
 
   type index = (string * string) list
 
+  (* an empty Tree *)
   let empty : t = Tree ("", [])
 
   (* [insert (fn, hn)] inserts a Blob into the tree.
@@ -82,6 +84,7 @@ module Tree = struct
     let obj_name = String.sub raw (sp2 + 1) (String.length raw - (sp2 + 1)) in
     (obj_type, obj_hash, obj_name)
 
+  (* [read_tree ptr] reads a tree from the filesystem and converts it to type t *)
   let rec read_tree (tree_name : string) (ptr : string) : t =
     let map_helper (dn, ptr) = read_tree dn ptr in
     let rec loop ic dirs acc =
@@ -98,6 +101,8 @@ module Tree = struct
     let ic = open_in (get_object_path ptr) in
     Tree(tree_name, loop ic [] [])
 
+  (* [write_tree tree] writes a tree to the filesystem
+   * precondition: tree is a variant type tree *)
   let rec write_tree (tree : t) : string =
     let rec tree_data acc = function
       | [] -> acc
@@ -114,7 +119,7 @@ module Tree = struct
         begin
           let temp_name = ".cml/temp_"^n in
           let ch = open_out temp_name in
-          let _ = tree_data [] lst |> write_lines ch in
+          let _ = lst |> tree_data [] |> write_lines ch in
           let hsh = Crypto.hash temp_name in
           let (d1,path) = split_hash hsh in
           if not (Sys.file_exists (".cml/objects/"^d1)) then
@@ -123,6 +128,7 @@ module Tree = struct
         end
       | _ -> raise Corrupt
 
+  (* [recreate_tree nm tree] updates working repo with tree content *)
   let rec recreate_tree (path : string) (tree : t) : unit =
     match tree with
       | Blob (fn, hsh) -> Crypto.decompress (get_object_path hsh)

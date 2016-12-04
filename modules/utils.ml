@@ -34,7 +34,7 @@ let get_flags_from_arg (arg : string) : string list =
   if Str.string_match r_double_dash arg 0 then
     [Str.replace_first r_double_dash "" arg]
   else
-    Str.replace_first r_single_dash "" arg |> Str.split (Str.regexp "")
+    arg |> Str.replace_first r_single_dash "" |> Str.split (Str.regexp "")
 
 (* fetch the user info (username) *)
 let get_user_info () : string =
