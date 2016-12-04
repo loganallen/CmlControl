@@ -39,22 +39,22 @@ val verify_files_in_repo: string list -> string list
 val get_files_from_rel_path: string -> string list
 
 (* returns a list of all files staged (added) for commit *)
-val get_staged: Common.index -> Common.index -> string list
+val get_staged: Universal.index -> Universal.index -> string list
 
 (* returns a mapping of changed files to their old obj hashes *)
-val get_changed_as_index: string list -> Common.index -> Common.index
+val get_changed_as_index: string list -> Universal.index -> Universal.index
 
 (* returns a list of changed files *)
-val get_changed: string list -> Common.index -> string list
+val get_changed: string list -> Universal.index -> string list
 
 (* returns a list of untracked files *)
-val get_untracked: string list -> Common.index -> string list
+val get_untracked: string list -> Universal.index -> string list
 
 (* returns a list of all files in the index *)
-val files_in_index: Common.index -> string list
+val files_in_index: Universal.index -> string list
 
 (* returns a list of files that were deleted since last commit *)
-val get_deleted: string list -> Common.index -> string list
+val get_deleted: string list -> Universal.index -> string list
 
 (******************************** Manipulation ********************************)
 
@@ -67,4 +67,4 @@ val remove_empty_dirs : string -> unit
 
 (* overwrites file with version added to supplied index
  * if the file is not in the index, do nothing *)
-val checkout_file: string -> Common.index -> unit
+val checkout_file: string -> Universal.index -> unit

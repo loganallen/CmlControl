@@ -8,7 +8,7 @@ val create_blob: string -> string
 val create_commit: string -> string -> string -> string -> string list -> string
 
 (* returns a commit record for the given commit ptr *)
-val parse_commit: string -> Common.commit
+val parse_commit: string -> Universal.commit
 
 (* takes a commit hash and returns  the index of the commit *)
-val get_commit_index: string -> Common.index
+val get_commit_index: string -> Universal.index

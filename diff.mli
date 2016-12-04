@@ -10,7 +10,7 @@ type diff_input = {
 }
 
 (* Convert an index into an associate list with file_data *)
-val index_to_diff_index : bool -> Common.index -> (string * file_data) list
+val index_to_diff_index : bool -> Universal.index -> (string * file_data) list
 
 (* Print the diff of two diff input lists *)
 val diff_indexes : (string * file_data) list -> (string * file_data) list -> unit

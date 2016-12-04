@@ -3,16 +3,16 @@
 
 (* returns the index which is a list that maps tracked filenames
  * to their most recent hash string value *)
-val get_index: unit -> Common.index
+val get_index: unit -> Universal.index
 
 (* returns the index of the branch *)
-val get_branch_index: string -> Common.index
+val get_branch_index: string -> Universal.index
 
 (* updates the index by adding a new mapping *)
-val update_index: string * string -> Common.index -> Common.index
+val update_index: string * string -> Universal.index -> Universal.index
 
 (* initializes an index in the cml directory *)
-val set_index: Common.index -> unit
+val set_index: Universal.index -> unit
 
 (* removes [rm_files] list from the index *)
 val rm_files_from_idx : string list -> unit
