@@ -157,10 +157,7 @@ let checkout (args: string list) : unit =
           if isdetached && arg = get_detached_head () then
             print ("Already detached HEAD at " ^ arg)
           else
-            let commit = parse_commit arg in
-            let tree = Tree.read_tree "" commit.tree in
-            Tree.recreate_tree "" tree;
-            set_index (Tree.tree_to_index tree);
+            switch_version true arg;
             set_detached_head arg;
             print_detached_warning arg
         with
