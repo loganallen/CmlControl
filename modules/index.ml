@@ -65,8 +65,7 @@ let switch_version (is_hard : bool) (commit_hash : string) : unit =
   let nhead = Object.parse_commit commit_hash in
   let ntree = Tree.read_tree "" nhead.tree in
   let nindex = Tree.tree_to_index ntree in
-  let ohead = Head.get_head () |> Object.parse_commit in
-  let oindex = ohead.tree |> Tree.read_tree "" |> Tree.tree_to_index in
+  let oindex = get_index () in
   let idx = begin
     if is_hard then
       let _ = List.iter (fun (fn, hn) -> Sys.remove fn ) oindex in nindex
