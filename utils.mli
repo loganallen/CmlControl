@@ -191,7 +191,7 @@ val delete_branch: string -> unit
 val switch_branch: string -> bool -> bool
 
 (* switches state of repo to state of given commit_hash *)
-val switch_version: string -> unit
+val switch_version: bool -> string -> unit
 
 (******************************** User Info ***********************************)
 (******************************************************************************)
