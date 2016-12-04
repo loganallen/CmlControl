@@ -7,7 +7,7 @@ open Cryptokit
 
 (* returns the string list of lines in the file_name
  * precondition: file_name exists from the cwd *)
-let parse_lines file_name =
+let parse_lines (file_name : string) : string list =
   let rec acc_lines acc ic =
     try begin
       let line = input_line ic in acc_lines (acc@[line]) ic
@@ -39,7 +39,7 @@ let compress (file_name : string) (path : string) : unit =
     | _ -> raise (Fatal ("Failure compressing '"^file_name^"'"))
 
 (* returns the compressed [str] *)
-let compress_string str =
+let compress_string (str : string) : string =
     Cryptokit.transform_string (Cryptokit.Zlib.compress ()) str
 
 (* decompresses a file/directory to the specified destination *)
@@ -53,12 +53,12 @@ let decompress (file_name : string) (dest_path : string) : unit =
     | _ -> raise (Fatal ("Failure uncompressing '"^file_name^"'"))
 
 (* returns the decompressed [str] *)
-let decompress_string str =
+let decompress_string (str : string) : string =
     Cryptokit.transform_string (Cryptokit.Zlib.uncompress ()) str
 
 (* returns the string list of lines in the decompressed file given the
  * file_name of a compressed file *)
-let decompress_contents file_name =
+let decompress_contents (file_name : string) : string list =
   try begin
     let decomp_name = file_name^"uncmlpressed" in
       decompress file_name decomp_name;
