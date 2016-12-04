@@ -10,8 +10,7 @@ open Cryptokit
 let parse_lines file_name =
   let rec acc_lines acc ic =
     try begin
-      let line = input_line ic in
-      acc_lines (acc@[line]) ic
+      let line = input_line ic in acc_lines (acc@[line]) ic
     end with
     | End_of_file -> close_in ic; acc
     | _ -> raise (Fatal ("Failure reading file '"^file_name^"'"))
@@ -35,9 +34,7 @@ let compress (file_name : string) (path : string) : unit =
     let ic = open_in file_name in
     let oc = open_out path in
     let compress = Cryptokit.Zlib.compress () in
-    Cryptokit.transform_channel compress ic oc;
-    close_in ic;
-    close_out oc
+    Cryptokit.transform_channel compress ic oc; close_in ic; close_out oc
   end with
     | _ -> raise (Fatal ("Failure compressing '"^file_name^"'"))
 
@@ -51,9 +48,7 @@ let decompress (file_name : string) (dest_path : string) : unit =
     let ic = open_in file_name in
     let oc = open_out dest_path in
     let uncompress = Cryptokit.Zlib.uncompress () in
-    Cryptokit.transform_channel uncompress ic oc;
-    close_in ic;
-    close_out oc
+    Cryptokit.transform_channel uncompress ic oc; close_in ic; close_out oc
   end with
     | _ -> raise (Fatal ("Failure uncompressing '"^file_name^"'"))
 
@@ -66,10 +61,9 @@ let decompress_string str =
 let decompress_contents file_name =
   try begin
     let decomp_name = file_name^"uncmlpressed" in
-    decompress file_name decomp_name;
+      decompress file_name decomp_name;
     let file_lines = parse_lines decomp_name in
-    Sys.remove decomp_name;
-    file_lines
+      Sys.remove decomp_name; file_lines
   end with
   | _ -> raise (Fatal ("Failure decompressing file '"^file_name^"'"))
 
@@ -80,7 +74,6 @@ let copy (file_name : string) (dest_path : string) : unit =
     with End_of_file -> close_in ic; close_out oc
   in try
     let ic = open_in file_name in
-    let oc = open_out dest_path in
-    loop ic oc
+    let oc = open_out dest_path in loop ic oc
   with
     Sys_error _ -> raise (Fatal "utils.copy, file not found")

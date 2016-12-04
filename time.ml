@@ -18,7 +18,8 @@ let month (n : int) : string = match n with
   | _ -> "Clarkson"
 
 (* returns the current year *)
-let year (n : int) : string = string_of_int (n + 1900)
+let year (n : int) : string =
+  string_of_int (n + 1900)
 
 (* returns a formatted timestamp string for cml commits *)
 let get_time (tm : Unix.tm) : string =
@@ -27,4 +28,4 @@ let get_time (tm : Unix.tm) : string =
   let day  = day tm.Unix.tm_wday in
   let mon  = month tm.Unix.tm_mon in
   let year = year tm.Unix.tm_year in
-    (day ^ " " ^ mon ^ " " ^ date ^ " " ^ time ^ " " ^ year)
+  (day ^ " " ^ mon ^ " " ^ date ^ " " ^ time ^ " " ^ year)

@@ -23,16 +23,14 @@ let diff_vs_blob (normal : string) (blob : string) : Odiff.diffs =
   let temp = ".cml/objects/temp_blob" in
   Crypto.decompress blob temp;
   let file_diff = Odiff.files_diffs normal temp in
-  Sys.remove temp;
-  file_diff
+  Sys.remove temp; file_diff
 
 (* prints a diff between one decompressed file and one compressed file *)
 let blob_vs_diff (blob : string) (normal : string) : Odiff.diffs =
   let temp = ".cml/objects/temp_blob" in
   Crypto.decompress blob temp;
   let file_diff = Odiff.files_diffs temp normal in
-  Sys.remove temp;
-  file_diff
+  Sys.remove temp; file_diff
 
 (* prints a diff between two compressed files *)
 let diff_blobs (blob1 : string) (blob2 : string) : Odiff.diffs =
@@ -40,8 +38,7 @@ let diff_blobs (blob1 : string) (blob2 : string) : Odiff.diffs =
   let temp2 = ".cml/objects/temp_blob2" in
   Crypto.decompress blob1 temp1; Crypto.decompress blob2 temp2;
   let file_diffs = Odiff.files_diffs temp1 temp2 in
-  Sys.remove temp1; Sys.remove temp2;
-  file_diffs
+  Sys.remove temp1; Sys.remove temp2; file_diffs
 
 (* [diff (file1, iscompressed1) (file2, iscompressed2)] prints a diff between
  * two files that can be compressed or decompressed *)
@@ -53,34 +50,24 @@ let diff old_file new_file : Odiff.diffs =
     | (true, true) -> diff_blobs old_file.file_path new_file.file_path
 
 let print_separator do_print =
-  if do_print then begin
-    Print.print "--------------------";
-  end else
-    ()
+  if do_print then Print.print "--------------------" else()
 
 (* prints diffs for all pairs of files in a list [lst] *)
 let rec diff_mult (lst : diff_input list) : unit =
   let acc_diff acc input = begin
     match input with
     | { name; old_file_data = None; } -> begin
-      print_separator acc;
-      Print.print_color ("added:   "^name) "green";
-      true
+      print_separator acc; Print.print_color ("added:   "^name) "green"; true
     end
     | { name; new_file_data = None; } -> begin
-      print_separator acc;
-      Print.print_color ("deleted: "^name) "red";
-      true
+      print_separator acc; Print.print_color ("deleted: "^name) "red"; true
     end
     | { name; old_file_data = Some old_file; new_file_data = Some new_file; } -> begin
       let file_diffs = diff old_file new_file in
-      if file_diffs = [] then
-        acc
+      if file_diffs = [] then acc
       else begin
-        print_separator acc;
-        Print.print_color ("diff --cml "^name) "";
-        List.iter print_diff file_diffs;
-        true
+        print_separator acc; Print.print_color ("diff --cml "^name) "";
+        List.iter print_diff file_diffs; true
       end
     end
   end in
