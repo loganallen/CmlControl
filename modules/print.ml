@@ -82,6 +82,28 @@ let print_commit (oc : out_channel) (ptr : string) (author : string) (time : str
   Printf.fprintf oc "Date: %s\n\n" time;
   Printf.fprintf oc "    %s\n\n" msg
 
+(* print help info for user (long version) *)
+let print_help_user_long () : unit =
+  print_indent "usage: cml --user <name>" "b" 1;
+  print_indent "Set the username associated with commits" "black" 1
+
+(* print help info for user *)
+let print_help_user () : unit =
+  print_indent "user\t\tSet the username associated with commits" "b" 1;
+  print_indent "usage: cml --user <name>" "y" 8
+
+(* print help info for init (long version) *)
+let print_help_init_long () : unit =
+  print_indent "usage: cml init" "b" 1;
+  print_newline ();
+  print_indent "Creates an empty Cml repository - basically a .cml directory" "black" 1;
+  print_indent "to hold information for CmlControl" "black" 1
+
+(* print help info for init *)
+let print_help_init () : unit =
+  print_indent "init\t\tCreate an empty Cml repository" "b" 1;
+  print_indent "usage: cml init" "y" 8
+
 (* print help info for add (long version) *)
 let print_help_add_long () : unit =
   print_indent "usage: cml add [-A] <pathspec>..." "b" 1;
@@ -172,52 +194,158 @@ let print_help_rm () : unit =
   print_indent "rm\t\tRemove files from index or the working tree and index)" "b" 1;
   print_indent "usage: cml rm [-f] <pathspec>..." "y" 8
 
+(* print help info for stash (long version) *)
+let print_help_stash_long () : unit =
+  print_indent "cml stash [apply]" "b" 1;
+  print_newline ();
+  print_indent "cml stash       -- create a snapshot of changes to the working tree and" "" 1;
+  print_indent "                   reverts back to the most recent commit" "" 1;
+  print_indent "cml stash apply -- apply stashed changes to the current repository, and" "" 1;
+  print_indent "                   remove the stash." "" 1;
+  print_indent "                   WARNING: this might overwrite your files." "" 1
+
 (* print help info for stash *)
 let print_help_stash () : unit =
   print_indent "stash\t\tStashes changes made to the current working tree" "b" 1;
-  print_indent "returns working directory to current HEAD pointer" "b" 1;
-  print_indent "usage: [ apply ] will reapply the stashed changes" "y" 8
+  print_indent "[apply] applies stashed changes" "b" 8;
+  print_indent "usage: cml stash [apply]" "y" 8
+
+(* print help info for branch (long version) *)
+let print_help_branch_long () : unit =
+  print_indent "cml branch [-d | -D] [<name>]" "b" 1;
+  print_newline ();
+  print_indent "cml branch" "" 1;
+  print_indent "Lists all branches, and highlights the current branch in green." "" 3;
+  print_newline ();
+  print_indent "cml branch <name>" "" 1;
+  print_indent "Creates new branch <name>" "" 3;
+  print_newline ();
+  print_indent "cml branch (-d | -D) <name>" "" 1;
+  print_indent "Deletes branch <name>." "" 3
 
 (* print help info for branch *)
 let print_help_branch () : unit =
   print_indent "branch\tCreate, list, or delete branches" "b" 1;
-  print_indent "usage:  <branch> | \" \" | [-d | -D] <branch>" "y" 8
+  print_indent "usage: cml branch [-d | -D] [<name>]" "y" 8
+
+(* print help info for checkout (long version) *)
+let print_help_checkout_long () : unit =
+  print_indent "cml checkout [-b] <branch>" "b" 1;
+  print_indent "cml checkout <commit>" "b" 1;
+  print_indent "cml checkout <file>" "b" 1;
+  print_newline ();
+  print_indent "cml checkout [-b] <branch>" "" 1;
+  print_indent "Switches branches to <branch>" "" 3;
+  print_indent "[-b] option creates a new branch <branch> and switches to the branch" "" 3;
+  print_newline ();
+  print_indent "cml checkout <commit>" "" 1;
+  print_indent "Enter detached head mode, and change the current working tree to that" "" 3;
+  print_indent "of the <commit>. You can get out of detached head mode by checkout out" "" 3;
+  print_indent "a branch." "" 3;
+  print_newline ();
+  print_indent "cml checkout <file>" "" 1;
+  print_indent "Overwrites the <file> with the version of <file> in the current index" "" 3
 
 (* print help info for checkout *)
 let print_help_checkout () : unit =
   print_indent "checkout\tSwitch branches or restore working tree files" "b" 1;
-  print_indent "usage:  <branch> | <commit>" "y" 8
+  print_indent "usage: cml checkout [-b] <branch>" "y" 8;
+  print_indent "       cml checkout <commit>" "y" 8;
+  print_indent "       cml checkout <file>" "y" 8
+
+(* print help info for commit (long version) *)
+let print_help_commit_long () : unit =
+  print_indent "usage: cml commit -m [-a] <message>" "b" 1;
+  print_newline ();
+  print_indent "Commit all the staged changes to the repository" "" 3;
+  print_newline ();
+  print_indent "-a" "" 1;
+  print_indent "Stages all the tracked files before committing. Any new files you" "" 3;
+  print_indent "have not told CmlControl about will not be affected." "" 3
 
 (* print help info for commit *)
 let print_help_commit () : unit =
   print_indent "commit\tRecord changes to the repository" "b" 1;
-  print_indent "usage:  [-am | -m] <message>" "y" 8
+  print_indent "usage: cml commit -m [-a] <message>" "y" 8
+
+(* print help info for diff (long version) *)
+let print_help_diff_long () : unit =
+  print_indent "cml diff [<commit>]" "b" 1;
+  print_indent "cml diff [<commit>] <file>" "b" 1;
+  print_indent "cml diff <commit1> <commit2>" "b" 1;
+  print_newline ();
+  print_indent "<commit> is the hash number of a commit. To find this, run \"cml log\"" "" 1;
+  print_indent "and for each commit, the hash is in yellow right after \"commit\"." "" 1;
+  print_newline ();
+  print_indent "cml diff [<commit>]" "" 1;
+  print_indent "Prints the differences between the current working tree and <commit>" "" 3;
+  print_indent "If <commit> is not specified, the previous commit is used." "" 3;
+  print_newline ();
+  print_indent "cml diff [<commit>] <file>" "" 1;
+  print_indent "Prints the difference between <file> in the current working tree and" "" 3;
+  print_indent "<file> in the <commit>. If <commit> is not specified, the previous" "" 3;
+  print_indent "commit is used." "" 3;
+  print_indent "cml diff <commit1> <commit2>" "" 1;
+  print_indent "Prints the differences between <commit1> and <commit2>." "" 3
 
 (* print help info for diff *)
 let print_help_diff () : unit =
-  print_indent "diff\t\tShow changes between working tree and previous commits" "b" 1;
-  print_indent "usage:  \" \" | <filename>" "y" 8
+  print_indent "diff\t\tShow changes between commits, commit and working tree, etc" "b" 1;
+  print_indent "usage: cml diff [<commit>]" "y" 8;
+  print_indent "       cml diff [<commit>] <file>" "y" 8;
+  print_indent "       cml diff <commit1> <commit2>" "y" 8
+
+(* print help info for merge (long version) *)
+let print_help_merge_long () : unit =
+  print_indent "cml merge <branch>" "b" 1;
+  print_newline ();
+  print_indent "Joins two branches together as long as they both do not have files" "" 1;
+  print_indent "sharing the same name and different content (this creates a merge" "" 1;
+  print_indent "conflict). In the case of merge conflicts, CmlControl will notify" "" 1;
+  print_indent "you of the conflicting files, and you will have to change the content" "" 1;
+  print_indent "of these files to match each other." "" 1
 
 (* print help info for merge *)
 let print_help_merge () : unit =
-  print_indent "merge\t\tJoin two or more development histories together" "b" 1;
-  print_indent "usage:  <branch>" "y" 8
+  print_indent "merge\t\tJoin two development histories together" "b" 1;
+  print_indent "usage: cml merge <branch>" "y" 8
+
+(* print help info for status (long version) *)
+let print_help_status_long () : unit =
+  print_indent "cml status" "b" 1;
+  print_newline ();
+  print_indent "Show the working tree status" "" 1
+
+(* print help info for status *)
+let print_help_status () : unit =
+  print_indent "status\tShow the working tree status" "b" 1;
+  print_indent "usage: cml status" "y" 8
+
+(* print help info for log (long version) *)
+let print_help_log_long () : unit =
+  print_indent "cml log" "b" 1;
+  print_newline ();
+  print_indent "Show commit logs" "" 1
+
+(* print help info for log *)
+let print_help_log () : unit =
+  print_indent "log\t\tShow commit logs" "b" 1;
+  print_indent "usage: cml log" "y" 8
 
 (* prints a help log for all Cml commands *)
 let print_help () : unit =
   print_camel (); print_newline ();
-  print_color "usage: [--help | help] [--user [<name>]]" "b"; print_newline ();
+  print_color "usage: cml <command> [--help] [<arg>...]" "b"; print_newline ();
   print "The following are cml commands and usages:";
   print_newline ();
   print_color "starting a cml version control repository" "";
-  print_indent "init\t\tCreate an empty Cml repository" "b" 1;
+  print_help_init (); print_help_user ();
   print_newline ();
   print "work on current changes";
   print_help_add (); print_help_reset (); print_help_rm (); print_help_stash ();
   print_newline ();
   print "examine the history and state";
-  print_indent "log\t\tShow commit logs" "b" 1;
-  print_indent "status\tShow the working tree status" "b" 1;
+  print_help_log (); print_help_status ();
   print_newline ();
   print "grow and tweak the cml history";
   print_help_branch (); print_help_checkout (); print_help_commit ();
