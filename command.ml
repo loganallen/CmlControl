@@ -48,10 +48,6 @@ let get_staged_help (idx: index) : string list =
   with
   | Fatal _ -> get_staged idx []
 
-let rec print_list = function
-  | [] -> ()
-  | h::t -> print_endline h; print_list t
-
 (* add print message of 'new file:' or 'modified:' to the files
  * precondition: cwd is the .cml repo (chdir_to_cml ()) *)
 let add_print_msg files =
@@ -130,7 +126,6 @@ let checkout (args: string list) : unit =
   let st = get_staged_help idx in
   let ch = get_changed cwd idx in
   let ut = get_untracked cwd idx in
-  print_list ut;
   let isdetached = detached_head () in
   match args with
   | []    -> raise (Fatal "branch name or HEAD version required")
@@ -187,8 +182,7 @@ let checkout (args: string list) : unit =
  * stores the current contents of the index in a new commit
  * along with commit metadata. *)
 let commit (args: string list) : unit =
-  let cwd = Sys.getcwd () in
-  chdir_to_cml ();
+  let cwd = Sys.getcwd () in chdir_to_cml ();
   let user = get_user_info () in
   let isdetached = detached_head () in
   let new_head =
@@ -210,7 +204,7 @@ let commit (args: string list) : unit =
         let changed_files = get_changed cwd_files (get_index ()) in
         begin if (flag = "-am" || flag = "-ma") && changed_files <> [] then add changed_files else () end;
         let deleted_files = get_deleted (get_all_files ["./"] []) (get_index ()) in
-        rm_files_from_idx deleted_files;
+          rm_files_from_idx deleted_files;
         let idx = get_index () in
         let staged_files = get_staged_help idx in
         if staged_files = [] && deleted_files = [] then begin
@@ -246,36 +240,31 @@ let get_diff_current_index () =
   let cwd_files = get_all_files ["./"] [] in
   let deleted_files = get_deleted cwd_files idx in
   let changed_files = get_changed cwd_files idx in
-  let changed_diff_index = List.map (fun file -> (file, file)) changed_files
-                           |> Diff.index_to_diff_index false in
-  List.filter (fun (file,_) -> not (List.mem file deleted_files)) idx
-  |> Diff.index_to_diff_index true
-  |> List.map (fun (file,hash) ->
-    if List.mem_assoc file changed_diff_index then
-      (file, List.assoc file changed_diff_index)
-    else
-      (file,hash))
+  let changed_diff_index = changed_files |>
+    List.map (fun f -> (f,f)) |> Diff.index_to_diff_index false in
+  idx |> List.filter (fun (f,_) -> not (List.mem f deleted_files)) |>
+    Diff.index_to_diff_index true |>
+    List.map (fun (f,hash) -> if List.mem_assoc f changed_diff_index then
+      (f, List.assoc f changed_diff_index) else (f,hash))
 
 (* precondition: [abs_path_lst] holds the absolute paths from cml.
-                 Also, all the files are uncompressed *)
+ * Also, all the files are uncompressed *)
 let diff_idx_current_files abs_path_lst =
-  List.map (fun f -> (f,f)) abs_path_lst |> Diff.index_to_diff_index false
+  abs_path_lst |> List.map (fun f -> (f,f)) |> Diff.index_to_diff_index false
 
 (* return the diff index of the cmt_idx for each file in [files] *)
 let diff_idx_commit idx files =
   let acc_idx acc file =
     try begin
-      let hash = List.assoc file idx in
-      (file,hash)::acc
+      let hash = List.assoc file idx in (file,hash)::acc
     end with
       | Not_found -> acc
   in
-  List.fold_left acc_idx [] files |> Diff.index_to_diff_index true
+  files |> List.fold_left acc_idx [] |> Diff.index_to_diff_index true
 
 (* show changes between working tree and previous commits *)
 let diff (args: string list) : unit =
-  let cwd = Sys.getcwd () in
-  chdir_to_cml ();
+  let cwd = Sys.getcwd () in chdir_to_cml ();
   let current_diff_idx = get_diff_current_index () in
   let commit_index = get_commit_index (get_head_safe ()) in
   let commit_diff_idx = commit_index |> Diff.index_to_diff_index true in
@@ -284,8 +273,7 @@ let diff (args: string list) : unit =
     if Sys.file_exists arg then begin
       let arg_file = abs_path_from_cml arg |> Str.(replace_first (regexp "/") "") in
       chdir_to_cml ();
-      let _ = verify_files_in_repo [arg_file] in
-      arg_file
+      let _ = verify_files_in_repo [arg_file] in arg_file
     end else (chdir_to_cml (); arg)
   in
   match args with
@@ -309,10 +297,8 @@ let diff (args: string list) : unit =
   end
   | arg1::arg2::[] -> begin
     let old_idx =
-      if List.mem arg1 (get_branches ()) then
-        get_branch_index arg1
-      else
-        get_commit_index arg1
+      if List.mem arg1 (get_branches ()) then get_branch_index arg1
+      else get_commit_index arg1
     in
     let arg_file = get_arg_file arg2 in
     if Sys.file_exists arg_file || arg_file = "" then
@@ -560,8 +546,7 @@ let stash (args: string list) : unit =
         try
           let ic = open_in ".cml/stash" in
           let version = input_line ic in
-          switch_version false version;
-          open_out ".cml/stash" |> close_out;
+          switch_version false version; open_out ".cml/stash" |> close_out;
         with
           | Sys_error _ | End_of_file -> print "No saved stashes to apply"
       else raise (Fatal ("not a valid argument to the stash command"))
