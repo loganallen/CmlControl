@@ -1,7 +1,7 @@
 open Unix
 open Common
 
-(***************************** Generic Helpers ********************************)
+(************************** Miscellaneous Helpers *****************************)
 (******************************************************************************)
 
 (* returns true if the path contains an initialized Cml repo,
@@ -17,9 +17,6 @@ let cml_initialized_r path =
     | None -> false
   with
   | Fatal _ -> false
-
-let current_dir () =
-  Filename.basename (Sys.getcwd ())
 
 (* returns whether the given argument is a flag (if arg is of the form
  * dash [-] followed by any number of characters > 0) *)
@@ -38,9 +35,6 @@ let get_flags_from_arg arg =
     [Str.replace_first r_double_dash "" arg]
   else
     Str.replace_first r_single_dash "" arg |> Str.split (Str.regexp "")
-
-(******************************** User Info ***********************************)
-(******************************************************************************)
 
 (* fetch the user info (username) *)
 let get_user_info () : string =
