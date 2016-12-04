@@ -163,11 +163,8 @@ let checkout (args: string list) : unit =
   | flag::b::_ ->
     begin
       if flag = "-b" || flag = "-B" then
-        if st <> [] || ch <> [] then
-          print_invalid_cml_state (st@ch)
-        else
-          let _ = get_head_safe () |> create_branch b in
-          switch_branch b isdetached
+        let _ = get_head_safe () |> create_branch b in
+        switch_branch b isdetached
       else
         raise (Fatal ("invalid flags, see [--help]"))
     end
