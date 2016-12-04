@@ -165,6 +165,7 @@ let print_help_rm () : unit =
 (* print help info for stash *)
 let print_help_stash () : unit =
   print_indent "stash\t\tStashes changes made to the current working tree" "b" 1;
+  print_indent "returns working directory to current HEAD pointer" "b" 1;
   print_indent "usage: [ apply ] will reapply the stashed changes" "y" 8
 
 (* print help info for branch *)

@@ -559,16 +559,20 @@ let switch_branch (branch : string) (isdetached : bool) : unit =
     print ("Switched to branch '"^branch^"'")
 
 (* switches state of repo to state of given commit_hash *)
-let switch_version (commit_hash : string) : unit =
-  let ohead = parse_commit (get_head ()) in
-  let oindex = Tree.read_tree "" ohead.tree |> Tree.tree_to_index in
+let switch_version (is_hard : bool) (commit_hash : string) : unit =
   let nhead = parse_commit commit_hash in
   let ntree = Tree.read_tree "" nhead.tree in
   let nindex = Tree.tree_to_index ntree in
-  List.iter (fun (fn, hn) -> Sys.remove fn ) oindex;
+  let ohead = parse_commit (get_head ()) in
+  let oindex = Tree.read_tree "" ohead.tree |> Tree.tree_to_index in
+  let idx = begin
+    if is_hard then
+      let _ = List.iter (fun (fn, hn) -> Sys.remove fn ) oindex in nindex
+    else oindex
+  end in
   Tree.recreate_tree "" ntree;
   remove_empty_dirs "./";
-  set_index nindex
+  set_index idx
 
 (******************************** User Info ***********************************)
 (******************************************************************************)

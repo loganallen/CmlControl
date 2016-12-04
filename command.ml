@@ -202,7 +202,7 @@ let checkout (args: string list) : unit =
             print_endline "fatal: The following untracked working tree files would be overwritten by checkout:";
             List.iter (fun fn -> print_indent fn "r" 3) conflicting_files
           end else begin
-            get_branch_ptr arg |> switch_version;
+            get_branch_ptr arg |> switch_version true;
             switch_branch arg isdetached
           end
       end else
@@ -491,7 +491,7 @@ let true_merge (cur_ptr: string) (br_ptr: string) (branch: string) : unit =
 (* perform fast-forward merge by updating the head to the branch head *)
 let fast_forward_merge (branch: string) (ptr: string) : unit =
   print ("Updating branch '" ^ branch ^ "' with fast-forward merge...");
-  set_head ptr; switch_version ptr;
+  set_head ptr; switch_version true ptr;
   print "\nMerge successful."
 
 (* join two or more development histories together *)
@@ -536,7 +536,7 @@ let reset (args: string list) : unit =
   in
   let commit = parse_commit head_hash in   (* parse_commit does validation *)
   if List.mem "hard" flags then begin
-    switch_version head_hash;
+    switch_version true head_hash;
     set_head head_hash
   end else
     set_head head_hash;
@@ -577,7 +577,43 @@ let rm (args: string list) : unit =
 
 (* stashes changes made to the current working tree *)
 let stash (args: string list) : unit =
-  failwith "Unimplemented"
+  match args with
+    | [] -> begin
+      try
+        chdir_to_cml ();
+        let cwd = get_all_files ["./"] [] in
+        let idx = get_index () in
+        let ch = get_changed cwd idx in
+        let st = get_staged_help idx in
+        if ch = [] && st = [] then print "No changes to stash"
+        else begin
+          let ch_idx = List.map (fun file -> (file,create_blob file)) ch in
+          let st_idx = List.map (fun file -> (file, List.assoc file idx)) st in
+          let f_idx = ch_idx @ st_idx in
+          let new_tree = Tree.index_to_tree f_idx |> Tree.write_tree in
+          let user = get_user_info () in
+          let tm = time () |> localtime |> Time.get_time in
+          let head = get_head () in
+          let commit = create_commit new_tree user tm "Stash" [head] in
+          switch_version true head;
+          let oc = open_out ".cml/stash" in
+          output_string oc commit;
+          close_out oc;
+        end
+      with
+      | Fatal f -> print_endline "cannot stash - no commit history"
+    end
+    | h::t -> begin
+      if h = "apply" then
+        try
+          let ic = open_in ".cml/stash" in
+          let version = input_line ic in
+          switch_version false version;
+          open_out ".cml/stash" |> close_out;
+        with
+          | Sys_error _ | End_of_file -> print "No saved stashes to apply"
+      else raise (Fatal ("not a valid argument to the stash command"))
+    end
 
 (* helper for printing status message *)
 let status_message () =
