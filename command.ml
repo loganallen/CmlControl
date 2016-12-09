@@ -315,6 +315,7 @@ let log () : unit =
 
 (* join two or more development histories together *)
 let merge (args: string list) : unit =
+  chdir_to_cml();
   match args with
   | []     -> raise (Fatal "no branch specified, see [--help]")
   | br::[] -> begin
