@@ -394,6 +394,7 @@ let rm (args: string list) : unit =
 
 (* stashes changes made to the current working tree *)
 let stash (args: string list) : unit =
+  chdir_to_cml ();
   match args with
     | [] -> begin
       try
