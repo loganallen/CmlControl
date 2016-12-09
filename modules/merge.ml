@@ -73,10 +73,11 @@ let true_merge (cur_ptr: string) (br_ptr: string) (branch: string) : unit =
     let tm = time () |> localtime |> Time.get_time in
     [cur_ptr;br_ptr] |> Object.create_commit tree_hash user tm msg |> Head.set_head;
     Index.set_index merged_idx; Tree.recreate_tree "" tree; Print.print msg
-  else
+  else begin
     Print.print "Unable to merge branches because of the following incompatible files:\n";
     List.iter (fun f -> Print.print_indent f "y" 3) incomp_fs;
-    Print.print "\nPlease resolve these conflicts so that the vile versions match."
+    Print.print "\nPlease resolve these conflicts so that the file versions match."
+  end
 
 (* perform fast-forward merge by updating the head to the branch head *)
 let fast_forward_merge (branch: string) (ptr: string) : unit =
