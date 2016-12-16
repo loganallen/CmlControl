@@ -34,12 +34,12 @@ let parse_commit (ptr : string) : commit =
   try
     let (_,path) = split_hash ptr in
     let ic = open_in path in
-    let tree = input_line ic in
-    let user = input_line ic in
-    let time = input_line ic in
+    let tr = input_line ic in
+    let usr = input_line ic in
+    let dt = input_line ic in
     let msg = input_line ic in
-    let parents = ic |> input_line |> Str.split (Str.regexp " ") in close_in ic;
-      {tree=tree; author=user; date=time; message=msg; parents=parents}
+    let ps = ic |> input_line |> Str.split (Str.regexp " ") in close_in ic;
+      {tree=tr; author=usr; date=dt; message=msg; parents=ps}
   with
     | Sys_error _ -> raise (Fatal ("commit - "^ptr^": not found"))
     | Invalid_argument _ -> raise (Fatal ("commit - "^ptr^": not valid"))

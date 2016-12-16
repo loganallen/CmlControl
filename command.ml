@@ -342,27 +342,30 @@ let reset (args: string list) : unit =
   let {flags; args; } = parse_args args in
   let allowed_flags = ["soft"; "hard"; "mixed"] in
   verify_allowed_flags allowed_flags flags;
-  begin if List.length flags > 1 then
-    raise (Fatal "usage: git reset [--soft | --mixed | --hard] [<commit>]")
-  else () end;
+  if List.length flags > 1 then
+    raise (Fatal "usage: git reset [--soft | --mixed | --hard] [<commit>]");
   chdir_to_cml ();
   let head_hash = match args with
     | [] -> get_head_safe ()
     | h::[] -> h
     | _ -> raise (Fatal "usage: git reset [--soft | --mixed | --hard] [<commit>]")
   in
-  let commit = parse_commit head_hash in   (* parse_commit does validation *)
-  if List.mem "hard" flags then begin
+  let cmt = parse_commit head_hash in   (* parse_commit does validation *)
+  (* if List.mem "hard" flags then begin
     switch_version true head_hash;
     set_head head_hash
   end else
     set_head head_hash;
     if List.mem "soft" flags then ()
     else begin
-      let tree = Tree.read_tree "" commit.tree in
+      let tree = Tree.read_tree "" cmt.tree in
       let index = Tree.tree_to_index tree in
       set_index index;
-    end
+    end *)
+  if flags = ["hard"] then switch_version true head_hash;
+  set_head head_hash;
+  if flags <> ["soft"] then
+  Tree.(read_tree "" cmt.tree |> tree_to_index) |> set_index
 
 (* remove files from working tree and index *)
 let rm (args: string list) : unit =
