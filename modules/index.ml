@@ -9,22 +9,22 @@ open Tree
 * to their most recent hash string value *)
 let get_index () : index =
   try
-    let rec parse_index acc ch =
+    let rec parse_index acc ic =
       try
-        let raw = input_line ch in let split = String.index raw ' ' in
+        let raw = input_line ic in let split = String.index raw ' ' in
         let file_path = String.sub raw 0 split in
         let hash = String.sub raw (split+1) (String.length raw - (split+1)) in
-          parse_index ((file_path,hash)::acc) ch
+          parse_index ((file_path,hash)::acc) ic
       with
-        End_of_file -> close_in ch; acc
+        End_of_file -> close_in ic; acc
     in parse_index [] (open_in ".cml/index")
   with
     | Sys_error _ -> []
 
 (* returns the index of the branch *)
 let get_branch_index branch =
-  let commit = branch |> Branch.get_branch_ptr |> Object.parse_commit in
-  commit.tree |> Tree.read_tree "" |> Tree.tree_to_index
+  let cmt = branch |> Branch.get_branch_ptr |> Object.parse_commit in
+  Tree.(read_tree "" cmt.tree |> tree_to_index)
 
 (* updates the index by adding a new mapping *)
 let update_index (map : string * string) (idx : index) : index =
@@ -32,9 +32,9 @@ let update_index (map : string * string) (idx : index) : index =
 
 (* initializes an index in the cml directory *)
 let set_index (idx : index) : unit =
-  let rec write_index ch = function
-    | [] -> close_out ch
-    | (f,h)::t -> output_string ch (f^" "^h^"\n"); write_index ch t
+  let rec write_index oc = function
+    | [] -> close_out oc
+    | (f,h)::t -> output_string oc (f^" "^h^"\n"); write_index oc t
   in
   write_index (open_out ".cml/index") idx
 
@@ -57,8 +57,8 @@ let add_files_to_idx (add_files : string list) : unit =
   set_index idx'; Sys.chdir cwd
 
 (* switches state of repo to state of given commit_hash *)
-let switch_version (is_hard : bool) (commit_hash : string) : unit =
-  let nhead = Object.parse_commit commit_hash in
+let switch_version (is_hard : bool) (cmt_hash : string) : unit =
+  let nhead = Object.parse_commit cmt_hash in
   let ntree = Tree.read_tree "" nhead.tree in
   let nindex = Tree.tree_to_index ntree in
   let oindex = get_index () in

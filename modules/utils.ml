@@ -34,19 +34,19 @@ let get_flags_from_arg (arg : string) : string list =
   if Str.string_match r_double_dash arg 0 then
     [Str.replace_first r_double_dash "" arg]
   else
-    arg |> Str.replace_first r_single_dash "" |> Str.split (Str.regexp "")
+    Str.(replace_first r_single_dash "" arg |> split (Str.regexp ""))
 
 (* fetch the user info (username) *)
 let get_user_info () : string =
   try
-    let ch = open_in ".cml/config" in
-    let raw = input_line ch in
+    let ic = open_in ".cml/config" in
+    let raw = input_line ic in
     let split = (String.index raw ' ') + 1 in
-    close_in ch; String.sub raw split (String.length raw - split)
+    close_in ic; String.sub raw split (String.length raw - split)
   with
   | Sys_error _ -> raise (Fatal "username not set, set with [cml --user <name>]")
 
 (* set the user info (username) *)
 let set_user_info (name : string) : unit =
-  let ch = open_out ".cml/config" in
-  output_string ch ("user: "^name^"\n"); close_out ch
+  let oc = open_out ".cml/config" in
+  output_string oc ("user: "^name^"\n"); close_out oc

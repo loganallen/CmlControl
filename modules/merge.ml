@@ -16,9 +16,8 @@ let merge_histories (h1: string list) (h2: string list) : string list =
 let rec get_commit_history (des: string list) (acc: string list) (ptr: string) : string list =
   let cmt = Object.parse_commit ptr in
   match cmt.parents with
-  | [] -> raise Corrupt
-  | p::[] -> if p = "None" then acc else get_commit_history des (p::acc) p
-  | p1::p2::[] -> begin
+  | [p] -> if p = "None" then acc else get_commit_history des (p::acc) p
+  | [p1;p2] -> begin
     let des' = acc@des in
     let h1 = get_commit_history des' [p1] p1 in
     let h2 = get_commit_history des' [p2] p2 in
@@ -44,11 +43,11 @@ let get_new_files (idx: index) (acc: index) (f,h) : index =
  * a new commit that combines the states of the two branches *)
 let true_merge (cur_ptr: string) (br_ptr: string) (branch: string) : unit =
   let cur = Object.parse_commit cur_ptr in
-  let cur_idx = cur.tree |> Tree.read_tree "" |> Tree.tree_to_index in
+  let cur_idx = Tree.(read_tree "" cur.tree |> tree_to_index) in
   let br = Object.parse_commit br_ptr in
-  let br_idx = br.tree |> Tree.read_tree "" |> Tree.tree_to_index in
+  let br_idx = Tree.(read_tree "" br.tree |> tree_to_index) in
   let anc = get_common_ancestor cur_ptr br_ptr |> Object.parse_commit in
-  let anc_idx = anc.tree |> Tree.read_tree "" |> Tree.tree_to_index in
+  let anc_idx = Tree.(read_tree "" anc.tree |> tree_to_index) in
   let compare_base (acc,inc_f) (f,h) =
     let c_hash = List.assoc f cur_idx in
     let b_hash = List.assoc f br_idx in
@@ -62,8 +61,8 @@ let true_merge (cur_ptr: string) (br_ptr: string) (branch: string) : unit =
   in
   let (merged_base,incomp_fs) = List.fold_left compare_base ([],[]) anc_idx in
   if incomp_fs = [] then
-    let new_cur = cur_idx |> List.fold_left (get_new_files merged_base) [] in
-    let new_br = br_idx |> List.fold_left (get_new_files merged_base) [] in
+    let new_cur = List.fold_left (get_new_files merged_base) [] cur_idx in
+    let new_br = List.fold_left (get_new_files merged_base) [] br_idx in
     (* merge the indexes, create a merge commit, and repopulate the repo, *)
     let merged_idx = merged_base @ new_cur @ new_br in
     let tree = Tree.index_to_tree merged_idx in

@@ -297,14 +297,14 @@ let init () : unit =
 (* display the current branches commit history *)
 let log () : unit =
   chdir_to_cml ();
-  let ch = open_out ".cml/log" in
+  let oc = open_out ".cml/log" in
   let log_help ptr =
     let cmt = parse_commit ptr in
-    print_commit ch ptr cmt.author cmt.date cmt.message
+    print_commit oc ptr cmt.author cmt.date cmt.message
   in try
     let head = get_head_safe () in
     head |> get_commit_history [] [head] |> List.rev |> List.iter log_help;
-    close_out ch; let _ = Sys.command "less -RXF .cml/log" in ()
+    close_out oc; let _ = Sys.command "less -RXF .cml/log" in ()
   with
   | Fatal m -> begin
     if m = "HEAD not initialized" then
