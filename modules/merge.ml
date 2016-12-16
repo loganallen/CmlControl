@@ -5,31 +5,43 @@ open Tree
 (******************************** Merge Module ********************************)
 (******************************************************************************)
 
-(* returns a commit history that is the merge of two histories *)
-let merge_histories (h1: string list) (h2: string list) : string list =
-  let base = List.filter (fun c -> List.mem c h2) h1 in
-  let h1' = List.filter (fun c -> not (List.mem c base)) h1 in
-  let h2' = List.filter (fun c -> not (List.mem c base)) h2 in
-  base @ h1' @ h2'
+(* returns a commit history that is the merge of two histories, ordered by
+ * commit timestamp *)
+let merge_histories (h1: (string * string) list) (h2: (string * string) list) : (string * string) list =
+  let base = List.filter (fun (c,_) -> List.mem_assoc c h2) h1 in
+  let h1' = List.filter (fun (c,_) -> not (List.mem_assoc c base)) h1 in
+  let h2' = List.filter (fun (c,_) -> not (List.mem_assoc c base)) h2 in
+  let sort_help (_,d1) (_,d2) = begin
+    if d1 < d2 then -1 else if d1 = d2 then 0 else 1
+  end in
+  let tail = h1' @ h2' |> List.sort sort_help in
+  base @ tail
 
-(* recursivley builds the commit history starting from a specified hash ptr *)
-let rec get_commit_history (des: string list) (acc: string list) (ptr: string) : string list =
+(* recursively builds the commit history, represented by a list of
+ * pairs s.t. in [(h,d);...;(hn,dn)], the tuple [(h,d)] is the
+ * commit's hash [h] and the commit's date [d] *)
+let rec commit_history_loop (des: (string * string) list) (acc : (string * string) list) (ptr: string) : (string * string) list =
   let cmt = Object.parse_commit ptr in
+  let acc' = (ptr,cmt.date)::acc in
   match cmt.parents with
-  | [p] -> if p = "None" then acc else get_commit_history des (p::acc) p
+  | [p] -> if p = "None" then acc' else commit_history_loop des acc' p
   | [p1;p2] -> begin
-    let des' = acc@des in
-    let h1 = get_commit_history des' [p1] p1 in
-    let h2 = get_commit_history des' [p2] p2 in
+    let des' = acc' @ des in
+    let h1 = commit_history_loop des' [] p1 in
+    let h2 = commit_history_loop des' [] p2 in
     (merge_histories h1 h2) @ des'
   end
   | _ -> raise Corrupt
 
+(* returns the commit history for the given commit hash pointer *)
+let get_commit_history (ptr: string) : string list =
+  ptr |> commit_history_loop [] [] |> List.map (fun (h,_) -> h)
+
 (* returns the commit ptr of the common ancestor between two branches
  * and the next commit for the branch *)
 let get_common_ancestor (cur_ptr: string) (br_ptr: string) : string =
-  let h1 = get_commit_history [] [cur_ptr] cur_ptr in
-  let h2 = get_commit_history [] [br_ptr] br_ptr in
+  let h1 = get_commit_history cur_ptr in
+  let h2 = get_commit_history br_ptr in
   let common = List.filter (fun c -> List.mem c h2) h1 in
   match List.rev common with
   | []   -> raise (Fatal "These branches don't have any ancestor in common")
@@ -69,7 +81,7 @@ let true_merge (cur_ptr: string) (br_ptr: string) (branch: string) : unit =
     let tree_hash = Tree.write_tree tree in
     let user = Utils.get_user_info () in
     let msg = "Merged branch '"^branch^"' into "^Branch.get_current_branch () in
-    let tm = time () |> localtime |> Time.get_time in
+    let tm = time () |> string_of_float in
     [cur_ptr;br_ptr] |> Object.create_commit tree_hash user tm msg |> Head.set_head;
     Index.set_index merged_idx; Tree.recreate_tree "" tree; Print.print msg
   else begin

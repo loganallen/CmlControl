@@ -215,10 +215,11 @@ let commit (args: string list) : unit =
           let tree = idx |> Tree.index_to_tree |> Tree.write_tree in
           let msg = lst |> List.rev |>
                     List.fold_left (fun acc s -> s^" "^acc) "" |> String.trim in
-          let tm = time () |> localtime |> Time.get_time in
-          let last_commit = try
-            if isdetached then get_detached_head () else get_head ()
-            with Fatal n -> "None" in
+          let tm = time () |> string_of_float in
+          let last_commit =
+            try if isdetached then get_detached_head () else get_head ()
+            with Fatal n -> "None"
+          in
           create_commit tree user tm msg [last_commit]
         end
     end
@@ -303,7 +304,7 @@ let log () : unit =
     print_commit oc ptr cmt.author cmt.date cmt.message
   in try
     let head = get_head_safe () in
-    head |> get_commit_history [] [head] |> List.rev |> List.iter log_help;
+    head |> get_commit_history |> List.rev |> List.iter log_help;
     close_out oc; let _ = Sys.command "less -RXF .cml/log" in ()
   with
   | Fatal m -> begin
@@ -327,9 +328,9 @@ let merge (args: string list) : unit =
     else begin
       let cur_ptr = get_head () in
       let br_ptr = get_branch_ptr br in
-      if (cur_ptr |> get_commit_history [] [cur_ptr] |> List.mem br_ptr) then
+      if (cur_ptr |> get_commit_history |> List.mem br_ptr) then
         print "Already up-to-date."
-      else if (br_ptr |> get_commit_history [] [br_ptr] |> List.mem cur_ptr) then
+      else if (br_ptr |> get_commit_history |> List.mem cur_ptr) then
         fast_forward_merge (get_current_branch ()) br_ptr
       else
         true_merge cur_ptr br_ptr br
@@ -413,7 +414,7 @@ let stash (args: string list) : unit =
           let f_idx = ch_idx @ st_idx in
           let new_tree = f_idx |> Tree.index_to_tree |> Tree.write_tree in
           let user = get_user_info () in
-          let tm = time () |> localtime |> Time.get_time in
+          let tm = time () |> string_of_float in
           let head = get_head () in
           let commit = create_commit new_tree user tm "Stash" [head] in
           switch_version true head;
