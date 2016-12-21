@@ -33,13 +33,13 @@ let create_commit (ptr : string) (user : string) (date : string) (msg: string) (
 let parse_commit (ptr : string) : commit =
   try
     let (_,path) = split_hash ptr in
-    let ch = open_in path in
-    let tree = input_line ch in
-    let user = input_line ch in
-    let time = input_line ch in
-    let msg = input_line ch in
-    let parents = ch |> input_line |> Str.split (Str.regexp " ") in close_in ch;
-      {tree=tree; author=user; date=time; message=msg; parents=parents}
+    let ic = open_in path in
+    let tr = input_line ic in
+    let usr = input_line ic in
+    let dt = input_line ic in
+    let msg = input_line ic in
+    let ps = ic |> input_line |> Str.split (Str.regexp " ") in close_in ic;
+      {tree=tr; author=usr; date=dt; message=msg; parents=ps}
   with
     | Sys_error _ -> raise (Fatal ("commit - "^ptr^": not found"))
     | Invalid_argument _ -> raise (Fatal ("commit - "^ptr^": not valid"))
@@ -47,5 +47,5 @@ let parse_commit (ptr : string) : commit =
 
 (* takes a commit hash and returns the index of the commit *)
 let get_commit_index (ptr : string) : index =
-  let commit = parse_commit ptr in
-  commit.tree |> Tree.read_tree "" |> Tree.tree_to_index
+  let cmt = parse_commit ptr in
+  Tree.(read_tree "" cmt.tree |> tree_to_index)
