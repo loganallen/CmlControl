@@ -1,4 +1,4 @@
-## Camel Control (cml)
+## Cml Control
 
 *An OCaml-based management tool for local version control.*
 
