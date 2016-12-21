@@ -1,24 +1,54 @@
-## Cml Control
+# Cml Control
 
 *An OCaml-based management tool for local version control.*
 
-#### Installation
+### Installation
+Download source code from this repo.  
+For compilation, you need to install the following dependecies:
 
-Cml has the following dependencies: <br>
+#### cryptokit
 
-	~ cryptokit (may need to run opam depext conf-zlib.1)
-	~ ANSITerminal
-	~ str
-	~ unix
-	~ ocamldiff
+Install cryptokit: `opam install cryptokit`  
+It is possible and even likely that you will receive an error.  
+To fix run: `opam depext conf-zlib.1`  
+Answer yes to all of the prompts and then after completion  
+Rerun: `opam install cryptokit`  
 
-All of these can be installed using: `opam install`
 
-#### Compilation
+#### ANSITerminal
 
-Run: `make` or `make install` to compile Cml and add `cml` to your path.
+Install ANSITerminal: `opam install ANSITerminal`  
 
-#### Development
+
+#### ocamldiff
+
+Install ocamldiff: `opam install ocamldiff`  
+
+
+### Compilation
+
+Open the src directory.
+
+Run: `make`
+
+--this will compile the program and attempt to copy the cml bash script and
+cml byte code to the /usr/bin/local folder so that CmlControl can be run 
+from any directory on your system.
+
+To uninstall CmlControl from your system. run: `make uninstall`
+
+
+
+You have now successfully compiled our project and are able to experience the wonders of CmlControl.
+
+#### To begin:
+
+Open a directory on you machine and run: `cml init`  
+-- this will initialize your directory as a cml repository
+
+Run `cml` or `cml help` for more information, or read our design document.
+
+### Development
 
 Run: `make clean` to remove compiled OCaml files before committing to the development repository.
 
@@ -26,7 +56,7 @@ Run: `make uninstall` to remove `cml` from your path entirely.
 
 **Run:** `rm -rf .cml/` **before committing if you were testing** `cml` **in the local repo.**
 
-#### How To Use Git!!
+### How To Use Git!!
 
 When working on a feature use the following protocol:
 
