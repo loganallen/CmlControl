@@ -4,7 +4,6 @@
 
 *Authors:* <br>
 Logan Allen, Andrew Grossfeld, Brandon Walker, and Michael Gingras
-> We are four computer science engineers at Cornell University that love programming.
 
 ## Installation
 Download source code from this repo.  
