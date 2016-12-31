@@ -1,5 +1,7 @@
 # Cml Control
 
+<img src="./cmlcontrolIcon.png" width="180" style="border-radius:25px">
+
 *An OCaml-based management tool for local version control.*
 
 *Authors:* <br>
