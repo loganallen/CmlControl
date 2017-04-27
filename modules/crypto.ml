@@ -22,9 +22,9 @@ let parse_lines (file_name : string) : string list =
 let hash (file_name : string) : string =
 	try
 		let fd = openfile file_name [O_RDONLY] 0o777 in
-		let channel = in_channel_of_descr fd in
-		let hash = hash_channel (Hash.sha1 ()) channel in
-		close_in channel; transform_string (Hexa.encode ()) hash
+		let ch = in_channel_of_descr fd in
+		let hash = hash_channel (Hash.sha1 ()) ch in close_in ch;
+    transform_string (Hexa.encode ()) hash
 	with
 		Unix_error (Unix.ENOENT,_,_) -> raise (Fatal ("Could not find file: "^file_name))
 

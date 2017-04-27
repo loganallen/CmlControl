@@ -215,10 +215,11 @@ let commit (args: string list) : unit =
           let tree = idx |> Tree.index_to_tree |> Tree.write_tree in
           let msg = lst |> List.rev |>
                     List.fold_left (fun acc s -> s^" "^acc) "" |> String.trim in
-          let tm = time () |> localtime |> Time.get_time in
-          let last_commit = try
-            if isdetached then get_detached_head () else get_head ()
-            with Fatal n -> "None" in
+          let tm = time () |> string_of_float in
+          let last_commit =
+            try if isdetached then get_detached_head () else get_head ()
+            with Fatal n -> "None"
+          in
           create_commit tree user tm msg [last_commit]
         end
     end
@@ -297,14 +298,14 @@ let init () : unit =
 (* display the current branches commit history *)
 let log () : unit =
   chdir_to_cml ();
-  let ch = open_out ".cml/log" in
+  let oc = open_out ".cml/log" in
   let log_help ptr =
     let cmt = parse_commit ptr in
-    print_commit ch ptr cmt.author cmt.date cmt.message
+    print_commit oc ptr cmt.author cmt.date cmt.message
   in try
     let head = get_head_safe () in
-    head |> get_commit_history [] [head] |> List.rev |> List.iter log_help;
-    close_out ch; let _ = Sys.command "less -RXF .cml/log" in ()
+    head |> get_commit_history |> List.rev |> List.iter log_help;
+    close_out oc; let _ = Sys.command "less -RXF .cml/log" in ()
   with
   | Fatal m -> begin
     if m = "HEAD not initialized" then
@@ -327,9 +328,9 @@ let merge (args: string list) : unit =
     else begin
       let cur_ptr = get_head () in
       let br_ptr = get_branch_ptr br in
-      if (cur_ptr |> get_commit_history [] [cur_ptr] |> List.mem br_ptr) then
+      if (cur_ptr |> get_commit_history |> List.mem br_ptr) then
         print "Already up-to-date."
-      else if (br_ptr |> get_commit_history [] [br_ptr] |> List.mem cur_ptr) then
+      else if (br_ptr |> get_commit_history |> List.mem cur_ptr) then
         fast_forward_merge (get_current_branch ()) br_ptr
       else
         true_merge cur_ptr br_ptr br
@@ -342,27 +343,30 @@ let reset (args: string list) : unit =
   let {flags; args; } = parse_args args in
   let allowed_flags = ["soft"; "hard"; "mixed"] in
   verify_allowed_flags allowed_flags flags;
-  begin if List.length flags > 1 then
-    raise (Fatal "usage: git reset [--soft | --mixed | --hard] [<commit>]")
-  else () end;
+  if List.length flags > 1 then
+    raise (Fatal "usage: git reset [--soft | --mixed | --hard] [<commit>]");
   chdir_to_cml ();
   let head_hash = match args with
     | [] -> get_head_safe ()
     | h::[] -> h
     | _ -> raise (Fatal "usage: git reset [--soft | --mixed | --hard] [<commit>]")
   in
-  let commit = parse_commit head_hash in   (* parse_commit does validation *)
-  if List.mem "hard" flags then begin
+  let cmt = parse_commit head_hash in   (* parse_commit does validation *)
+  (* if List.mem "hard" flags then begin
     switch_version true head_hash;
     set_head head_hash
   end else
     set_head head_hash;
     if List.mem "soft" flags then ()
     else begin
-      let tree = Tree.read_tree "" commit.tree in
+      let tree = Tree.read_tree "" cmt.tree in
       let index = Tree.tree_to_index tree in
       set_index index;
-    end
+    end *)
+  if flags = ["hard"] then switch_version true head_hash;
+  set_head head_hash;
+  if flags <> ["soft"] then
+  Tree.(read_tree "" cmt.tree |> tree_to_index) |> set_index
 
 (* remove files from working tree and index *)
 let rm (args: string list) : unit =
@@ -410,7 +414,7 @@ let stash (args: string list) : unit =
           let f_idx = ch_idx @ st_idx in
           let new_tree = f_idx |> Tree.index_to_tree |> Tree.write_tree in
           let user = get_user_info () in
-          let tm = time () |> localtime |> Time.get_time in
+          let tm = time () |> string_of_float in
           let head = get_head () in
           let commit = create_commit new_tree user tm "Stash" [head] in
           switch_version true head;

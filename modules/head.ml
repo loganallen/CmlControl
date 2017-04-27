@@ -7,38 +7,40 @@ open Universal
 (* returns the current HEAD of the cml repository *)
 let get_head () : string =
   try
-    let ch = open_in ".cml/HEAD" in
-    let path = ".cml/" ^ input_line ch in close_in ch;
-    let ch' = open_in path in
-    let head = input_line ch' in close_in ch'; head
+    let ic = open_in ".cml/HEAD" in
+    let path = ".cml/" ^ input_line ic in close_in ic;
+    let oc = open_in path in
+    let head = input_line oc in
+    close_in oc; head
   with
     | Sys_error _ -> raise (Fatal "HEAD not found")
     | End_of_file -> raise (Fatal "HEAD not initialized")
 
 (* sets the HEAD of the cml repository *)
-let set_head (commit_hash : string) : unit =
+let set_head (cmt_hash : string) : unit =
   try
-    let ch = open_in ".cml/HEAD" in
-    let path = ".cml/" ^ input_line ch in close_in ch;
-    let ch' = open_out path in
-      output_string ch' commit_hash; close_out ch'
+    let ic = open_in ".cml/HEAD" in
+    let path = ".cml/" ^ input_line ic in close_in ic;
+    let oc = open_out path in
+    output_string oc cmt_hash; close_out oc
   with
     | Sys_error _ -> raise (Fatal "could not set HEAD")
     | End_of_file -> raise (Fatal "HEAD not initialized")
 
 (* sets the HEAD of the cml repository to a commit hash *)
-let set_detached_head (commit_hash : string) : unit =
+let set_detached_head (cmt_hash : string) : unit =
   try
-    let ch = open_out ".cml/HEAD" in
-    output_string ch commit_hash; close_out ch
+    let ic = open_out ".cml/HEAD" in
+    output_string ic cmt_hash; close_out ic
   with
     | Sys_error _ -> raise (Fatal "could not set detached HEAD")
 
 (* returns the commit hash the head was detached at *)
 let get_detached_head () : string =
   try
-    let ch = open_in ".cml/HEAD" in
-    let raw = input_line ch in close_in ch; raw
+    let ic = open_in ".cml/HEAD" in
+    let raw = input_line ic in
+    close_in ic; raw
   with
   | Sys_error _ -> raise (Fatal "could not get detached HEAD")
 

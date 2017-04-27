@@ -30,9 +30,9 @@ let get_branches () : string list =
 (* returns string of name of the current branch *)
 let get_current_branch () : string =
   try
-    let ch = open_in ".cml/HEAD" in
-    let raw = input_line ch in
-    let _ = close_in ch in
+    let ic = open_in ".cml/HEAD" in
+    let raw = input_line ic in
+    let _ = close_in ic in
     let split = (String.index raw '/') + 1 in
     String.sub raw split (String.length raw - split)
   with
@@ -42,9 +42,9 @@ let get_current_branch () : string =
 (* returns the head ptr of the given branch *)
 let get_branch_ptr (branch_name : string) : string =
   try
-    let ch = open_in (".cml/heads/" ^ branch_name) in
-    let ptr = input_line ch in
-    close_in ch; ptr
+    let ic = open_in (".cml/heads/" ^ branch_name) in
+    let ptr = input_line ic in
+    close_in ic; ptr
   with
     | Sys_error _ -> raise (Fatal ("branch "^branch_name^" not found"))
     | End_of_file -> raise (Fatal (branch_name^" ptr not set"))
@@ -52,8 +52,8 @@ let get_branch_ptr (branch_name : string) : string =
 (* initializes a given commit to a given branch name *)
 let set_branch_ptr (branch_name : string) (commit_hash : string) : unit =
   try
-    let ch = open_out (".cml/heads/" ^ branch_name) in
-    output_string ch commit_hash; close_out ch
+    let oc = open_out (".cml/heads/" ^ branch_name) in
+    output_string oc commit_hash; close_out oc
   with
     | Sys_error _ -> raise (Fatal "write error")
 
@@ -75,13 +75,13 @@ let create_branch (branch : string) (ptr : string) : unit =
     raise (Fatal ("a branch named "^branch^" already exists"))
   else
     let _ = validate_branch branch in
-    let ch = begin
+    let oc = begin
       if String.contains branch '/' then
         branch_help ".cml/heads/" branch
       else
         open_out (".cml/heads/"^branch)
     end in
-    let _ = output_string ch ptr in close_out ch
+    output_string oc ptr; close_out oc
 
 (* delete a branch if it exists *)
 let delete_branch (branch : string) : unit =
@@ -104,6 +104,6 @@ let switch_branch (branch : string) (isdetached : bool) : unit =
   if cur = branch then
     Print.print ("Already on branch '"^branch^"'")
   else
-    let ch = open_out ".cml/HEAD" in
-    output_string ch ("heads/"^branch); close_out ch;
+    let oc = open_out ".cml/HEAD" in
+    output_string oc ("heads/"^branch); close_out oc;
     Print.print ("Switched to branch '"^branch^"'")

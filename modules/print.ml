@@ -79,7 +79,7 @@ let print_untracked (files : string list) : unit =
 let print_commit (oc : out_channel) (ptr : string) (author : string) (time : string) (msg : string) : unit =
   Printf.fprintf oc "[33mcommit %s\n" ptr;
   Printf.fprintf oc "Author: %s\n" author;
-  Printf.fprintf oc "Date: %s\n\n" time;
+  time |> float_of_string |> Unix.localtime |> Time.get_time |> Printf.fprintf oc "Date: %s\n\n";
   Printf.fprintf oc "    %s\n\n" msg
 
 (* print help info for user (long version) *)

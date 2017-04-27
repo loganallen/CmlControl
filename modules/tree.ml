@@ -110,16 +110,16 @@ module Tree = struct
       | (Tree (n, lst))::t -> tree_data (("tree " ^
                                 (write_tree (Tree (n, lst))) ^ " " ^ n)::acc) t
     in
-    let rec write_lines ch = function
-      | [] -> close_out ch;
-      | h::t -> Printf.fprintf ch "%s\n" h; write_lines ch t
+    let rec write_lines oc = function
+      | [] -> close_out oc;
+      | h::t -> Printf.fprintf oc "%s\n" h; write_lines oc t
     in
     match tree with
       | Tree (n, lst) ->
         begin
           let temp_name = ".cml/temp_"^n in
-          let ch = open_out temp_name in
-          let _ = lst |> tree_data [] |> write_lines ch in
+          let oc = open_out temp_name in
+          let _ = lst |> tree_data [] |> write_lines oc in
           let hsh = Crypto.hash temp_name in
           let (d1,path) = split_hash hsh in
           if not (Sys.file_exists (".cml/objects/"^d1)) then
