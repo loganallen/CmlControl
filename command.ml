@@ -517,7 +517,7 @@ let execute (i : input) : unit =
       | Commit   -> run (commit, i.args) (print_help_commit_long, i.args)
       | Diff     -> run (diff, i.args) (print_help_diff_long, i.args)
       | Help     -> run (help, ()) (print_help, i.args)
-  		| Init     -> run (init, ()) (print_help_init_long, i.args)
+      | Init     -> run (init, ()) (print_help_init_long, i.args)
       | Log      -> run (log, ()) (print_help_log_long, i.args)
       | Merge    -> run (merge, i.args) (print_help_merge_long, i.args)
       | Reset    -> run (reset, i.args) (print_help_reset_long, i.args)
